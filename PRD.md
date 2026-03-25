@@ -129,7 +129,12 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-25*
+*Poslední aktualizace: 2026-03-25 (Session 2)*
+
+### ✅ Dokončeno – Session 2 (Dialog, GitHub, Vercel)
+- `SaveMissionDialog` komponenta – vlastní modal místo window.prompt (Enter uloží, Escape zavře, autofocus)
+- GitHub repozitář: `https://github.com/MichalLeinweber/dji-waypoint-planner` (public)
+- Vercel deploy: `https://dji-waypoint-planner-phi.vercel.app` (production, auto-deploy z main)
 
 ### ✅ Dokončeno – Session 1 (MVP základ)
 - Next.js 16.2.1 + TypeScript + Tailwind CSS projekt inicializován

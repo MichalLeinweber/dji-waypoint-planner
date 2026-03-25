@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
+import SaveMissionDialog from '@/components/SaveMissionDialog';
 import { Waypoint, Mission, MissionType } from '@/lib/types';
 import { exportKMZ } from '@/lib/exportKMZ';
 import { saveMission } from '@/lib/missionStore';
@@ -22,6 +23,7 @@ export default function HomePage() {
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [missionType, setMissionType] = useState<MissionType>('waypoints');
   const [isExporting, setIsExporting] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   /** Add a new waypoint at the clicked map location */
   const handleAddWaypoint = useCallback((lat: number, lng: number) => {
@@ -63,20 +65,22 @@ export default function HomePage() {
     setWaypoints([]);
   }, []);
 
-  /** Show a name dialog and save the current mission to localStorage */
+  /** Open the save dialog */
   const handleSaveMission = useCallback(() => {
-    const name = window.prompt('Zadej nazev mise:', 'Nova mise');
-    if (!name?.trim()) return;
+    setSaveDialogOpen(true);
+  }, []);
 
+  /** Called when the user confirms the save dialog with a name */
+  const handleSaveConfirm = useCallback((name: string) => {
     const mission: Mission = {
       id: `mission-${Date.now()}`,
-      name: name.trim(),
+      name,
       type: missionType,
       createdAt: new Date().toISOString(),
       waypoints: [...waypoints],
     };
-
     saveMission(mission);
+    setSaveDialogOpen(false);
     router.push('/missions');
   }, [waypoints, missionType, router]);
 
@@ -103,6 +107,13 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
+      {/* Save mission modal */}
+      <SaveMissionDialog
+        open={saveDialogOpen}
+        onSave={handleSaveConfirm}
+        onClose={() => setSaveDialogOpen(false)}
+      />
+
       {/* Sidebar (desktop left / mobile bottom) */}
       <Sidebar
         waypoints={waypoints}
