@@ -73,6 +73,8 @@ interface MapProps {
   onCenterChange: (lat: number, lng: number) => void;
   /** Optional rectangle to draw (grid area selection) — [[swLat,swLng],[neLat,neLng]] */
   gridRect: [[number, number], [number, number]] | null;
+  /** Optional facade line — [[aLat,aLng],[bLat,bLng]] */
+  facadeLine: [[number, number], [number, number]] | null;
 }
 
 export default function MapView({
@@ -83,6 +85,7 @@ export default function MapView({
   onUpdateWaypoint,
   onCenterChange,
   gridRect,
+  facadeLine,
 }: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
@@ -155,6 +158,14 @@ export default function MapView({
         <Rectangle
           bounds={gridRect}
           pathOptions={{ color: '#f59e0b', weight: 2, fillOpacity: 0.1, fillColor: '#f59e0b' }}
+        />
+      )}
+
+      {/* Facade line between point A and B */}
+      {facadeLine && (
+        <Polyline
+          positions={facadeLine}
+          pathOptions={{ color: '#f59e0b', weight: 3, dashArray: '6 4' }}
         />
       )}
     </MapContainer>

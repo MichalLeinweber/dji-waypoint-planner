@@ -39,6 +39,13 @@ export default function HomePage() {
   const [poi, setPoi] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingPoi, setIsSelectingPoi] = useState(false);
 
+  // ── Facade state ─────────────────────────────────────────────
+  type FacadePoints = { a: { lat: number; lng: number }; b: { lat: number; lng: number } };
+  const [facadePoints, setFacadePoints] = useState<FacadePoints | null>(null);
+  const [facadeDrawStep, setFacadeDrawStep] = useState<'idle' | 'a' | 'b'>('idle');
+  // Temporary point A while waiting for point B click
+  const [pendingFacadeA, setPendingFacadeA] = useState<{ lat: number; lng: number } | null>(null);
+
   // ── Map interaction ──────────────────────────────────────────
 
   /** Single handler for all map clicks — behavior depends on current mode */
@@ -47,6 +54,19 @@ export default function HomePage() {
     if (isSelectingPoi) {
       setPoi({ lat, lng });
       setIsSelectingPoi(false);
+      return;
+    }
+
+    // Facade point selection
+    if (facadeDrawStep === 'a') {
+      setPendingFacadeA({ lat, lng });
+      setFacadeDrawStep('b');
+      return;
+    }
+    if (facadeDrawStep === 'b' && pendingFacadeA) {
+      setFacadePoints({ a: pendingFacadeA, b: { lat, lng } });
+      setPendingFacadeA(null);
+      setFacadeDrawStep('idle');
       return;
     }
 
@@ -70,7 +90,7 @@ export default function HomePage() {
         { id: generateId(), lat, lng, height: 50, speed: 5, waitTime: 0, cameraAction: 'none' },
       ]);
     }
-  }, [isSelectingPoi, gridDrawStep, pendingSw, missionType]);
+  }, [isSelectingPoi, facadeDrawStep, pendingFacadeA, gridDrawStep, pendingSw, missionType]);
 
   /** Update waypoint position after drag */
   const handleUpdateWaypointPosition = useCallback((id: string, lat: number, lng: number) => {
@@ -102,6 +122,8 @@ export default function HomePage() {
     setGridDrawStep('idle');
     setPendingSw(null);
     setIsSelectingPoi(false);
+    setFacadeDrawStep('idle');
+    setPendingFacadeA(null);
   }, []);
 
   // ── Save / Export ────────────────────────────────────────────
@@ -149,7 +171,7 @@ export default function HomePage() {
   // ── Derived map props ────────────────────────────────────────
 
   // Show crosshair cursor when the user is placing a point on the map
-  const crosshairCursor = isSelectingPoi || gridDrawStep !== 'idle';
+  const crosshairCursor = isSelectingPoi || gridDrawStep !== 'idle' || facadeDrawStep !== 'idle';
 
   // Markers are draggable only in manual waypoints mode
   const draggableMarkers = missionType === 'waypoints';
@@ -157,6 +179,11 @@ export default function HomePage() {
   // Show grid rectangle when both corners are selected
   const gridRect: [[number, number], [number, number]] | null = gridCorners
     ? [gridCorners.sw, gridCorners.ne]
+    : null;
+
+  // Show facade line when both points are selected
+  const facadeLine: [[number, number], [number, number]] | null = facadePoints
+    ? [[facadePoints.a.lat, facadePoints.a.lng], [facadePoints.b.lat, facadePoints.b.lng]]
     : null;
 
   return (
@@ -183,6 +210,9 @@ export default function HomePage() {
         isSelectingPoi={isSelectingPoi}
         onSelectPoi={() => setIsSelectingPoi(true)}
         onSetPoi={setPoi}
+        facadePoints={facadePoints}
+        facadeDrawStep={facadeDrawStep}
+        onStartDrawFacade={() => setFacadeDrawStep('a')}
         onSaveMission={handleSaveMission}
         onExportKMZ={handleExportKMZ}
         isExporting={isExporting}
@@ -197,6 +227,7 @@ export default function HomePage() {
           onUpdateWaypoint={handleUpdateWaypointPosition}
           onCenterChange={(lat, lng) => setMapCenter({ lat, lng })}
           gridRect={gridRect}
+          facadeLine={facadeLine}
         />
       </main>
     </div>

@@ -9,6 +9,7 @@ const MISSION_TYPE_LABELS: Record<MissionType, string> = {
   spiral: 'Spirala',
   grid: 'Grid',
   orbit: 'Orbit',
+  facade: 'Fasada',
 };
 
 interface MissionListProps {

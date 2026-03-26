@@ -4,7 +4,7 @@
 export type CameraAction = 'none' | 'photo' | 'startVideo' | 'stopVideo';
 
 /** Mission types supported by the application */
-export type MissionType = 'waypoints' | 'spiral' | 'grid' | 'orbit';
+export type MissionType = 'waypoints' | 'spiral' | 'grid' | 'orbit' | 'facade';
 
 /** A single waypoint in a mission */
 export interface Waypoint {
@@ -22,6 +22,8 @@ export interface Waypoint {
   waitTime: number;
   /** Camera action to perform at this waypoint */
   cameraAction: CameraAction;
+  /** Optional gimbal pitch angle in degrees (0 = horizontal, -90 = straight down) */
+  gimbalPitch?: number;
 }
 
 /** A saved mission */

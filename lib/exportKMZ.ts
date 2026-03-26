@@ -73,6 +73,26 @@ function generateActionXML(wp: Waypoint, index: number): string {
             </wpml:actionActuatorFuncParam>
           </wpml:action>` : '';
 
+  // Gimbal rotate action — only emitted when gimbalPitch is explicitly set
+  const gimbalAction = wp.gimbalPitch !== undefined ? `
+          <wpml:action>
+            <wpml:actionId>2</wpml:actionId>
+            <wpml:actionActuatorFunc>gimbalRotate</wpml:actionActuatorFunc>
+            <wpml:actionActuatorFuncParam>
+              <wpml:gimbalHeadingYawBase>aircraft</wpml:gimbalHeadingYawBase>
+              <wpml:gimbalRotateMode>absoluteAngle</wpml:gimbalRotateMode>
+              <wpml:gimbalPitchRotateEnable>1</wpml:gimbalPitchRotateEnable>
+              <wpml:gimbalPitchRotateAngle>${wp.gimbalPitch}</wpml:gimbalPitchRotateAngle>
+              <wpml:gimbalRollRotateEnable>0</wpml:gimbalRollRotateEnable>
+              <wpml:gimbalRollRotateAngle>0</wpml:gimbalRollRotateAngle>
+              <wpml:gimbalYawRotateEnable>0</wpml:gimbalYawRotateEnable>
+              <wpml:gimbalYawRotateAngle>0</wpml:gimbalYawRotateAngle>
+              <wpml:gimbalRotateTimeEnable>0</wpml:gimbalRotateTimeEnable>
+              <wpml:gimbalRotateTime>0</wpml:gimbalRotateTime>
+              <wpml:payloadPositionIndex>0</wpml:payloadPositionIndex>
+            </wpml:actionActuatorFuncParam>
+          </wpml:action>` : '';
+
   return `
       <wpml:actionGroup>
           <wpml:actionGroupId>${index}</wpml:actionGroupId>
@@ -88,7 +108,7 @@ function generateActionXML(wp: Waypoint, index: number): string {
             <wpml:actionActuatorFuncParam>
               <wpml:hoverTime>${wp.waitTime}</wpml:hoverTime>
             </wpml:actionActuatorFuncParam>
-          </wpml:action>${photoAction}${startVideoAction}${stopVideoAction}
+          </wpml:action>${photoAction}${startVideoAction}${stopVideoAction}${gimbalAction}
         </wpml:actionGroup>`;
 }
 

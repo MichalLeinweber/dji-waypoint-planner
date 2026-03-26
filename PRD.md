@@ -129,7 +129,17 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-26 (Session 3)*
+*Poslední aktualizace: 2026-03-26 (Session 4)*
+
+### ✅ Dokončeno – Session 4 (Fasádní sken)
+- FacadePanel: horizontální pasy podél fasády (lawn-mower), 2 body A+B na mapě, kolmý offset dronu
+- Žlutá čárkovaná čára A→B na mapě jako vizuální reference fasády
+- Parametry: vzdálenost od fasády, výška startu/konce, překryv, rychlost, úhel gimbalu
+- Info box: šířka fasády, počet řad, počet fotek, délka trasy
+- exportKMZ: nová akce `gimbalRotate` (actionId 2) pro waypointy s `gimbalPitch`
+- types.ts: přidány `'facade'` do MissionType, `gimbalPitch?: number` do Waypoint
+- Sidebar: záložky přepnuty na `overflow-x: auto` (škáluje na mobil i pro budoucí záložky)
+- MissionList: přidán label 'Fasada'
 
 ### ✅ Dokončeno – Session 3 (Spirála, Grid, Orbit)
 - SpiralPanel: generuje spirální trajektorii (střed = střed mapy, parametry: poloměry, výšky, otáčky, směr CW/CCW)

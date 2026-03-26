@@ -7,13 +7,15 @@ import WaypointPanel from './WaypointPanel';
 import SpiralPanel from './SpiralPanel';
 import GridPanel from './GridPanel';
 import OrbitPanel from './OrbitPanel';
+import FacadePanel from './FacadePanel';
 import { Waypoint, MissionType } from '@/lib/types';
 
 const MISSION_TABS: { type: MissionType; label: string }[] = [
-  { type: 'waypoints', label: 'Waypointy' },
+  { type: 'waypoints', label: 'Body' },
   { type: 'spiral', label: 'Spirala' },
   { type: 'grid', label: 'Grid' },
   { type: 'orbit', label: 'Orbit' },
+  { type: 'facade', label: 'Fasada' },
 ];
 
 interface SidebarProps {
@@ -37,6 +39,10 @@ interface SidebarProps {
   isSelectingPoi: boolean;
   onSelectPoi: () => void;
   onSetPoi: (poi: { lat: number; lng: number }) => void;
+  // Facade
+  facadePoints: { a: { lat: number; lng: number }; b: { lat: number; lng: number } } | null;
+  facadeDrawStep: 'idle' | 'a' | 'b';
+  onStartDrawFacade: () => void;
   // Save / Export
   onSaveMission: () => void;
   onExportKMZ: () => void;
@@ -59,6 +65,9 @@ export default function Sidebar({
   isSelectingPoi,
   onSelectPoi,
   onSetPoi,
+  facadePoints,
+  facadeDrawStep,
+  onStartDrawFacade,
   onSaveMission,
   onExportKMZ,
   isExporting,
@@ -73,14 +82,14 @@ export default function Sidebar({
         <p className="text-gray-500 text-xs">Mini 4 Pro</p>
       </div>
 
-      {/* Mission type tabs */}
+      {/* Mission type tabs — horizontal scroll so new tabs fit without layout breaking */}
       <div className="px-2 pt-3 flex-shrink-0">
-        <div className="grid grid-cols-4 gap-1">
+        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
           {MISSION_TABS.map((tab) => (
             <button
               key={tab.type}
               onClick={() => onMissionTypeChange(tab.type)}
-              className={`py-1.5 rounded text-xs font-medium transition-colors ${
+              className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 missionType === tab.type
                   ? 'bg-blue-600 text-white'
                   : 'bg-[#0f1117] text-gray-400 hover:text-white'
@@ -128,6 +137,15 @@ export default function Sidebar({
               onSetWaypoints(wps);
               onSetPoi(p);
             }}
+          />
+        )}
+
+        {missionType === 'facade' && (
+          <FacadePanel
+            facadePoints={facadePoints}
+            drawStep={facadeDrawStep}
+            onStartDraw={onStartDrawFacade}
+            onGenerate={onSetWaypoints}
           />
         )}
       </div>
