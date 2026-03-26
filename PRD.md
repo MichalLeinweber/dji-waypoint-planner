@@ -129,7 +129,16 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-25 (Session 2)*
+*Poslední aktualizace: 2026-03-26 (Session 3)*
+
+### ✅ Dokončeno – Session 3 (Spirála, Grid, Orbit)
+- SpiralPanel: generuje spirální trajektorii (střed = střed mapy, parametry: poloměry, výšky, otáčky, směr CW/CCW)
+- GridPanel: fotogrammetrický grid s plnou podporou rotace směru letu, lawn-mower pattern, odhad počtu fotek/délky/doby
+- OrbitPanel: kruhová mise kolem POI, kliknutím na mapu vybere střed, CW/CCW
+- exportKMZ.ts: orbit mise → `towardPOI` heading mode v WPML (gimbal míří na POI)
+- Map.tsx: přidán `onCenterChange` (sleduje střed pro spirálu), `gridRect` (žlutý obdélník oblasti), `crosshairCursor` při výběru bodu, `draggableMarkers` flag
+- Sidebar.tsx: plně zapojen — odstraněno "coming soon", každý tab zobrazuje příslušný panel
+- page.tsx: stavový automat pro gridDrawStep (idle→sw→ne→idle) a poiSelectMode
 
 ### ✅ Dokončeno – Session 2 (Dialog, GitHub, Vercel)
 - `SaveMissionDialog` komponenta – vlastní modal místo window.prompt (Enter uloží, Escape zavře, autofocus)

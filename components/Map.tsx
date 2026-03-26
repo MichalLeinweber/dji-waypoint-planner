@@ -3,7 +3,7 @@
 // Interactive Leaflet map component (must be imported with next/dynamic + ssr:false)
 // Leaflet uses browser-only APIs (window, document) so it cannot run on the server.
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Rectangle, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Waypoint } from '@/lib/types';
@@ -40,15 +40,20 @@ function createNumberedIcon(index: number): L.DivIcon {
   });
 }
 
-interface MapClickHandlerProps {
+interface EventHandlerProps {
   onMapClick: (lat: number, lng: number) => void;
+  onCenterChange: (lat: number, lng: number) => void;
 }
 
-/** Inner component that listens to map click events */
-function MapClickHandler({ onMapClick }: MapClickHandlerProps) {
+/** Inner component that handles map clicks and center-change events */
+function MapEventHandler({ onMapClick, onCenterChange }: EventHandlerProps) {
   useMapEvents({
     click(e) {
       onMapClick(e.latlng.lat, e.latlng.lng);
+    },
+    moveend(e) {
+      const center = e.target.getCenter();
+      onCenterChange(center.lat, center.lng);
     },
   });
   return null;
@@ -56,22 +61,40 @@ function MapClickHandler({ onMapClick }: MapClickHandlerProps) {
 
 interface MapProps {
   waypoints: Waypoint[];
-  onAddWaypoint: (lat: number, lng: number) => void;
+  /** Whether waypoint markers can be dragged (only in waypoints mode) */
+  draggableMarkers: boolean;
+  /** Cursor style hint — 'crosshair' when selecting a point on the map */
+  crosshairCursor?: boolean;
+  /** Called on every map click */
+  onMapClick: (lat: number, lng: number) => void;
+  /** Called after drag ends on a marker */
   onUpdateWaypoint: (id: string, lat: number, lng: number) => void;
+  /** Called when the map viewport moves — provides the new center */
+  onCenterChange: (lat: number, lng: number) => void;
+  /** Optional rectangle to draw (grid area selection) — [[swLat,swLng],[neLat,neLng]] */
+  gridRect: [[number, number], [number, number]] | null;
 }
 
-export default function Map({ waypoints, onAddWaypoint, onUpdateWaypoint }: MapProps) {
-  // Store marker references keyed by waypoint ID
+export default function MapView({
+  waypoints,
+  draggableMarkers,
+  crosshairCursor,
+  onMapClick,
+  onUpdateWaypoint,
+  onCenterChange,
+  gridRect,
+}: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
 
-  // Add/update markers whenever waypoints change
+  // Sync markers whenever waypoints or draggable flag changes
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
 
-    // Remove markers that no longer exist in waypoints
     const currentIds = new Set(waypoints.map((wp) => wp.id));
+
+    // Remove stale markers
     Object.entries(markersRef.current).forEach(([id, marker]) => {
       if (!currentIds.has(id)) {
         marker.remove();
@@ -79,48 +102,60 @@ export default function Map({ waypoints, onAddWaypoint, onUpdateWaypoint }: MapP
       }
     });
 
-    // Add or update markers for each waypoint
+    // Add or update each waypoint marker
     waypoints.forEach((wp, index) => {
       const existing = markersRef.current[wp.id];
       const icon = createNumberedIcon(index);
 
       if (existing) {
-        // Update position and icon in case order changed
         existing.setLatLng([wp.lat, wp.lng]);
         existing.setIcon(icon);
+        // Update draggable — Leaflet requires remove/re-add to toggle draggable
+        if (existing.dragging) {
+          draggableMarkers ? existing.dragging.enable() : existing.dragging.disable();
+        }
       } else {
-        // Create a new draggable marker
-        const marker = L.marker([wp.lat, wp.lng], { icon, draggable: true });
+        const marker = L.marker([wp.lat, wp.lng], { icon, draggable: draggableMarkers });
         marker.addTo(map);
-
-        // Update waypoint position after drag ends
         marker.on('dragend', () => {
           const pos = marker.getLatLng();
           onUpdateWaypoint(wp.id, pos.lat, pos.lng);
         });
-
         markersRef.current[wp.id] = marker;
       }
     });
-  }, [waypoints, onUpdateWaypoint]);
+  }, [waypoints, draggableMarkers, onUpdateWaypoint]);
 
-  // Polyline coordinates connecting all waypoints in order
   const polylinePositions = waypoints.map((wp) => [wp.lat, wp.lng] as [number, number]);
 
   return (
     <MapContainer
       center={[50.08, 14.42]}
       zoom={13}
-      style={{ height: '100%', width: '100%' }}
+      style={{
+        height: '100%',
+        width: '100%',
+        cursor: crosshairCursor ? 'crosshair' : undefined,
+      }}
       ref={mapRef}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <MapClickHandler onMapClick={onAddWaypoint} />
+      <MapEventHandler onMapClick={onMapClick} onCenterChange={onCenterChange} />
+
+      {/* Waypoint connection line */}
       {polylinePositions.length > 1 && (
         <Polyline positions={polylinePositions} color="#3b82f6" weight={2} opacity={0.8} />
+      )}
+
+      {/* Grid area rectangle */}
+      {gridRect && (
+        <Rectangle
+          bounds={gridRect}
+          pathOptions={{ color: '#f59e0b', weight: 2, fillOpacity: 0.1, fillColor: '#f59e0b' }}
+        />
       )}
     </MapContainer>
   );

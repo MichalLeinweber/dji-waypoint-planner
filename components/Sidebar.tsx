@@ -4,9 +4,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import WaypointPanel from './WaypointPanel';
+import SpiralPanel from './SpiralPanel';
+import GridPanel from './GridPanel';
+import OrbitPanel from './OrbitPanel';
 import { Waypoint, MissionType } from '@/lib/types';
 
-/** Tab labels for mission types */
 const MISSION_TABS: { type: MissionType; label: string }[] = [
   { type: 'waypoints', label: 'Waypointy' },
   { type: 'spiral', label: 'Spirala' },
@@ -18,9 +20,24 @@ interface SidebarProps {
   waypoints: Waypoint[];
   missionType: MissionType;
   onMissionTypeChange: (type: MissionType) => void;
+  // Waypoints panel
   onUpdateWaypoint: (id: string, updates: Partial<Waypoint>) => void;
   onDeleteWaypoint: (id: string) => void;
   onClearAll: () => void;
+  // Generated mission panels
+  onSetWaypoints: (waypoints: Waypoint[]) => void;
+  // Spiral
+  mapCenter: { lat: number; lng: number };
+  // Grid
+  gridCorners: { sw: [number, number]; ne: [number, number] } | null;
+  gridDrawStep: 'idle' | 'sw' | 'ne';
+  onStartDrawGrid: () => void;
+  // Orbit
+  poi: { lat: number; lng: number } | null;
+  isSelectingPoi: boolean;
+  onSelectPoi: () => void;
+  onSetPoi: (poi: { lat: number; lng: number }) => void;
+  // Save / Export
   onSaveMission: () => void;
   onExportKMZ: () => void;
   isExporting: boolean;
@@ -33,11 +50,19 @@ export default function Sidebar({
   onUpdateWaypoint,
   onDeleteWaypoint,
   onClearAll,
+  onSetWaypoints,
+  mapCenter,
+  gridCorners,
+  gridDrawStep,
+  onStartDrawGrid,
+  poi,
+  isSelectingPoi,
+  onSelectPoi,
+  onSetPoi,
   onSaveMission,
   onExportKMZ,
   isExporting,
 }: SidebarProps) {
-  // Mobile: whether the drawer is expanded
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const content = (
@@ -67,26 +92,45 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Coming soon notice for non-waypoint types */}
-      {missionType !== 'waypoints' && (
-        <div className="mx-4 mt-4 p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg">
-          <p className="text-yellow-400 text-xs">
-            Tento typ mise bude dostupny v budoucich verzich.
-          </p>
-        </div>
-      )}
-
-      {/* Waypoint list — scrollable */}
-      {missionType === 'waypoints' && (
-        <div className="flex-1 overflow-y-auto px-3 py-3 min-h-0">
+      {/* Panel content — scrollable */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 min-h-0">
+        {missionType === 'waypoints' && (
           <WaypointPanel
             waypoints={waypoints}
             onUpdateWaypoint={onUpdateWaypoint}
             onDeleteWaypoint={onDeleteWaypoint}
             onClearAll={onClearAll}
           />
-        </div>
-      )}
+        )}
+
+        {missionType === 'spiral' && (
+          <SpiralPanel
+            mapCenter={mapCenter}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {missionType === 'grid' && (
+          <GridPanel
+            gridCorners={gridCorners}
+            drawStep={gridDrawStep}
+            onStartDraw={onStartDrawGrid}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {missionType === 'orbit' && (
+          <OrbitPanel
+            poi={poi}
+            isSelectingPoi={isSelectingPoi}
+            onSelectPoi={onSelectPoi}
+            onGenerate={(wps, p) => {
+              onSetWaypoints(wps);
+              onSetPoi(p);
+            }}
+          />
+        )}
+      </div>
 
       {/* Action buttons */}
       <div className="px-3 py-3 border-t border-gray-700 flex flex-col gap-2 flex-shrink-0">
@@ -107,16 +151,10 @@ export default function Sidebar({
 
       {/* Navigation links */}
       <div className="px-3 pb-3 flex gap-3 flex-shrink-0">
-        <Link
-          href="/missions"
-          className="text-xs text-gray-500 hover:text-blue-400 transition-colors"
-        >
+        <Link href="/missions" className="text-xs text-gray-500 hover:text-blue-400 transition-colors">
           Ulozene mise
         </Link>
-        <Link
-          href="/guide"
-          className="text-xs text-gray-500 hover:text-blue-400 transition-colors"
-        >
+        <Link href="/guide" className="text-xs text-gray-500 hover:text-blue-400 transition-colors">
           Navod RC 2
         </Link>
       </div>
@@ -132,7 +170,6 @@ export default function Sidebar({
 
       {/* Mobile bottom drawer */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-[1000]">
-        {/* Toggle handle */}
         <button
           onClick={() => setMobileOpen((v) => !v)}
           className="w-full bg-[#1a1d27] border-t border-gray-700 py-2 flex items-center justify-center gap-2"
@@ -142,8 +179,6 @@ export default function Sidebar({
           </span>
           <span className="text-gray-400">{mobileOpen ? '▼' : '▲'}</span>
         </button>
-
-        {/* Drawer content */}
         {mobileOpen && (
           <div className="bg-[#1a1d27] border-t border-gray-700 max-h-[60vh] overflow-y-auto">
             {content}

@@ -36,4 +36,6 @@ export interface Mission {
   createdAt: string;
   /** List of waypoints in this mission */
   waypoints: Waypoint[];
+  /** Point of interest for orbit missions (gimbal points here) */
+  poi?: { lat: number; lng: number };
 }

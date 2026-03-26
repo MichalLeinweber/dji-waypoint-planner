@@ -98,7 +98,20 @@ function generateWaylinesWPML(mission: Mission): string {
     ? mission.waypoints.reduce((sum, wp) => sum + wp.speed, 0) / mission.waypoints.length
     : 5;
 
-  const placemarks = mission.waypoints.map((wp, index) => `
+  // Orbit missions aim the gimbal at the POI on every waypoint
+  const isOrbit = mission.type === 'orbit' && mission.poi != null;
+
+  const placemarks = mission.waypoints.map((wp, index) => {
+    const headingParam = isOrbit && mission.poi
+      ? `<wpml:waypointHeadingParam>
+        <wpml:waypointHeadingMode>towardPOI</wpml:waypointHeadingMode>
+        <wpml:waypointPoiPoint>${mission.poi.lng},${mission.poi.lat},0</wpml:waypointPoiPoint>
+      </wpml:waypointHeadingParam>`
+      : `<wpml:waypointHeadingParam>
+        <wpml:waypointHeadingMode>followWayline</wpml:waypointHeadingMode>
+      </wpml:waypointHeadingParam>`;
+
+    return `
     <Placemark>
       <Point>
         <coordinates>${wp.lng},${wp.lat}</coordinates>
@@ -106,15 +119,14 @@ function generateWaylinesWPML(mission: Mission): string {
       <wpml:index>${index}</wpml:index>
       <wpml:executeHeight>${wp.height}</wpml:executeHeight>
       <wpml:waypointSpeed>${wp.speed}</wpml:waypointSpeed>
-      <wpml:waypointHeadingParam>
-        <wpml:waypointHeadingMode>followWayline</wpml:waypointHeadingMode>
-      </wpml:waypointHeadingParam>
+      ${headingParam}
       <wpml:waypointTurnParam>
         <wpml:waypointTurnMode>coordinateTurn</wpml:waypointTurnMode>
         <wpml:waypointBankingParam>0</wpml:waypointBankingParam>
       </wpml:waypointTurnParam>
       <wpml:useStraightLine>1</wpml:useStraightLine>${generateActionXML(wp, index)}
-    </Placemark>`).join('');
+    </Placemark>`;
+  }).join('');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:wpml="http://www.dji.com/wpmz/1.0.2">
