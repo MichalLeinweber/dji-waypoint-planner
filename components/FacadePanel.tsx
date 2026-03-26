@@ -65,14 +65,18 @@ export default function FacadePanel({ facadePoints, drawStep, onStartDraw, onGen
     const numRows = Math.ceil((params.endHeight - params.startHeight) / step) + 1;
     const photosPerRow = Math.ceil(facadeWidthM / step) + 1;
     const totalPhotos = numRows * photosPerRow;
+    // Each photo point = one waypoint (inner loop in handleGenerate)
+    const waypointCount = numRows * photosPerRow;
     // Lawn-mower: each row is facadeWidth, rows joined by short vertical climb
     const rowLengthM = facadeWidthM;
     const totalDistanceM = Math.round(numRows * rowLengthM + (numRows - 1) * step);
-    return { facadeWidthM: Math.round(facadeWidthM), numRows, totalPhotos, totalDistanceM };
+    return { facadeWidthM: Math.round(facadeWidthM), numRows, totalPhotos, totalDistanceM, waypointCount };
   }
 
   function handleGenerate() {
     if (!facadePoints) return;
+    const currentStats = getStats();
+    if (currentStats && currentStats.waypointCount > 200) return;
     const { a, b } = facadePoints;
     const { distance, startHeight, endHeight, overlap, speed, gimbalPitch } = params;
 
@@ -227,14 +231,34 @@ export default function FacadePanel({ facadePoints, drawStep, onStartDraw, onGen
       </div>
 
       {/* Stats */}
-      {stats && facadePoints && (
-        <div className="bg-[#0f1117] rounded-lg p-3 border border-gray-700 text-xs text-gray-400 grid grid-cols-2 gap-1">
-          <span>Sirka fasady: <span className="text-white">{stats.facadeWidthM} m</span></span>
-          <span>Rady: <span className="text-white">{stats.numRows}</span></span>
-          <span>Fotky: <span className="text-white">~{stats.totalPhotos}</span></span>
-          <span>Trasa: <span className="text-white">{(stats.totalDistanceM / 1000).toFixed(2)} km</span></span>
-        </div>
-      )}
+      {stats && facadePoints && (() => {
+        const wpColor = stats.waypointCount > 200
+          ? 'text-red-400'
+          : stats.waypointCount > 150
+          ? 'text-yellow-400'
+          : 'text-green-400';
+        return (
+          <>
+            <div className="bg-[#0f1117] rounded-lg p-3 border border-gray-700 text-xs text-gray-400 grid grid-cols-2 gap-1">
+              <span>Sirka fasady: <span className="text-white">{stats.facadeWidthM} m</span></span>
+              <span>Rady: <span className="text-white">{stats.numRows}</span></span>
+              <span>Fotky: <span className="text-white">~{stats.totalPhotos}</span></span>
+              <span>Trasa: <span className="text-white">{(stats.totalDistanceM / 1000).toFixed(2)} km</span></span>
+              <span className="col-span-2">Waypointy: <span className={wpColor}>{stats.waypointCount} / 200</span></span>
+            </div>
+            {stats.waypointCount > 200 && (
+              <div className="bg-red-900/30 border border-red-700 rounded-lg p-2 text-xs text-red-400">
+                Prekrocen limit 200 waypointu. Sniz prekryv nebo zmen rozsah vysek.
+              </div>
+            )}
+            {stats.waypointCount > 150 && stats.waypointCount <= 200 && (
+              <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-2 text-xs text-yellow-400">
+                Blizis se limitu DJI Fly (200 waypointu).
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       <button
         onClick={handleGenerate}

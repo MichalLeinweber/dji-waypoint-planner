@@ -77,11 +77,15 @@ export default function GridPanel({ gridCorners, drawStep, onStartDraw, onGenera
     const distanceM = numRows * heightM + (numRows - 1) * rowSpacing;
     const photos = numRows * Math.ceil(heightM / (swath * (1 - params.overlap / 100)));
     const timeMin = distanceM / (params.speed * 60);
-    return { numRows, photos, distanceM: Math.round(distanceM), timeMin: timeMin.toFixed(1) };
+    // Each row generates exactly 2 waypoints (start + end)
+    const waypointCount = numRows * 2;
+    return { numRows, photos, distanceM: Math.round(distanceM), timeMin: timeMin.toFixed(1), waypointCount };
   }
 
   function handleGenerate() {
     if (!gridCorners) return;
+    const currentStats = getStats();
+    if (currentStats && currentStats.waypointCount > 200) return;
     const [swLat, swLng] = gridCorners.sw;
     const [neLat, neLng] = gridCorners.ne;
 
@@ -196,14 +200,34 @@ export default function GridPanel({ gridCorners, drawStep, onStartDraw, onGenera
       </div>
 
       {/* Stats */}
-      {stats && gridCorners && (
-        <div className="bg-[#0f1117] rounded-lg p-3 border border-gray-700 text-xs text-gray-400 grid grid-cols-2 gap-1">
-          <span>Rady: <span className="text-white">{stats.numRows}</span></span>
-          <span>Fotky: <span className="text-white">~{stats.photos}</span></span>
-          <span>Trasa: <span className="text-white">{(stats.distanceM / 1000).toFixed(2)} km</span></span>
-          <span>Cas: <span className="text-white">~{stats.timeMin} min</span></span>
-        </div>
-      )}
+      {stats && gridCorners && (() => {
+        const wpColor = stats.waypointCount > 200
+          ? 'text-red-400'
+          : stats.waypointCount > 150
+          ? 'text-yellow-400'
+          : 'text-green-400';
+        return (
+          <>
+            <div className="bg-[#0f1117] rounded-lg p-3 border border-gray-700 text-xs text-gray-400 grid grid-cols-2 gap-1">
+              <span>Rady: <span className="text-white">{stats.numRows}</span></span>
+              <span>Fotky: <span className="text-white">~{stats.photos}</span></span>
+              <span>Trasa: <span className="text-white">{(stats.distanceM / 1000).toFixed(2)} km</span></span>
+              <span>Cas: <span className="text-white">~{stats.timeMin} min</span></span>
+              <span className="col-span-2">Waypointy: <span className={wpColor}>{stats.waypointCount} / 200</span></span>
+            </div>
+            {stats.waypointCount > 200 && (
+              <div className="bg-red-900/30 border border-red-700 rounded-lg p-2 text-xs text-red-400">
+                Prekrocen limit 200 waypointu. Sniz prekryv nebo zmens oblast.
+              </div>
+            )}
+            {stats.waypointCount > 150 && stats.waypointCount <= 200 && (
+              <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-2 text-xs text-yellow-400">
+                Blizis se limitu DJI Fly (200 waypointu).
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       <button
         onClick={handleGenerate}
