@@ -122,7 +122,14 @@ function generateWaylinesWPML(mission: Mission): string {
   const isOrbit = mission.type === 'orbit' && mission.poi != null;
 
   const placemarks = mission.waypoints.map((wp, index) => {
-    const headingParam = isOrbit && mission.poi
+    // Determine heading mode: per-waypoint fixed angle takes priority,
+    // then orbit towardPOI, then default followWayline
+    const headingParam = wp.headingAngle !== undefined
+      ? `<wpml:waypointHeadingParam>
+        <wpml:waypointHeadingMode>fixed</wpml:waypointHeadingMode>
+        <wpml:waypointHeadingAngle>${wp.headingAngle.toFixed(1)}</wpml:waypointHeadingAngle>
+      </wpml:waypointHeadingParam>`
+      : isOrbit && mission.poi
       ? `<wpml:waypointHeadingParam>
         <wpml:waypointHeadingMode>towardPOI</wpml:waypointHeadingMode>
         <wpml:waypointPoiPoint>${mission.poi.lng},${mission.poi.lat},0</wpml:waypointPoiPoint>

@@ -24,6 +24,8 @@ export interface Waypoint {
   cameraAction: CameraAction;
   /** Optional gimbal pitch angle in degrees (0 = horizontal, -90 = straight down) */
   gimbalPitch?: number;
+  /** Optional fixed heading angle in degrees (0 = North, 90 = East, clockwise) */
+  headingAngle?: number;
 }
 
 /** A saved mission */

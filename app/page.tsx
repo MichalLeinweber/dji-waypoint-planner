@@ -39,12 +39,20 @@ export default function HomePage() {
   const [poi, setPoi] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingPoi, setIsSelectingPoi] = useState(false);
 
-  // ── Facade state ─────────────────────────────────────────────
+  // ── Facade state (single side) ───────────────────────────────
   type FacadePoints = { a: { lat: number; lng: number }; b: { lat: number; lng: number } };
   const [facadePoints, setFacadePoints] = useState<FacadePoints | null>(null);
   const [facadeDrawStep, setFacadeDrawStep] = useState<'idle' | 'a' | 'b'>('idle');
   // Temporary point A while waiting for point B click
   const [pendingFacadeA, setPendingFacadeA] = useState<{ lat: number; lng: number } | null>(null);
+
+  // ── Facade state (360° building) ─────────────────────────────
+  type FacadePoints360 = { a: { lat: number; lng: number }; b: { lat: number; lng: number }; c: { lat: number; lng: number }; d: { lat: number; lng: number } };
+  const [facadePoints360, setFacadePoints360] = useState<FacadePoints360 | null>(null);
+  const [facade360DrawStep, setFacade360DrawStep] = useState<'idle' | 'a' | 'b' | 'c' | 'd'>('idle');
+  const [pendingFacade360A, setPendingFacade360A] = useState<{ lat: number; lng: number } | null>(null);
+  const [pendingFacade360B, setPendingFacade360B] = useState<{ lat: number; lng: number } | null>(null);
+  const [pendingFacade360C, setPendingFacade360C] = useState<{ lat: number; lng: number } | null>(null);
 
   // ── Map interaction ──────────────────────────────────────────
 
@@ -57,7 +65,7 @@ export default function HomePage() {
       return;
     }
 
-    // Facade point selection
+    // Facade point selection (single side)
     if (facadeDrawStep === 'a') {
       setPendingFacadeA({ lat, lng });
       setFacadeDrawStep('b');
@@ -67,6 +75,31 @@ export default function HomePage() {
       setFacadePoints({ a: pendingFacadeA, b: { lat, lng } });
       setPendingFacadeA(null);
       setFacadeDrawStep('idle');
+      return;
+    }
+
+    // Facade point selection (360° building — 4 corners)
+    if (facade360DrawStep === 'a') {
+      setPendingFacade360A({ lat, lng });
+      setFacade360DrawStep('b');
+      return;
+    }
+    if (facade360DrawStep === 'b' && pendingFacade360A) {
+      setPendingFacade360B({ lat, lng });
+      setFacade360DrawStep('c');
+      return;
+    }
+    if (facade360DrawStep === 'c' && pendingFacade360A && pendingFacade360B) {
+      setPendingFacade360C({ lat, lng });
+      setFacade360DrawStep('d');
+      return;
+    }
+    if (facade360DrawStep === 'd' && pendingFacade360A && pendingFacade360B && pendingFacade360C) {
+      setFacadePoints360({ a: pendingFacade360A, b: pendingFacade360B, c: pendingFacade360C, d: { lat, lng } });
+      setPendingFacade360A(null);
+      setPendingFacade360B(null);
+      setPendingFacade360C(null);
+      setFacade360DrawStep('idle');
       return;
     }
 
@@ -124,6 +157,11 @@ export default function HomePage() {
     setIsSelectingPoi(false);
     setFacadeDrawStep('idle');
     setPendingFacadeA(null);
+    setFacadePoints360(null);
+    setFacade360DrawStep('idle');
+    setPendingFacade360A(null);
+    setPendingFacade360B(null);
+    setPendingFacade360C(null);
   }, []);
 
   // ── Save / Export ────────────────────────────────────────────
@@ -171,7 +209,7 @@ export default function HomePage() {
   // ── Derived map props ────────────────────────────────────────
 
   // Show crosshair cursor when the user is placing a point on the map
-  const crosshairCursor = isSelectingPoi || gridDrawStep !== 'idle' || facadeDrawStep !== 'idle';
+  const crosshairCursor = isSelectingPoi || gridDrawStep !== 'idle' || facadeDrawStep !== 'idle' || facade360DrawStep !== 'idle';
 
   // Markers are draggable only in manual waypoints mode
   const draggableMarkers = missionType === 'waypoints';
@@ -184,6 +222,16 @@ export default function HomePage() {
   // Show facade line when both points are selected
   const facadeLine: [[number, number], [number, number]] | null = facadePoints
     ? [[facadePoints.a.lat, facadePoints.a.lng], [facadePoints.b.lat, facadePoints.b.lng]]
+    : null;
+
+  // Show building polygon when all 4 corners are selected
+  const buildingPolygon: [[number, number], [number, number], [number, number], [number, number]] | null = facadePoints360
+    ? [
+        [facadePoints360.a.lat, facadePoints360.a.lng],
+        [facadePoints360.b.lat, facadePoints360.b.lng],
+        [facadePoints360.c.lat, facadePoints360.c.lng],
+        [facadePoints360.d.lat, facadePoints360.d.lng],
+      ]
     : null;
 
   return (
@@ -213,6 +261,9 @@ export default function HomePage() {
         facadePoints={facadePoints}
         facadeDrawStep={facadeDrawStep}
         onStartDrawFacade={() => setFacadeDrawStep('a')}
+        facadePoints360={facadePoints360}
+        facade360DrawStep={facade360DrawStep}
+        onStartDrawFacade360={() => setFacade360DrawStep('a')}
         onSaveMission={handleSaveMission}
         onExportKMZ={handleExportKMZ}
         isExporting={isExporting}
@@ -228,6 +279,7 @@ export default function HomePage() {
           onCenterChange={(lat, lng) => setMapCenter({ lat, lng })}
           gridRect={gridRect}
           facadeLine={facadeLine}
+          buildingPolygon={buildingPolygon}
         />
       </main>
     </div>

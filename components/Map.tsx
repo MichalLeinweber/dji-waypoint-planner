@@ -3,7 +3,7 @@
 // Interactive Leaflet map component (must be imported with next/dynamic + ssr:false)
 // Leaflet uses browser-only APIs (window, document) so it cannot run on the server.
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Rectangle, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Rectangle, Polygon, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Waypoint } from '@/lib/types';
@@ -75,6 +75,8 @@ interface MapProps {
   gridRect: [[number, number], [number, number]] | null;
   /** Optional facade line — [[aLat,aLng],[bLat,bLng]] */
   facadeLine: [[number, number], [number, number]] | null;
+  /** Optional building polygon for 360° facade mode — 4 corners [[lat,lng],...] */
+  buildingPolygon: [[number, number], [number, number], [number, number], [number, number]] | null;
 }
 
 export default function MapView({
@@ -86,6 +88,7 @@ export default function MapView({
   onCenterChange,
   gridRect,
   facadeLine,
+  buildingPolygon,
 }: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
@@ -166,6 +169,14 @@ export default function MapView({
         <Polyline
           positions={facadeLine}
           pathOptions={{ color: '#f59e0b', weight: 3, dashArray: '6 4' }}
+        />
+      )}
+
+      {/* Building polygon for 360° facade mode */}
+      {buildingPolygon && (
+        <Polygon
+          positions={buildingPolygon}
+          pathOptions={{ color: '#f59e0b', weight: 2, dashArray: '6 4', fillOpacity: 0.08, fillColor: '#f59e0b' }}
         />
       )}
     </MapContainer>
