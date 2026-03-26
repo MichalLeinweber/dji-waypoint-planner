@@ -45,15 +45,25 @@ interface EventHandlerProps {
   onCenterChange: (lat: number, lng: number) => void;
 }
 
-/** Inner component that handles map clicks and center-change events */
+/** Inner component that handles map clicks and center-change events.
+ *  Callbacks are stored in refs so that useMapEvents always calls the latest
+ *  version of the handler even if Leaflet bound the listener only once on mount.
+ */
 function MapEventHandler({ onMapClick, onCenterChange }: EventHandlerProps) {
+  // Keep a ref to the latest callbacks to avoid stale closures in Leaflet listeners
+  const onMapClickRef = useRef(onMapClick);
+  const onCenterChangeRef = useRef(onCenterChange);
+
+  useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
+  useEffect(() => { onCenterChangeRef.current = onCenterChange; }, [onCenterChange]);
+
   useMapEvents({
     click(e) {
-      onMapClick(e.latlng.lat, e.latlng.lng);
+      onMapClickRef.current(e.latlng.lat, e.latlng.lng);
     },
     moveend(e) {
       const center = e.target.getCenter();
-      onCenterChange(center.lat, center.lng);
+      onCenterChangeRef.current(center.lat, center.lng);
     },
   });
   return null;
