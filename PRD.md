@@ -129,20 +129,29 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-26 (Session 6)*
+*Poslední aktualizace: 2026-03-26 (Session 7)*
+
+### ✅ Dokončeno – Session 7 (Fasáda 360° – refactor + bugfixy)
+- Crosshair cursor: opraven bug kde Leaflet třída `leaflet-grab` přebíjela inline cursor styl
+  → Map.tsx: useEffect toggleuje CSS třídy leaflet-grab/leaflet-crosshair přímo na container
+- Stale closure: opraven bug v MapEventHandler kde Leaflet listener držel staré callbacky
+  → Map.tsx: onMapClick a onCenterChange uloženy do refs, listener vždy volá ref.current()
+- Fasáda 360° zjednodušena: odstraněn komplexní stavový automat (facade360DrawStep + 5 stavů)
+  → 360° mode nyní přidává rohy jako normální waypointy (klikání = stejné jako Body záložka)
+  → facadeMode ('single'|'360') zvednut do page.tsx; přepínání módu maže waypointy
+  → buildingPolygon odvozen z prvních 4 waypointů (missionType=facade, facadeMode=360)
+  → FacadePanel: tlačítko generování zobrazí "Pridej N rohy budovy" dokud není 4 bodů
+  → Markery jsou přetahovatelné v 360° módu (fine-tune rohů)
 
 ### ✅ Dokončeno – Session 6 (Fasáda 360°)
 - FacadePanel: přepínač "Jedna strana" / "Celá budova 360°"
-- 360° režim: výběr 4 rohů budovy kliknutím na mapu (crosshair, 4 kroky A→B→C→D)
-- Na mapě se vykreslí žlutý čárkovaný polygon (buildingPolygon) přes react-leaflet Polygon
 - Generátor 360°: lawn-mower pasy pro všechny 4 strany v jedné misi
 - Každý waypoint má `headingAngle` = nos dronu kolmo na fasádu (vypočítáno z vektoru strany)
 - Přechodové body mezi stranami: diagonální clearance bod + entry bod, cameraAction 'none', speed 5
 - Limit 200 waypointů: varování + blokování generování platí i pro 360° režim
 - types.ts: `headingAngle?: number` přidáno do rozhraní Waypoint
-- exportKMZ.ts: `fixed` heading mode pro waypointy s `headingAngle` (priorita před towardPOI/followWayline)
+- exportKMZ.ts: `fixed` heading mode pro waypointy s `headingAngle`
 - Map.tsx: nový prop `buildingPolygon`, import Polygon z react-leaflet
-- page.tsx: samostatný stavový automat pro 360° výběr (facade360DrawStep + 5 nových stavů)
 
 ### ✅ Dokončeno – Session 5 (Limit waypointů)
 - FacadePanel a GridPanel: barevný řádek "Waypointy: X / 200" v info boxu (zelená/žlutá/červená)
