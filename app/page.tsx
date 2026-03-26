@@ -45,14 +45,8 @@ export default function HomePage() {
   const [facadeDrawStep, setFacadeDrawStep] = useState<'idle' | 'a' | 'b'>('idle');
   // Temporary point A while waiting for point B click
   const [pendingFacadeA, setPendingFacadeA] = useState<{ lat: number; lng: number } | null>(null);
-
-  // ── Facade state (360° building) ─────────────────────────────
-  type FacadePoints360 = { a: { lat: number; lng: number }; b: { lat: number; lng: number }; c: { lat: number; lng: number }; d: { lat: number; lng: number } };
-  const [facadePoints360, setFacadePoints360] = useState<FacadePoints360 | null>(null);
-  const [facade360DrawStep, setFacade360DrawStep] = useState<'idle' | 'a' | 'b' | 'c' | 'd'>('idle');
-  const [pendingFacade360A, setPendingFacade360A] = useState<{ lat: number; lng: number } | null>(null);
-  const [pendingFacade360B, setPendingFacade360B] = useState<{ lat: number; lng: number } | null>(null);
-  const [pendingFacade360C, setPendingFacade360C] = useState<{ lat: number; lng: number } | null>(null);
+  // 'single' = one facade side; '360' = full building (corners added via map clicks like waypoints)
+  const [facadeMode, setFacadeMode] = useState<'single' | '360'>('single');
 
   // ── Map interaction ──────────────────────────────────────────
 
@@ -78,31 +72,6 @@ export default function HomePage() {
       return;
     }
 
-    // Facade point selection (360° building — 4 corners)
-    if (facade360DrawStep === 'a') {
-      setPendingFacade360A({ lat, lng });
-      setFacade360DrawStep('b');
-      return;
-    }
-    if (facade360DrawStep === 'b' && pendingFacade360A) {
-      setPendingFacade360B({ lat, lng });
-      setFacade360DrawStep('c');
-      return;
-    }
-    if (facade360DrawStep === 'c' && pendingFacade360A && pendingFacade360B) {
-      setPendingFacade360C({ lat, lng });
-      setFacade360DrawStep('d');
-      return;
-    }
-    if (facade360DrawStep === 'd' && pendingFacade360A && pendingFacade360B && pendingFacade360C) {
-      setFacadePoints360({ a: pendingFacade360A, b: pendingFacade360B, c: pendingFacade360C, d: { lat, lng } });
-      setPendingFacade360A(null);
-      setPendingFacade360B(null);
-      setPendingFacade360C(null);
-      setFacade360DrawStep('idle');
-      return;
-    }
-
     // Grid corner selection
     if (gridDrawStep === 'sw') {
       setPendingSw([lat, lng]);
@@ -116,14 +85,14 @@ export default function HomePage() {
       return;
     }
 
-    // Default: add waypoint (only in waypoints mode)
-    if (missionType === 'waypoints') {
+    // Default: add waypoint in waypoints mode, or in facade 360° mode (building corners)
+    if (missionType === 'waypoints' || (missionType === 'facade' && facadeMode === '360')) {
       setWaypoints((prev) => [
         ...prev,
         { id: generateId(), lat, lng, height: 50, speed: 5, waitTime: 0, cameraAction: 'none' },
       ]);
     }
-  }, [isSelectingPoi, facadeDrawStep, pendingFacadeA, gridDrawStep, pendingSw, missionType]);
+  }, [isSelectingPoi, facadeDrawStep, pendingFacadeA, gridDrawStep, pendingSw, missionType, facadeMode]);
 
   /** Update waypoint position after drag */
   const handleUpdateWaypointPosition = useCallback((id: string, lat: number, lng: number) => {
@@ -157,11 +126,12 @@ export default function HomePage() {
     setIsSelectingPoi(false);
     setFacadeDrawStep('idle');
     setPendingFacadeA(null);
-    setFacadePoints360(null);
-    setFacade360DrawStep('idle');
-    setPendingFacade360A(null);
-    setPendingFacade360B(null);
-    setPendingFacade360C(null);
+  }, []);
+
+  /** Switch between single-side and 360° facade modes — clears waypoints */
+  const handleFacadeModeChange = useCallback((mode: 'single' | '360') => {
+    setFacadeMode(mode);
+    setWaypoints([]);
   }, []);
 
   // ── Save / Export ────────────────────────────────────────────
@@ -209,10 +179,10 @@ export default function HomePage() {
   // ── Derived map props ────────────────────────────────────────
 
   // Show crosshair cursor when the user is placing a point on the map
-  const crosshairCursor = isSelectingPoi || gridDrawStep !== 'idle' || facadeDrawStep !== 'idle' || facade360DrawStep !== 'idle';
+  const crosshairCursor = isSelectingPoi || gridDrawStep !== 'idle' || facadeDrawStep !== 'idle';
 
-  // Markers are draggable only in manual waypoints mode
-  const draggableMarkers = missionType === 'waypoints';
+  // Markers are draggable in waypoints mode and in facade 360° mode (to fine-tune corners)
+  const draggableMarkers = missionType === 'waypoints' || (missionType === 'facade' && facadeMode === '360');
 
   // Show grid rectangle when both corners are selected
   const gridRect: [[number, number], [number, number]] | null = gridCorners
@@ -224,15 +194,16 @@ export default function HomePage() {
     ? [[facadePoints.a.lat, facadePoints.a.lng], [facadePoints.b.lat, facadePoints.b.lng]]
     : null;
 
-  // Show building polygon when all 4 corners are selected
-  const buildingPolygon: [[number, number], [number, number], [number, number], [number, number]] | null = facadePoints360
-    ? [
-        [facadePoints360.a.lat, facadePoints360.a.lng],
-        [facadePoints360.b.lat, facadePoints360.b.lng],
-        [facadePoints360.c.lat, facadePoints360.c.lng],
-        [facadePoints360.d.lat, facadePoints360.d.lng],
-      ]
-    : null;
+  // Show building polygon in facade 360° mode once at least 4 corners have been placed
+  const buildingPolygon: [[number, number], [number, number], [number, number], [number, number]] | null =
+    missionType === 'facade' && facadeMode === '360' && waypoints.length >= 4
+      ? [
+          [waypoints[0].lat, waypoints[0].lng],
+          [waypoints[1].lat, waypoints[1].lng],
+          [waypoints[2].lat, waypoints[2].lng],
+          [waypoints[3].lat, waypoints[3].lng],
+        ]
+      : null;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -261,9 +232,8 @@ export default function HomePage() {
         facadePoints={facadePoints}
         facadeDrawStep={facadeDrawStep}
         onStartDrawFacade={() => setFacadeDrawStep('a')}
-        facadePoints360={facadePoints360}
-        facade360DrawStep={facade360DrawStep}
-        onStartDrawFacade360={() => setFacade360DrawStep('a')}
+        facadeMode={facadeMode}
+        onFacadeModeChange={handleFacadeModeChange}
         onSaveMission={handleSaveMission}
         onExportKMZ={handleExportKMZ}
         isExporting={isExporting}

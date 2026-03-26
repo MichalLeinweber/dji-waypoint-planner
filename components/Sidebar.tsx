@@ -39,14 +39,12 @@ interface SidebarProps {
   isSelectingPoi: boolean;
   onSelectPoi: () => void;
   onSetPoi: (poi: { lat: number; lng: number }) => void;
-  // Facade (single side)
+  // Facade
   facadePoints: { a: { lat: number; lng: number }; b: { lat: number; lng: number } } | null;
   facadeDrawStep: 'idle' | 'a' | 'b';
   onStartDrawFacade: () => void;
-  // Facade (360° building)
-  facadePoints360: { a: { lat: number; lng: number }; b: { lat: number; lng: number }; c: { lat: number; lng: number }; d: { lat: number; lng: number } } | null;
-  facade360DrawStep: 'idle' | 'a' | 'b' | 'c' | 'd';
-  onStartDrawFacade360: () => void;
+  facadeMode: 'single' | '360';
+  onFacadeModeChange: (mode: 'single' | '360') => void;
   // Save / Export
   onSaveMission: () => void;
   onExportKMZ: () => void;
@@ -72,9 +70,8 @@ export default function Sidebar({
   facadePoints,
   facadeDrawStep,
   onStartDrawFacade,
-  facadePoints360,
-  facade360DrawStep,
-  onStartDrawFacade360,
+  facadeMode,
+  onFacadeModeChange,
   onSaveMission,
   onExportKMZ,
   isExporting,
@@ -152,9 +149,9 @@ export default function Sidebar({
             facadePoints={facadePoints}
             drawStep={facadeDrawStep}
             onStartDraw={onStartDrawFacade}
-            facadePoints360={facadePoints360}
-            drawStep360={facade360DrawStep}
-            onStartDraw360={onStartDrawFacade360}
+            mode={facadeMode}
+            onModeChange={onFacadeModeChange}
+            waypoints={waypoints}
             onGenerate={onSetWaypoints}
           />
         )}

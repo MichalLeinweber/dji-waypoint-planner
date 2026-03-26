@@ -3,8 +3,7 @@
 // Facade scan mission generator panel.
 // Modes:
 //   "Jedna strana"      — drone flies lawn-mower passes along one facade (A→B)
-//   "Celá budova 360°"  — drone scans all 4 sides of a building (A→B→C→D→A)
-import { useState } from 'react';
+//   "Celá budova 360°"  — user places 4 corners via normal map clicks; drone scans all 4 sides
 import { Waypoint } from '@/lib/types';
 
 const METERS_PER_DEG_LAT = 111320;
@@ -27,22 +26,16 @@ interface FacadePoints {
   b: { lat: number; lng: number };
 }
 
-interface FacadePoints360 {
-  a: { lat: number; lng: number };
-  b: { lat: number; lng: number };
-  c: { lat: number; lng: number };
-  d: { lat: number; lng: number };
-}
-
 interface FacadePanelProps {
   // Single side
   facadePoints: FacadePoints | null;
   drawStep: 'idle' | 'a' | 'b';
   onStartDraw: () => void;
-  // 360° building
-  facadePoints360: FacadePoints360 | null;
-  drawStep360: 'idle' | 'a' | 'b' | 'c' | 'd';
-  onStartDraw360: () => void;
+  // Mode (lifted to page.tsx so map click behavior can change)
+  mode: 'single' | '360';
+  onModeChange: (mode: 'single' | '360') => void;
+  // Waypoints array — used as building corners in 360° mode
+  waypoints: Waypoint[];
   onGenerate: (waypoints: Waypoint[]) => void;
 }
 
@@ -68,7 +61,7 @@ function computeSideVectors(
   distance: number
 ) {
   const mPerDegLng = METERS_PER_DEG_LAT * Math.cos((p1.lat * Math.PI) / 180);
-  const dx = (p2.lng - p1.lng) * mPerDegLng;      // East component of facade
+  const dx = (p2.lng - p1.lng) * mPerDegLng;         // East component of facade
   const dy = (p2.lat - p1.lat) * METERS_PER_DEG_LAT; // North component of facade
   const facadeLen = Math.sqrt(dx * dx + dy * dy);
   if (facadeLen < 1) return null;
@@ -91,16 +84,17 @@ function computeSideVectors(
   return { mPerDegLng, facadeLen, ux, uy, offsetLat, offsetLng, headingAngle };
 }
 
+import { useState } from 'react';
+
 export default function FacadePanel({
   facadePoints,
   drawStep,
   onStartDraw,
-  facadePoints360,
-  drawStep360,
-  onStartDraw360,
+  mode,
+  onModeChange,
+  waypoints,
   onGenerate,
 }: FacadePanelProps) {
-  const [mode, setMode] = useState<'single' | '360'>('single');
   const [params, setParams] = useState<FacadeParams>({
     distance: 8,
     startHeight: 5,
@@ -145,7 +139,7 @@ export default function FacadePanel({
     const numRows = Math.ceil((endHeight - startHeight) / rowStep) + 1;
     const numPhotosPerRow = Math.ceil(facadeLen / rowStep) + 1;
 
-    const waypoints: Waypoint[] = [];
+    const result: Waypoint[] = [];
     let wpIdx = 0;
 
     for (let row = 0; row < numRows; row++) {
@@ -160,7 +154,7 @@ export default function FacadePanel({
         const lat = a.lat + (uy * alongM) / METERS_PER_DEG_LAT + offsetLat;
         const lng = a.lng + (ux * alongM) / mPerDegLng + offsetLng;
 
-        waypoints.push({
+        result.push({
           id: generateId(wpIdx++),
           lat, lng, height, speed,
           waitTime: 0, cameraAction: 'photo', gimbalPitch,
@@ -168,18 +162,14 @@ export default function FacadePanel({
       }
     }
 
-    onGenerate(waypoints);
+    onGenerate(result);
   }
 
   // ── 360° mode ────────────────────────────────────────────────
 
   /** Stats summed across all 4 sides + transition waypoints */
-  function getStats360() {
-    if (!facadePoints360) return null;
-    const { a, b, c, d } = facadePoints360;
-    const corners = [a, b, c, d];
+  function getStats360(corners: { lat: number; lng: number }[]) {
     const { distance, startHeight, endHeight, overlap } = params;
-
     const swath = distance * 0.87;
     const step = swath * (1 - overlap / 100);
 
@@ -197,26 +187,19 @@ export default function FacadePanel({
       totalPhotos += numRows * photosPerRow;
       totalDistanceM += numRows * sideWidthM + (numRows - 1) * step;
     }
-
     // 2 transition waypoints per inter-side corner × 3 corners (last side has no transition)
     totalWaypoints += 3 * 2;
 
-    return {
-      waypointCount: totalWaypoints,
-      totalPhotos,
-      totalDistanceM: Math.round(totalDistanceM),
-    };
+    return { waypointCount: totalWaypoints, totalPhotos, totalDistanceM: Math.round(totalDistanceM) };
   }
 
   function handleGenerate360() {
-    if (!facadePoints360) return;
-    const currentStats = getStats360();
-    if (currentStats && currentStats.waypointCount > 200) return;
+    if (waypoints.length < 4) return;
+    const corners = waypoints.slice(0, 4);
+    const stats360 = getStats360(corners);
+    if (stats360.waypointCount > 200) return;
 
-    const { a, b, c, d } = facadePoints360;
-    const corners = [a, b, c, d];
     const { distance, startHeight, endHeight, overlap, speed, gimbalPitch } = params;
-
     const swath = distance * 0.87;
     const rowStep = swath * (1 - overlap / 100);
 
@@ -225,7 +208,7 @@ export default function FacadePanel({
       computeSideVectors(p1, corners[(i + 1) % 4], distance)
     );
 
-    const waypoints: Waypoint[] = [];
+    const result: Waypoint[] = [];
     let wpIdx = 0;
 
     for (let sideIdx = 0; sideIdx < 4; sideIdx++) {
@@ -251,7 +234,7 @@ export default function FacadePanel({
           const lat = p1.lat + (uy * alongM) / METERS_PER_DEG_LAT + offsetLat;
           const lng = p1.lng + (ux * alongM) / mPerDegLng + offsetLng;
 
-          waypoints.push({
+          result.push({
             id: generateId(wpIdx++),
             lat, lng, height, speed,
             waitTime: 0, cameraAction: 'photo',
@@ -265,12 +248,10 @@ export default function FacadePanel({
         const nextSide = sides[sideIdx + 1];
         if (!nextSide) continue;
 
-        // Height of the last row of this side
         const transitionHeight = startHeight + (numRows - 1) * rowStep;
 
-        // WP1: diagonal point at corner = cornerEnd + offsetCurrent + offsetNext
-        //      ensures drone clears the building corner safely from the outside
-        waypoints.push({
+        // WP1: diagonal point outside corner — cornerEnd + offsetCurrent + offsetNext
+        result.push({
           id: generateId(wpIdx++),
           lat: cornerEnd.lat + offsetLat + nextSide.offsetLat,
           lng: cornerEnd.lng + offsetLng + nextSide.offsetLng,
@@ -281,8 +262,8 @@ export default function FacadePanel({
           headingAngle,
         });
 
-        // WP2: entry point for next side = cornerEnd + offsetNext only
-        waypoints.push({
+        // WP2: entry point for next side — cornerEnd + offsetNext only
+        result.push({
           id: generateId(wpIdx++),
           lat: cornerEnd.lat + nextSide.offsetLat,
           lng: cornerEnd.lng + nextSide.offsetLng,
@@ -295,32 +276,21 @@ export default function FacadePanel({
       }
     }
 
-    onGenerate(waypoints);
+    onGenerate(result);
   }
 
   // ── Derived values ───────────────────────────────────────────
 
   const stats = getStats();
-  const stats360 = getStats360();
-
-  // Draw step label for the 360° selection button
-  const draw360ButtonLabel = (() => {
-    if (drawStep360 === 'idle') return facadePoints360 ? 'Zmenit budovu' : 'Vybrat budovu';
-    const labels: Record<string, string> = {
-      a: 'Klikni na roh A...',
-      b: 'Klikni na roh B...',
-      c: 'Klikni na roh C...',
-      d: 'Klikni na roh D...',
-    };
-    return labels[drawStep360] ?? '';
-  })();
+  const corners360 = waypoints.slice(0, 4);
+  const stats360 = mode === '360' && waypoints.length >= 4 ? getStats360(corners360) : null;
 
   return (
     <div className="flex flex-col gap-3">
       {/* Mode toggle */}
       <div className="flex gap-1 bg-[#0f1117] rounded-lg p-1 border border-gray-700">
         <button
-          onClick={() => setMode('single')}
+          onClick={() => onModeChange('single')}
           className={`flex-1 py-1.5 text-xs rounded transition-colors ${
             mode === 'single' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
           }`}
@@ -328,7 +298,7 @@ export default function FacadePanel({
           Jedna strana
         </button>
         <button
-          onClick={() => setMode('360')}
+          onClick={() => onModeChange('360')}
           className={`flex-1 py-1.5 text-xs rounded transition-colors ${
             mode === '360' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
           }`}
@@ -379,34 +349,20 @@ export default function FacadePanel({
         </div>
       )}
 
-      {/* Point selector — 360° building */}
+      {/* Corner info — 360° mode */}
       {mode === '360' && (
         <div className="bg-[#0f1117] rounded-lg p-3 border border-gray-700">
-          <p className="text-gray-500 text-xs mb-2">Budova (4 rohy dokola)</p>
-          <div className="flex flex-col gap-1 text-xs font-mono">
-            {(['a', 'b', 'c', 'd'] as const).map((key) => (
-              <span key={key} className="text-gray-500">
-                {key.toUpperCase()}:{' '}
-                {facadePoints360
-                  ? <span className="text-gray-300">{facadePoints360[key].lat.toFixed(5)}, {facadePoints360[key].lng.toFixed(5)}</span>
-                  : <span className="text-gray-600">nevybran</span>
-                }
-              </span>
-            ))}
-          </div>
-          <button
-            onClick={onStartDraw360}
-            className={`mt-2 w-full py-1.5 text-xs rounded border transition-colors ${
-              drawStep360 !== 'idle'
-                ? 'bg-amber-700 border-amber-600 text-white'
-                : 'bg-[#1a1d27] border-gray-600 text-gray-300 hover:border-blue-500'
-            }`}
-          >
-            {draw360ButtonLabel}
-          </button>
-          <p className="mt-1 text-gray-600 text-xs">
-            Klikej 4 rohy dokola (po nebo proti smeru hodin).
+          <p className="text-gray-500 text-xs mb-2">
+            Rohy budovy: <span className="text-white">{Math.min(waypoints.length, 4)} / 4</span>
           </p>
+          <p className="text-gray-600 text-xs leading-relaxed">
+            Klikni 4 rohy budovy na mapě dokola (po nebo proti smeru hodin). Body lze presouvat tazenim.
+          </p>
+          {waypoints.length > 4 && (
+            <p className="mt-2 text-yellow-500 text-xs">
+              Pouzivam prvni 4 body jako rohy. Ostatni jsou ignorovany.
+            </p>
+          )}
         </div>
       )}
 
@@ -477,7 +433,7 @@ export default function FacadePanel({
       })()}
 
       {/* Stats — 360° mode */}
-      {mode === '360' && stats360 && facadePoints360 && (() => {
+      {mode === '360' && stats360 && (() => {
         const wpColor = stats360.waypointCount > 200 ? 'text-red-400' : stats360.waypointCount > 150 ? 'text-yellow-400' : 'text-green-400';
         return (
           <>
@@ -515,10 +471,12 @@ export default function FacadePanel({
       {mode === '360' && (
         <button
           onClick={handleGenerate360}
-          disabled={!facadePoints360 || drawStep360 !== 'idle' || (stats360?.waypointCount ?? 0) > 200}
+          disabled={waypoints.length < 4 || (stats360?.waypointCount ?? 0) > 200}
           className="w-full py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          Generovat 360°
+          {waypoints.length < 4
+            ? `Pridej ${4 - waypoints.length} ${4 - waypoints.length === 1 ? 'roh' : 'rohy'} budovy`
+            : 'Generovat 360°'}
         </button>
       )}
     </div>
