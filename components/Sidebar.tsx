@@ -182,6 +182,9 @@ export default function Sidebar({
         <Link href="/guide" className="text-xs text-gray-500 hover:text-blue-400 transition-colors">
           Navod RC 2
         </Link>
+        <Link href="/help" className="text-xs text-gray-500 hover:text-blue-400 transition-colors">
+          Napoveda
+        </Link>
       </div>
     </div>
   );
