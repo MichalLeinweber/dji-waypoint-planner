@@ -14,7 +14,7 @@ import { saveMission } from '@/lib/missionStore';
 const MapView = dynamic(() => import('@/components/Map'), { ssr: false });
 
 /** Shot types available in film mode */
-export type FilmType = 'dronie' | 'reveal' | 'topdown' | 'craneup';
+export type FilmType = 'dronie' | 'reveal' | 'topdown' | 'craneup' | 'hyperlapse' | 'arcshot';
 
 function generateId(): string {
   return `wp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -72,6 +72,13 @@ export default function HomePage() {
   // Crane Up
   const [craneUpPos, setCraneUpPos] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingCraneUpPos, setIsSelectingCraneUpPos] = useState(false);
+  // Hyperlapse
+  const [hyperlapseStart, setHyperlapseStart] = useState<{ lat: number; lng: number } | null>(null);
+  const [hyperlapseEnd, setHyperlapseEnd] = useState<{ lat: number; lng: number } | null>(null);
+  const [hyperlapseSelectStep, setHyperlapseSelectStep] = useState<'idle' | 'start' | 'end'>('idle');
+  // Arc Shot
+  const [arcShotPoi, setArcShotPoi] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSelectingArcShotPoi, setIsSelectingArcShotPoi] = useState(false);
 
   // ── Map interaction ──────────────────────────────────────────
 
@@ -82,7 +89,9 @@ export default function HomePage() {
     isSelectingRevealStart ||
     isSelectingTopDownStart ||
     isSelectingTopDownEnd ||
-    isSelectingCraneUpPos;
+    isSelectingCraneUpPos ||
+    hyperlapseSelectStep !== 'idle' ||
+    isSelectingArcShotPoi;
 
   /** Single handler for all map clicks — behavior depends on current mode */
   const handleMapClick = useCallback((lat: number, lng: number) => {
@@ -115,6 +124,21 @@ export default function HomePage() {
     if (isSelectingCraneUpPos) {
       setCraneUpPos({ lat, lng });
       setIsSelectingCraneUpPos(false);
+      return;
+    }
+    if (hyperlapseSelectStep === 'start') {
+      setHyperlapseStart({ lat, lng });
+      setHyperlapseSelectStep('idle');
+      return;
+    }
+    if (hyperlapseSelectStep === 'end') {
+      setHyperlapseEnd({ lat, lng });
+      setHyperlapseSelectStep('idle');
+      return;
+    }
+    if (isSelectingArcShotPoi) {
+      setArcShotPoi({ lat, lng });
+      setIsSelectingArcShotPoi(false);
       return;
     }
 
@@ -163,6 +187,7 @@ export default function HomePage() {
   }, [
     isSelectingDronieStart, isSelectingRevealPoi, isSelectingRevealStart,
     isSelectingTopDownStart, isSelectingTopDownEnd, isSelectingCraneUpPos,
+    hyperlapseSelectStep, isSelectingArcShotPoi,
     isSelectingPoi, facadeDrawStep, pendingFacadeA, gridDrawStep, pendingSw,
     missionType, facadeMode,
   ]);
@@ -212,6 +237,8 @@ export default function HomePage() {
     setIsSelectingTopDownStart(false);
     setIsSelectingTopDownEnd(false);
     setIsSelectingCraneUpPos(false);
+    setHyperlapseSelectStep('idle');
+    setIsSelectingArcShotPoi(false);
   }, []);
 
   /** Switch between single-side and 360° facade modes — clears waypoints */
@@ -350,6 +377,16 @@ export default function HomePage() {
         craneUpPos={craneUpPos}
         isSelectingCraneUpPos={isSelectingCraneUpPos}
         onSelectCraneUpPos={() => setIsSelectingCraneUpPos(true)}
+        // Hyperlapse props
+        hyperlapseStart={hyperlapseStart}
+        hyperlapseEnd={hyperlapseEnd}
+        hyperlapseSelectStep={hyperlapseSelectStep}
+        onSelectHyperlapseStart={() => setHyperlapseSelectStep('start')}
+        onSelectHyperlapseEnd={() => setHyperlapseSelectStep('end')}
+        // Arc Shot props
+        arcShotPoi={arcShotPoi}
+        isSelectingArcShotPoi={isSelectingArcShotPoi}
+        onSelectArcShotPoi={() => setIsSelectingArcShotPoi(true)}
         onSaveMission={handleSaveMission}
         onExportKMZ={handleExportKMZ}
         isExporting={isExporting}

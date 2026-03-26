@@ -12,6 +12,8 @@ import DroniePanel from './film/DroniePanel';
 import RevealPanel from './film/RevealPanel';
 import TopDownPanel from './film/TopDownPanel';
 import CraneUpPanel from './film/CraneUpPanel';
+import HyperlapsePanel from './film/HyperlapsePanel';
+import ArcShotPanel from './film/ArcShotPanel';
 import { Waypoint, MissionType } from '@/lib/types';
 import { FilmType } from '@/app/page';
 
@@ -24,10 +26,12 @@ const PHOTO_TABS: { type: MissionType; label: string }[] = [
 ];
 
 const FILM_TABS: { type: FilmType; label: string }[] = [
-  { type: 'dronie', label: 'Dronie' },
-  { type: 'reveal', label: 'Reveal' },
-  { type: 'topdown', label: 'Top-down' },
-  { type: 'craneup', label: 'Crane Up' },
+  { type: 'dronie',     label: 'Dronie'     },
+  { type: 'reveal',     label: 'Reveal'     },
+  { type: 'topdown',    label: 'Top-down'   },
+  { type: 'craneup',    label: 'Crane Up'   },
+  { type: 'hyperlapse', label: 'Hyperlapse' },
+  { type: 'arcshot',    label: 'Arc Shot'   },
 ];
 
 interface SidebarProps {
@@ -84,6 +88,16 @@ interface SidebarProps {
   craneUpPos: { lat: number; lng: number } | null;
   isSelectingCraneUpPos: boolean;
   onSelectCraneUpPos: () => void;
+  // Film — Hyperlapse
+  hyperlapseStart: { lat: number; lng: number } | null;
+  hyperlapseEnd: { lat: number; lng: number } | null;
+  hyperlapseSelectStep: 'idle' | 'start' | 'end';
+  onSelectHyperlapseStart: () => void;
+  onSelectHyperlapseEnd: () => void;
+  // Film — Arc Shot
+  arcShotPoi: { lat: number; lng: number } | null;
+  isSelectingArcShotPoi: boolean;
+  onSelectArcShotPoi: () => void;
   // Save / Export
   onSaveMission: () => void;
   onExportKMZ: () => void;
@@ -133,6 +147,14 @@ export default function Sidebar({
   craneUpPos,
   isSelectingCraneUpPos,
   onSelectCraneUpPos,
+  hyperlapseStart,
+  hyperlapseEnd,
+  hyperlapseSelectStep,
+  onSelectHyperlapseStart,
+  onSelectHyperlapseEnd,
+  arcShotPoi,
+  isSelectingArcShotPoi,
+  onSelectArcShotPoi,
   onSaveMission,
   onExportKMZ,
   isExporting,
@@ -297,6 +319,26 @@ export default function Sidebar({
             pos={craneUpPos}
             isSelectingPos={isSelectingCraneUpPos}
             onSelectPos={onSelectCraneUpPos}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {appMode === 'film' && filmType === 'hyperlapse' && (
+          <HyperlapsePanel
+            startPos={hyperlapseStart}
+            endPos={hyperlapseEnd}
+            selectStep={hyperlapseSelectStep}
+            onSelectStart={onSelectHyperlapseStart}
+            onSelectEnd={onSelectHyperlapseEnd}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {appMode === 'film' && filmType === 'arcshot' && (
+          <ArcShotPanel
+            poi={arcShotPoi}
+            isSelectingPoi={isSelectingArcShotPoi}
+            onSelectPoi={onSelectArcShotPoi}
             onGenerate={onSetWaypoints}
           />
         )}
