@@ -13,6 +13,9 @@ import { saveMission } from '@/lib/missionStore';
 // Leaflet map must be loaded client-side only (it uses browser APIs)
 const MapView = dynamic(() => import('@/components/Map'), { ssr: false });
 
+/** Shot types available in film mode */
+export type FilmType = 'dronie' | 'reveal' | 'topdown' | 'craneup';
+
 function generateId(): string {
   return `wp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -25,6 +28,10 @@ export default function HomePage() {
   const [missionType, setMissionType] = useState<MissionType>('waypoints');
   const [isExporting, setIsExporting] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+
+  // ── App mode: photo workflow vs. cinematic film shots ─────────
+  const [appMode, setAppMode] = useState<'photo' | 'film'>('photo');
+  const [filmType, setFilmType] = useState<FilmType>('dronie');
 
   // ── Map state ────────────────────────────────────────────────
   const [mapCenter, setMapCenter] = useState({ lat: 50.08, lng: 14.42 });
@@ -48,10 +55,71 @@ export default function HomePage() {
   // 'single' = one facade side; '360' = full building (corners added via map clicks like waypoints)
   const [facadeMode, setFacadeMode] = useState<'single' | '360'>('single');
 
+  // ── Film state — one point-selector per shot type ─────────────
+  // Dronie
+  const [dronieStart, setDronieStart] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSelectingDronieStart, setIsSelectingDronieStart] = useState(false);
+  // Reveal
+  const [revealPoi, setRevealPoi] = useState<{ lat: number; lng: number } | null>(null);
+  const [revealStart, setRevealStart] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSelectingRevealPoi, setIsSelectingRevealPoi] = useState(false);
+  const [isSelectingRevealStart, setIsSelectingRevealStart] = useState(false);
+  // Top-down
+  const [topDownStart, setTopDownStart] = useState<{ lat: number; lng: number } | null>(null);
+  const [topDownEnd, setTopDownEnd] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSelectingTopDownStart, setIsSelectingTopDownStart] = useState(false);
+  const [isSelectingTopDownEnd, setIsSelectingTopDownEnd] = useState(false);
+  // Crane Up
+  const [craneUpPos, setCraneUpPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSelectingCraneUpPos, setIsSelectingCraneUpPos] = useState(false);
+
   // ── Map interaction ──────────────────────────────────────────
+
+  /** Returns true when any film point selector is active */
+  const isAnyFilmSelecting =
+    isSelectingDronieStart ||
+    isSelectingRevealPoi ||
+    isSelectingRevealStart ||
+    isSelectingTopDownStart ||
+    isSelectingTopDownEnd ||
+    isSelectingCraneUpPos;
 
   /** Single handler for all map clicks — behavior depends on current mode */
   const handleMapClick = useCallback((lat: number, lng: number) => {
+    // ── Film mode point selectors ────────────────────────────
+    if (isSelectingDronieStart) {
+      setDronieStart({ lat, lng });
+      setIsSelectingDronieStart(false);
+      return;
+    }
+    if (isSelectingRevealPoi) {
+      setRevealPoi({ lat, lng });
+      setIsSelectingRevealPoi(false);
+      return;
+    }
+    if (isSelectingRevealStart) {
+      setRevealStart({ lat, lng });
+      setIsSelectingRevealStart(false);
+      return;
+    }
+    if (isSelectingTopDownStart) {
+      setTopDownStart({ lat, lng });
+      setIsSelectingTopDownStart(false);
+      return;
+    }
+    if (isSelectingTopDownEnd) {
+      setTopDownEnd({ lat, lng });
+      setIsSelectingTopDownEnd(false);
+      return;
+    }
+    if (isSelectingCraneUpPos) {
+      setCraneUpPos({ lat, lng });
+      setIsSelectingCraneUpPos(false);
+      return;
+    }
+
+    // ── Photo mode ───────────────────────────────────────────
+
     // POI select mode (orbit)
     if (isSelectingPoi) {
       setPoi({ lat, lng });
@@ -92,7 +160,12 @@ export default function HomePage() {
         { id: generateId(), lat, lng, height: 50, speed: 5, waitTime: 0, cameraAction: 'none' },
       ]);
     }
-  }, [isSelectingPoi, facadeDrawStep, pendingFacadeA, gridDrawStep, pendingSw, missionType, facadeMode]);
+  }, [
+    isSelectingDronieStart, isSelectingRevealPoi, isSelectingRevealStart,
+    isSelectingTopDownStart, isSelectingTopDownEnd, isSelectingCraneUpPos,
+    isSelectingPoi, facadeDrawStep, pendingFacadeA, gridDrawStep, pendingSw,
+    missionType, facadeMode,
+  ]);
 
   /** Update waypoint position after drag */
   const handleUpdateWaypointPosition = useCallback((id: string, lat: number, lng: number) => {
@@ -112,7 +185,7 @@ export default function HomePage() {
     setWaypoints([]);
   }, []);
 
-  /** Replace all waypoints with a newly generated set (spiral/grid/orbit) */
+  /** Replace all waypoints with a newly generated set (spiral/grid/orbit/film) */
   const handleSetWaypoints = useCallback((wps: Waypoint[]) => {
     setWaypoints(wps);
   }, []);
@@ -128,6 +201,19 @@ export default function HomePage() {
     setPendingFacadeA(null);
   }, []);
 
+  /** Switch between photo and film app modes — clears waypoints and film selections */
+  const handleAppModeChange = useCallback((mode: 'photo' | 'film') => {
+    setAppMode(mode);
+    setWaypoints([]);
+    // Reset all film selectors
+    setIsSelectingDronieStart(false);
+    setIsSelectingRevealPoi(false);
+    setIsSelectingRevealStart(false);
+    setIsSelectingTopDownStart(false);
+    setIsSelectingTopDownEnd(false);
+    setIsSelectingCraneUpPos(false);
+  }, []);
+
   /** Switch between single-side and 360° facade modes — clears waypoints */
   const handleFacadeModeChange = useCallback((mode: 'single' | '360') => {
     setFacadeMode(mode);
@@ -141,10 +227,12 @@ export default function HomePage() {
   }, []);
 
   const handleSaveConfirm = useCallback((name: string) => {
+    // Film missions are saved with type 'film'
+    const effectiveMissionType: MissionType = appMode === 'film' ? 'film' : missionType;
     const mission: Mission = {
       id: `mission-${Date.now()}`,
       name,
-      type: missionType,
+      type: effectiveMissionType,
       createdAt: new Date().toISOString(),
       waypoints: [...waypoints],
       // Include POI for orbit missions so KMZ export uses towardPOI heading
@@ -153,16 +241,17 @@ export default function HomePage() {
     saveMission(mission);
     setSaveDialogOpen(false);
     router.push('/missions');
-  }, [waypoints, missionType, poi, router]);
+  }, [waypoints, missionType, appMode, poi, router]);
 
   const handleExportKMZ = useCallback(async () => {
     if (waypoints.length === 0) return;
     setIsExporting(true);
     try {
+      const effectiveMissionType: MissionType = appMode === 'film' ? 'film' : missionType;
       const mission: Mission = {
         id: 'export',
         name: 'mise',
-        type: missionType,
+        type: effectiveMissionType,
         createdAt: new Date().toISOString(),
         waypoints,
         ...(missionType === 'orbit' && poi ? { poi } : {}),
@@ -174,12 +263,16 @@ export default function HomePage() {
     } finally {
       setIsExporting(false);
     }
-  }, [waypoints, missionType, poi]);
+  }, [waypoints, missionType, appMode, poi]);
 
   // ── Derived map props ────────────────────────────────────────
 
   // Show crosshair cursor when the user is placing a point on the map
-  const crosshairCursor = isSelectingPoi || gridDrawStep !== 'idle' || facadeDrawStep !== 'idle';
+  const crosshairCursor =
+    isSelectingPoi ||
+    gridDrawStep !== 'idle' ||
+    facadeDrawStep !== 'idle' ||
+    isAnyFilmSelecting;
 
   // Markers are draggable in waypoints mode and in facade 360° mode (to fine-tune corners)
   const draggableMarkers = missionType === 'waypoints' || (missionType === 'facade' && facadeMode === '360');
@@ -217,6 +310,10 @@ export default function HomePage() {
         waypoints={waypoints}
         missionType={missionType}
         onMissionTypeChange={handleMissionTypeChange}
+        appMode={appMode}
+        onAppModeChange={handleAppModeChange}
+        filmType={filmType}
+        onFilmTypeChange={setFilmType}
         onUpdateWaypoint={handleUpdateWaypoint}
         onDeleteWaypoint={handleDeleteWaypoint}
         onClearAll={handleClearAll}
@@ -234,6 +331,25 @@ export default function HomePage() {
         onStartDrawFacade={() => setFacadeDrawStep('a')}
         facadeMode={facadeMode}
         onFacadeModeChange={handleFacadeModeChange}
+        // Film props
+        dronieStart={dronieStart}
+        isSelectingDronieStart={isSelectingDronieStart}
+        onSelectDronieStart={() => setIsSelectingDronieStart(true)}
+        revealPoi={revealPoi}
+        revealStart={revealStart}
+        isSelectingRevealPoi={isSelectingRevealPoi}
+        isSelectingRevealStart={isSelectingRevealStart}
+        onSelectRevealPoi={() => setIsSelectingRevealPoi(true)}
+        onSelectRevealStart={() => setIsSelectingRevealStart(true)}
+        topDownStart={topDownStart}
+        topDownEnd={topDownEnd}
+        isSelectingTopDownStart={isSelectingTopDownStart}
+        isSelectingTopDownEnd={isSelectingTopDownEnd}
+        onSelectTopDownStart={() => setIsSelectingTopDownStart(true)}
+        onSelectTopDownEnd={() => setIsSelectingTopDownEnd(true)}
+        craneUpPos={craneUpPos}
+        isSelectingCraneUpPos={isSelectingCraneUpPos}
+        onSelectCraneUpPos={() => setIsSelectingCraneUpPos(true)}
         onSaveMission={handleSaveMission}
         onExportKMZ={handleExportKMZ}
         isExporting={isExporting}

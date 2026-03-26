@@ -8,9 +8,14 @@ import SpiralPanel from './SpiralPanel';
 import GridPanel from './GridPanel';
 import OrbitPanel from './OrbitPanel';
 import FacadePanel from './FacadePanel';
+import DroniePanel from './film/DroniePanel';
+import RevealPanel from './film/RevealPanel';
+import TopDownPanel from './film/TopDownPanel';
+import CraneUpPanel from './film/CraneUpPanel';
 import { Waypoint, MissionType } from '@/lib/types';
+import { FilmType } from '@/app/page';
 
-const MISSION_TABS: { type: MissionType; label: string }[] = [
+const PHOTO_TABS: { type: MissionType; label: string }[] = [
   { type: 'waypoints', label: 'Body' },
   { type: 'spiral', label: 'Spirala' },
   { type: 'grid', label: 'Grid' },
@@ -18,10 +23,22 @@ const MISSION_TABS: { type: MissionType; label: string }[] = [
   { type: 'facade', label: 'Fasada' },
 ];
 
+const FILM_TABS: { type: FilmType; label: string }[] = [
+  { type: 'dronie', label: 'Dronie' },
+  { type: 'reveal', label: 'Reveal' },
+  { type: 'topdown', label: 'Top-down' },
+  { type: 'craneup', label: 'Crane Up' },
+];
+
 interface SidebarProps {
   waypoints: Waypoint[];
   missionType: MissionType;
   onMissionTypeChange: (type: MissionType) => void;
+  // App mode (photo vs. film)
+  appMode: 'photo' | 'film';
+  onAppModeChange: (mode: 'photo' | 'film') => void;
+  filmType: FilmType;
+  onFilmTypeChange: (type: FilmType) => void;
   // Waypoints panel
   onUpdateWaypoint: (id: string, updates: Partial<Waypoint>) => void;
   onDeleteWaypoint: (id: string) => void;
@@ -45,6 +62,28 @@ interface SidebarProps {
   onStartDrawFacade: () => void;
   facadeMode: 'single' | '360';
   onFacadeModeChange: (mode: 'single' | '360') => void;
+  // Film — Dronie
+  dronieStart: { lat: number; lng: number } | null;
+  isSelectingDronieStart: boolean;
+  onSelectDronieStart: () => void;
+  // Film — Reveal
+  revealPoi: { lat: number; lng: number } | null;
+  revealStart: { lat: number; lng: number } | null;
+  isSelectingRevealPoi: boolean;
+  isSelectingRevealStart: boolean;
+  onSelectRevealPoi: () => void;
+  onSelectRevealStart: () => void;
+  // Film — Top-down
+  topDownStart: { lat: number; lng: number } | null;
+  topDownEnd: { lat: number; lng: number } | null;
+  isSelectingTopDownStart: boolean;
+  isSelectingTopDownEnd: boolean;
+  onSelectTopDownStart: () => void;
+  onSelectTopDownEnd: () => void;
+  // Film — Crane Up
+  craneUpPos: { lat: number; lng: number } | null;
+  isSelectingCraneUpPos: boolean;
+  onSelectCraneUpPos: () => void;
   // Save / Export
   onSaveMission: () => void;
   onExportKMZ: () => void;
@@ -55,6 +94,10 @@ export default function Sidebar({
   waypoints,
   missionType,
   onMissionTypeChange,
+  appMode,
+  onAppModeChange,
+  filmType,
+  onFilmTypeChange,
   onUpdateWaypoint,
   onDeleteWaypoint,
   onClearAll,
@@ -72,6 +115,24 @@ export default function Sidebar({
   onStartDrawFacade,
   facadeMode,
   onFacadeModeChange,
+  dronieStart,
+  isSelectingDronieStart,
+  onSelectDronieStart,
+  revealPoi,
+  revealStart,
+  isSelectingRevealPoi,
+  isSelectingRevealStart,
+  onSelectRevealPoi,
+  onSelectRevealStart,
+  topDownStart,
+  topDownEnd,
+  isSelectingTopDownStart,
+  isSelectingTopDownEnd,
+  onSelectTopDownStart,
+  onSelectTopDownEnd,
+  craneUpPos,
+  isSelectingCraneUpPos,
+  onSelectCraneUpPos,
   onSaveMission,
   onExportKMZ,
   isExporting,
@@ -86,28 +147,69 @@ export default function Sidebar({
         <p className="text-gray-500 text-xs">Mini 4 Pro</p>
       </div>
 
-      {/* Mission type tabs — horizontal scroll so new tabs fit without layout breaking */}
-      <div className="px-2 pt-3 flex-shrink-0">
+      {/* Mode switcher: Fotogrammetrie / Film */}
+      <div className="px-3 pt-3 flex-shrink-0">
+        <div className="flex rounded overflow-hidden border border-gray-700">
+          <button
+            onClick={() => onAppModeChange('photo')}
+            className={`flex-1 py-1.5 text-xs font-medium transition-colors ${
+              appMode === 'photo'
+                ? 'bg-blue-600 text-white'
+                : 'bg-[#0f1117] text-gray-400 hover:text-white'
+            }`}
+          >
+            Foto
+          </button>
+          <button
+            onClick={() => onAppModeChange('film')}
+            className={`flex-1 py-1.5 text-xs font-medium transition-colors ${
+              appMode === 'film'
+                ? 'bg-purple-600 text-white'
+                : 'bg-[#0f1117] text-gray-400 hover:text-white'
+            }`}
+          >
+            Film
+          </button>
+        </div>
+      </div>
+
+      {/* Mission type tabs — switches based on app mode */}
+      <div className="px-2 pt-2 flex-shrink-0">
         <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
-          {MISSION_TABS.map((tab) => (
-            <button
-              key={tab.type}
-              onClick={() => onMissionTypeChange(tab.type)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                missionType === tab.type
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-[#0f1117] text-gray-400 hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {appMode === 'photo'
+            ? PHOTO_TABS.map((tab) => (
+                <button
+                  key={tab.type}
+                  onClick={() => onMissionTypeChange(tab.type)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                    missionType === tab.type
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-[#0f1117] text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))
+            : FILM_TABS.map((tab) => (
+                <button
+                  key={tab.type}
+                  onClick={() => onFilmTypeChange(tab.type)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                    filmType === tab.type
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-[#0f1117] text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
         </div>
       </div>
 
       {/* Panel content — scrollable */}
       <div className="flex-1 overflow-y-auto px-3 py-3 min-h-0">
-        {missionType === 'waypoints' && (
+        {/* ── Photo mode panels ── */}
+        {appMode === 'photo' && missionType === 'waypoints' && (
           <WaypointPanel
             waypoints={waypoints}
             onUpdateWaypoint={onUpdateWaypoint}
@@ -116,14 +218,14 @@ export default function Sidebar({
           />
         )}
 
-        {missionType === 'spiral' && (
+        {appMode === 'photo' && missionType === 'spiral' && (
           <SpiralPanel
             mapCenter={mapCenter}
             onGenerate={onSetWaypoints}
           />
         )}
 
-        {missionType === 'grid' && (
+        {appMode === 'photo' && missionType === 'grid' && (
           <GridPanel
             gridCorners={gridCorners}
             drawStep={gridDrawStep}
@@ -132,7 +234,7 @@ export default function Sidebar({
           />
         )}
 
-        {missionType === 'orbit' && (
+        {appMode === 'photo' && missionType === 'orbit' && (
           <OrbitPanel
             poi={poi}
             isSelectingPoi={isSelectingPoi}
@@ -144,7 +246,7 @@ export default function Sidebar({
           />
         )}
 
-        {missionType === 'facade' && (
+        {appMode === 'photo' && missionType === 'facade' && (
           <FacadePanel
             facadePoints={facadePoints}
             drawStep={facadeDrawStep}
@@ -152,6 +254,49 @@ export default function Sidebar({
             mode={facadeMode}
             onModeChange={onFacadeModeChange}
             waypoints={waypoints}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {/* ── Film mode panels ── */}
+        {appMode === 'film' && filmType === 'dronie' && (
+          <DroniePanel
+            startPos={dronieStart}
+            isSelectingStart={isSelectingDronieStart}
+            onSelectStart={onSelectDronieStart}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {appMode === 'film' && filmType === 'reveal' && (
+          <RevealPanel
+            poi={revealPoi}
+            startPos={revealStart}
+            isSelectingPoi={isSelectingRevealPoi}
+            isSelectingStart={isSelectingRevealStart}
+            onSelectPoi={onSelectRevealPoi}
+            onSelectStart={onSelectRevealStart}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {appMode === 'film' && filmType === 'topdown' && (
+          <TopDownPanel
+            startPos={topDownStart}
+            endPos={topDownEnd}
+            isSelectingStart={isSelectingTopDownStart}
+            isSelectingEnd={isSelectingTopDownEnd}
+            onSelectStart={onSelectTopDownStart}
+            onSelectEnd={onSelectTopDownEnd}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {appMode === 'film' && filmType === 'craneup' && (
+          <CraneUpPanel
+            pos={craneUpPos}
+            isSelectingPos={isSelectingCraneUpPos}
+            onSelectPos={onSelectCraneUpPos}
             onGenerate={onSetWaypoints}
           />
         )}
