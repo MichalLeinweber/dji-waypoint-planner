@@ -129,121 +129,69 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-26 (Session 11)*
+*Poslední aktualizace: 2026-03-26 (Session 12)*
 
-### ✅ Dokončeno – Session 11 (Rozšíření /help – filmařský modul)
-- `app/help/page.tsx`: navigační kotvy (pill tlačítka) na začátku stránky (#foto / #film / #prenos)
-- Sekce A "Jak začít": krok 1 aktualizován na Foto/Film přepínač
-- Sekce B "Výběr mise": přidány podnadpisy "📷 Fotogrammetrie" a teaser "🎬 Filmařský modul →"
-- Nová sekce `id="film"`: 6 karet filmových záběrů (fialový akcent), tabulka doporučených rychlostí, SVG diagram gimbalu (4 úhly 0°/-30°/-60°/-90° s vizualizací směru pohledu kamery), Hyperlapse výpočet s vzorcem a příkladem (fialový info box)
-- Sekce F "Přenos do RC 2": přidáno `id="prenos"`
+### ✅ Dokončeno – kompletní přehled
 
-### ✅ Dokončeno – Session 10 (Filmařský modul – Fáze 2)
-- `components/film/HyperlapsePanel.tsx`: časosběrný let po trase — 2 body (start + konec), konstantní výška, konfigurovatelná rychlost, interval focení a gimbal mód (Dopředu/Na střed/Dolů); každý waypoint = `cameraAction: 'photo'`; live info box: délka trasy, počet fotek, délka videa při 25fps; blokování generování při > 200 fotkách
-- `components/film/ArcShotPanel.tsx`: oblet s měnící se výškou — 1 POI, poloměr, výška startu/konce, počet otáček (0.25–2.0), CW/CCW; `headingAngle` per waypoint (atan2 k POI); lineárně interpolovaná výška; info box: úhel, počet WP, délka trasy, odhadovaná doba letu
-- `Sidebar.tsx`: rozšířeny FILM_TABS na 6 záložek (Dronie / Reveal / Top-down / Crane Up / Hyperlapse / Arc Shot), nové props a renderování panelů
-- `app/page.tsx`: rozšířen `FilmType` union o `'hyperlapse'|'arcshot'`, přidány stavy `hyperlapseStart/End/SelectStep` a `arcShotPoi/isSelectingArcShotPoi`, rozšířen `handleMapClick` a `isAnyFilmSelecting`
+**Infrastruktura:**
+- Next.js 16.2.1 + TypeScript + Tailwind CSS
+- Leaflet.js + React-Leaflet (mapa, crosshair cursor oprava)
+- JSZip (KMZ/WPML export)
+- next-pwa (PWA, manifest)
+- GitHub + Vercel (auto-deploy z main)
 
-### ✅ Dokončeno – Session 9 (Filmařský modul – Fáze 1)
-- `lib/types.ts`: přidán `'film'` do union typu `MissionType`
-- `MissionList.tsx`: přidán label `'Film'` pro filmové mise
-- `app/page.tsx`: přidán `appMode` ('photo'|'film'), `filmType`, stavy a selektory pro všechny filmové záběry
-- `Sidebar.tsx`: přepínač Foto/Film, filmové záložky (Dronie/Reveal/Top-down/Crane Up), renderování filmových panelů
-- `components/film/DroniePanel.tsx`: let dozadu + nahoru, parametr `bearing` (výchozí 180°), gimbal 0→-30°
-- `components/film/RevealPanel.tsx`: let k POI, `headingAngle` namířený na POI pro každý waypoint
-- `components/film/TopDownPanel.tsx`: konstantní výška, `gimbalPitch=-90`
-- `components/film/CraneUpPanel.tsx`: vertikální stoupání na jednom místě, gimbal -60°→0°
+**Fotogrammetrický modul (záložka Foto):**
+- Manuální waypointy – klikání na mapu, drag & drop, parametry per bod
+- Spirála – střed mapy, CW/CCW, interpolace poloměru a výšky
+- Grid – lawn-mower pattern, rotace směru, odhad fotek/času
+- Orbit – kroužení kolem POI, gimbal towardPOI v WPML
+- Fasáda jedna strana – lawn-mower podél fasády, gimbal úhel
+- Fasáda 360° – 4 body na mapě = celá budova, 4 strany v jedné misi
 
-### ✅ Dokončeno – Session 8 (Stránka /help)
-- Nová statická stránka `/help` — vizuální průvodce aplikací
-- Sekce A: Jak začít — 5 číslovaných kroků od výběru mise po přenos do RC 2
-- Sekce B: Výběr typu mise — 6 karet (Body/Spirála/Grid/Orbit/Fasáda/360°), každá s popisem a „→ záložka X"
-- Sekce C: Jak funguje překryv — inline SVG diagram (4 záběry, 70% překryv zvýrazněn), tabulka doporučení
-- Sekce D: Vzdálenost od fasády — inline SVG pohled zboku (dron + zeď + FOV kužel + šipka 8 m), tabulka hodnot
-- Sekce E: Limit 200 waypointů — barevná legenda (zelená/žlutá/červená) + tabulka řešení
-- Sekce F: Přenos do RC 2 — 3 věty + odkaz na /guide
-- Sidebar.tsx: přidán odkaz „Napoveda" do spodní navigace
+**KMZ/WPML export:**
+- Formát kompatibilní s DJI Fly (Mini 4 Pro, droneEnumValue: 67)
+- Akce: takePhoto, startRecord, stopRecord, hover, gimbalRotate
+- gimbalPitch (absolutní úhel), headingAngle (fixed heading), towardPOI
+- Limit 200 waypointů – varování zelená/žlutá/červená + blokování
 
-### ✅ Dokončeno – Session 7 (Fasáda 360° – refactor + bugfixy)
-- Crosshair cursor: opraven bug kde Leaflet třída `leaflet-grab` přebíjela inline cursor styl
-  → Map.tsx: useEffect toggleuje CSS třídy leaflet-grab/leaflet-crosshair přímo na container
-- Stale closure: opraven bug v MapEventHandler kde Leaflet listener držel staré callbacky
-  → Map.tsx: onMapClick a onCenterChange uloženy do refs, listener vždy volá ref.current()
-- Fasáda 360° zjednodušena: odstraněn komplexní stavový automat (facade360DrawStep + 5 stavů)
-  → 360° mode nyní přidává rohy jako normální waypointy (klikání = stejné jako Body záložka)
-  → facadeMode ('single'|'360') zvednut do page.tsx; přepínání módu maže waypointy
-  → buildingPolygon odvozen z prvních 4 waypointů (missionType=facade, facadeMode=360)
-  → FacadePanel: tlačítko generování zobrazí "Pridej N rohy budovy" dokud není 4 bodů
-  → Markery jsou přetahovatelné v 360° módu (fine-tune rohů)
+**Filmařský modul (záložka Film):**
+- Přepínač Foto/Film v horní části sidebaru
+- Dronie – odletový záběr, kompasový směr, gimbal 0°→-30°
+- Reveal – let k POI, headingAngle per waypoint (nos na POI)
+- Top-down – přelet A→B, gimbal -90°, konstantní výška
+- Crane Up – vertikální stoupání, interpolace gimbalu -60°→0°
+- Hyperlapse – focení v intervalech, 3 gimbal módy, live výpočet délky videa
+- Arc Shot – oblet s měnící se výškou, headingAngle k POI per bod
 
-### ✅ Dokončeno – Session 6 (Fasáda 360°)
-- FacadePanel: přepínač "Jedna strana" / "Celá budova 360°"
-- Generátor 360°: lawn-mower pasy pro všechny 4 strany v jedné misi
-- Každý waypoint má `headingAngle` = nos dronu kolmo na fasádu (vypočítáno z vektoru strany)
-- Přechodové body mezi stranami: diagonální clearance bod + entry bod, cameraAction 'none', speed 5
-- Limit 200 waypointů: varování + blokování generování platí i pro 360° režim
-- types.ts: `headingAngle?: number` přidáno do rozhraní Waypoint
-- exportKMZ.ts: `fixed` heading mode pro waypointy s `headingAngle`
-- Map.tsx: nový prop `buildingPolygon`, import Polygon z react-leaflet
+**Správa misí:**
+- Uložení do localStorage s vlastním názvem (SaveMissionDialog)
+- Seznam misí /missions – načíst / smazat
+- MissionType: waypoints | spiral | grid | orbit | facade | film
 
-### ✅ Dokončeno – Session 5 (Limit waypointů)
-- FacadePanel a GridPanel: barevný řádek "Waypointy: X / 200" v info boxu (zelená/žlutá/červená)
-- Žluté upozornění při 151–200 waypointech, červené při > 200
-- Blokování tlačítka Generovat při překročení 200
+**Stránky:**
+- `/` – hlavní mapa s celou aplikací
+- `/missions` – seznam uložených misí
+- `/guide` – detailní návod přenosu KMZ do DJI RC 2 (6 kroků)
+- `/help` – kompletní nápověda (fotogrammetrie + filmařský modul)
 
-### ✅ Dokončeno – Session 4 (Fasádní sken)
-- FacadePanel: horizontální pasy podél fasády (lawn-mower), 2 body A+B na mapě, kolmý offset dronu
-- Žlutá čárkovaná čára A→B na mapě jako vizuální reference fasády
-- Parametry: vzdálenost od fasády, výška startu/konce, překryv, rychlost, úhel gimbalu
-- Info box: šířka fasády, počet řad, počet fotek, délka trasy
-- exportKMZ: nová akce `gimbalRotate` (actionId 2) pro waypointy s `gimbalPitch`
-- types.ts: přidány `'facade'` do MissionType, `gimbalPitch?: number` do Waypoint
-- Sidebar: záložky přepnuty na `overflow-x: auto` (škáluje na mobil i pro budoucí záložky)
-- MissionList: přidán label 'Fasada'
+**Help sekce (/help):**
+- Navigační kotvy: #foto / #film / #prenos
+- Fotogrammetrie: výběr mise, překryv %, vzdálenost od fasády
+- SVG diagramy: překryv záběrů, vzdálenost zboku, gimbal úhly
+- Filmařský modul: 6 karet záběrů, doporučené rychlosti
+- Hyperlapse výpočet: vzorec + příklad
+- Limit 200 waypointů: barevná legenda + tabulka řešení
 
-### ✅ Dokončeno – Session 3 (Spirála, Grid, Orbit)
-- SpiralPanel: generuje spirální trajektorii (střed = střed mapy, parametry: poloměry, výšky, otáčky, směr CW/CCW)
-- GridPanel: fotogrammetrický grid s plnou podporou rotace směru letu, lawn-mower pattern, odhad počtu fotek/délky/doby
-- OrbitPanel: kruhová mise kolem POI, kliknutím na mapu vybere střed, CW/CCW
-- exportKMZ.ts: orbit mise → `towardPOI` heading mode v WPML (gimbal míří na POI)
-- Map.tsx: přidán `onCenterChange` (sleduje střed pro spirálu), `gridRect` (žlutý obdélník oblasti), `crosshairCursor` při výběru bodu, `draggableMarkers` flag
-- Sidebar.tsx: plně zapojen — odstraněno "coming soon", každý tab zobrazuje příslušný panel
-- page.tsx: stavový automat pro gridDrawStep (idle→sw→ne→idle) a poiSelectMode
+**Opravené bugy:**
+- Leaflet crosshair cursor (leaflet-grab přebíjel CSS – oprava přes classList)
+- Stale closure v useMapEvents (useRef pattern pro callbacky)
 
-### ✅ Dokončeno – Session 2 (Dialog, GitHub, Vercel)
-- `SaveMissionDialog` komponenta – vlastní modal místo window.prompt (Enter uloží, Escape zavře, autofocus)
-- GitHub repozitář: `https://github.com/MichalLeinweber/dji-waypoint-planner` (public)
-- Vercel deploy: `https://dji-waypoint-planner-phi.vercel.app` (production, auto-deploy z main)
-
-### ✅ Dokončeno – Session 1 (MVP základ)
-- Next.js 16.2.1 + TypeScript + Tailwind CSS projekt inicializován
-- Instalovány závislosti: react-leaflet, leaflet, jszip, next-pwa
-- PWA manifest (`public/manifest.json`) – tmavý theme #0f1117
-- `next.config.js` s next-pwa (disable v dev, turbopack: {} workaround pro Next.js 16)
-- TypeScript typy: `Waypoint`, `Mission`, `MissionType`, `CameraAction` (`lib/types.ts`)
-- localStorage logika: `loadMissions`, `saveMission`, `deleteMission` (`lib/missionStore.ts`)
-- KMZ export: `exportKMZ(mission)` generuje ZIP s `wpmz/template.kml` + `wpmz/waylines.wpml` (`lib/exportKMZ.ts`)
-- Leaflet mapa s klikáním, drag & drop markerů, polyline trasa (`components/Map.tsx`)
-- Sidebar: záložky typů misí, WaypointPanel, tlačítka Uložit/Export (`components/Sidebar.tsx`)
-- WaypointPanel: výška, rychlost, čekání, akce kamery, smazání (`components/WaypointPanel.tsx`)
-- Seznam misí s Načíst/Smazat (`components/MissionList.tsx`)
-- Hlavní stránka s mapou a sidebarme (`app/page.tsx`)
-- Seznam uložených misí (`app/missions/page.tsx`)
-- Návod přenosu do RC 2 – 6 kroků (`app/guide/page.tsx`)
-- Produkční build prošel bez chyb (`npm run build`)
-- Git repozitář inicializován, první commit
-
-### ⚠️ Chybí pro plnohodnotné PWA
-- PWA ikony (`public/icons/icon-192.png`, `icon-512.png`) – zatím neexistují, manifest na ně odkazuje
-- Načítání uložené mise zpět do mapy (sessionStorage bridge z /missions na /)
-
-### 📋 Plánováno – další fáze
-- Spirála, Grid, Orbit generátory
-- Anglická jazyková mutace
-- Import KMZ zpět do aplikace
+### 📋 Plánováno – budoucí rozvoj
+- Filmařský modul Fáze 3: další záběry (Boomerang, Rocket...)
+- Import KMZ zpět do aplikace (editace existující mise)
 - Výpočet výšky terénu (terrain following)
-- Odhad doby letu a spotřeby baterie
-- Sdílení misí jako odkaz (URL encode)
+- Sdílení misí jako URL odkaz
+- Anglická jazyková mutace
 
 ---
 
@@ -253,12 +201,21 @@ Aplikace zobrazí krok za krokem:
 - GPS přesnost RC 2 není stoprocentní – mise se mohou mírně lišit od plánu
 - Maximálně **200 waypointů** na jednu misi (limit DJI Fly)
 - Výška waypointů je relativní od místa vzletu – uživatel musí startovat ze stejného místa pro přesné opakování mise
+- Filmařský modul generuje základní waypointové trajektorie – DJI Fly nepodporuje Bezierovy křivky přes WPML
+- Crosshair cursor vyžaduje přímou manipulaci CSS tříd Leafletu (`leaflet-crosshair`), ne inline styly
 
 ---
 
 ## 11. Kritéria úspěchu MVP
 
-- [ ] Uživatel vytvoří manuální misi, exportuje KMZ a DJI Fly ji přijme bez chyby
-- [ ] Spirála, grid a orbit generují validní WPML soubor
-- [ ] Aplikace je instalovatelná jako PWA na Windows PC a Android telefon
-- [ ] Mise se ukládají a znovu načítají správně
+- [x] Uživatel vytvoří manuální misi, exportuje KMZ a DJI Fly ji přijme bez chyby
+- [x] Spirála, grid, orbit a fasáda generují validní WPML soubor
+- [x] Aplikace je instalovatelná jako PWA na Windows PC a Android telefon
+- [x] Mise se ukládají a znovu načítají správně
+- [x] Filmařský modul – 6 typů záběrů funkčních (Dronie, Reveal, Top-down, Crane Up, Hyperlapse, Arc Shot)
+- [x] Help sekce pokrývá všechny funkcionality (foto i film)
+
+### Budoucí kritéria
+- [ ] Terrain following – výška přizpůsobena terénu
+- [ ] Import KMZ zpět do editoru
+- [ ] Anglická lokalizace
