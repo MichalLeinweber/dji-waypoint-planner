@@ -129,7 +129,17 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-26 (Session 7)*
+*Poslední aktualizace: 2026-03-26 (Session 8)*
+
+### ✅ Dokončeno – Session 8 (Stránka /help)
+- Nová statická stránka `/help` — vizuální průvodce aplikací
+- Sekce A: Jak začít — 5 číslovaných kroků od výběru mise po přenos do RC 2
+- Sekce B: Výběr typu mise — 6 karet (Body/Spirála/Grid/Orbit/Fasáda/360°), každá s popisem a „→ záložka X"
+- Sekce C: Jak funguje překryv — inline SVG diagram (4 záběry, 70% překryv zvýrazněn), tabulka doporučení
+- Sekce D: Vzdálenost od fasády — inline SVG pohled zboku (dron + zeď + FOV kužel + šipka 8 m), tabulka hodnot
+- Sekce E: Limit 200 waypointů — barevná legenda (zelená/žlutá/červená) + tabulka řešení
+- Sekce F: Přenos do RC 2 — 3 věty + odkaz na /guide
+- Sidebar.tsx: přidán odkaz „Napoveda" do spodní navigace
 
 ### ✅ Dokončeno – Session 7 (Fasáda 360° – refactor + bugfixy)
 - Crosshair cursor: opraven bug kde Leaflet třída `leaflet-grab` přebíjela inline cursor styl
