@@ -129,7 +129,23 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-26 (Session 8)*
+*Poslední aktualizace: 2026-03-26 (Session 10)*
+
+### ✅ Dokončeno – Session 10 (Filmařský modul – Fáze 2)
+- `components/film/HyperlapsePanel.tsx`: časosběrný let po trase — 2 body (start + konec), konstantní výška, konfigurovatelná rychlost, interval focení a gimbal mód (Dopředu/Na střed/Dolů); každý waypoint = `cameraAction: 'photo'`; live info box: délka trasy, počet fotek, délka videa při 25fps; blokování generování při > 200 fotkách
+- `components/film/ArcShotPanel.tsx`: oblet s měnící se výškou — 1 POI, poloměr, výška startu/konce, počet otáček (0.25–2.0), CW/CCW; `headingAngle` per waypoint (atan2 k POI); lineárně interpolovaná výška; info box: úhel, počet WP, délka trasy, odhadovaná doba letu
+- `Sidebar.tsx`: rozšířeny FILM_TABS na 6 záložek (Dronie / Reveal / Top-down / Crane Up / Hyperlapse / Arc Shot), nové props a renderování panelů
+- `app/page.tsx`: rozšířen `FilmType` union o `'hyperlapse'|'arcshot'`, přidány stavy `hyperlapseStart/End/SelectStep` a `arcShotPoi/isSelectingArcShotPoi`, rozšířen `handleMapClick` a `isAnyFilmSelecting`
+
+### ✅ Dokončeno – Session 9 (Filmařský modul – Fáze 1)
+- `lib/types.ts`: přidán `'film'` do union typu `MissionType`
+- `MissionList.tsx`: přidán label `'Film'` pro filmové mise
+- `app/page.tsx`: přidán `appMode` ('photo'|'film'), `filmType`, stavy a selektory pro všechny filmové záběry
+- `Sidebar.tsx`: přepínač Foto/Film, filmové záložky (Dronie/Reveal/Top-down/Crane Up), renderování filmových panelů
+- `components/film/DroniePanel.tsx`: let dozadu + nahoru, parametr `bearing` (výchozí 180°), gimbal 0→-30°
+- `components/film/RevealPanel.tsx`: let k POI, `headingAngle` namířený na POI pro každý waypoint
+- `components/film/TopDownPanel.tsx`: konstantní výška, `gimbalPitch=-90`
+- `components/film/CraneUpPanel.tsx`: vertikální stoupání na jednom místě, gimbal -60°→0°
 
 ### ✅ Dokončeno – Session 8 (Stránka /help)
 - Nová statická stránka `/help` — vizuální průvodce aplikací
