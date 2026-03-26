@@ -93,6 +93,21 @@ export default function MapView({
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
 
+  // Toggle crosshair cursor by swapping Leaflet CSS classes on the map container.
+  // Leaflet adds 'leaflet-grab' by default which overrides any inline cursor style,
+  // so we must remove it and add 'leaflet-crosshair' instead.
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const container = mapRef.current.getContainer();
+    if (crosshairCursor) {
+      container.classList.remove('leaflet-grab');
+      container.classList.add('leaflet-crosshair');
+    } else {
+      container.classList.remove('leaflet-crosshair');
+      container.classList.add('leaflet-grab');
+    }
+  }, [crosshairCursor]);
+
   // Sync markers whenever waypoints or draggable flag changes
   useEffect(() => {
     if (!mapRef.current) return;
@@ -141,7 +156,6 @@ export default function MapView({
       style={{
         height: '100%',
         width: '100%',
-        cursor: crosshairCursor ? 'crosshair' : undefined,
       }}
       ref={mapRef}
     >
