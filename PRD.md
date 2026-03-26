@@ -129,7 +129,14 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-26 (Session 10)*
+*Poslední aktualizace: 2026-03-26 (Session 11)*
+
+### ✅ Dokončeno – Session 11 (Rozšíření /help – filmařský modul)
+- `app/help/page.tsx`: navigační kotvy (pill tlačítka) na začátku stránky (#foto / #film / #prenos)
+- Sekce A "Jak začít": krok 1 aktualizován na Foto/Film přepínač
+- Sekce B "Výběr mise": přidány podnadpisy "📷 Fotogrammetrie" a teaser "🎬 Filmařský modul →"
+- Nová sekce `id="film"`: 6 karet filmových záběrů (fialový akcent), tabulka doporučených rychlostí, SVG diagram gimbalu (4 úhly 0°/-30°/-60°/-90° s vizualizací směru pohledu kamery), Hyperlapse výpočet s vzorcem a příkladem (fialový info box)
+- Sekce F "Přenos do RC 2": přidáno `id="prenos"`
 
 ### ✅ Dokončeno – Session 10 (Filmařský modul – Fáze 2)
 - `components/film/HyperlapsePanel.tsx`: časosběrný let po trase — 2 body (start + konec), konstantní výška, konfigurovatelná rychlost, interval focení a gimbal mód (Dopředu/Na střed/Dolů); každý waypoint = `cameraAction: 'photo'`; live info box: délka trasy, počet fotek, délka videa při 25fps; blokování generování při > 200 fotkách
