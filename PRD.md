@@ -129,7 +129,25 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-26 (Session 4)*
+*Poslední aktualizace: 2026-03-26 (Session 6)*
+
+### ✅ Dokončeno – Session 6 (Fasáda 360°)
+- FacadePanel: přepínač "Jedna strana" / "Celá budova 360°"
+- 360° režim: výběr 4 rohů budovy kliknutím na mapu (crosshair, 4 kroky A→B→C→D)
+- Na mapě se vykreslí žlutý čárkovaný polygon (buildingPolygon) přes react-leaflet Polygon
+- Generátor 360°: lawn-mower pasy pro všechny 4 strany v jedné misi
+- Každý waypoint má `headingAngle` = nos dronu kolmo na fasádu (vypočítáno z vektoru strany)
+- Přechodové body mezi stranami: diagonální clearance bod + entry bod, cameraAction 'none', speed 5
+- Limit 200 waypointů: varování + blokování generování platí i pro 360° režim
+- types.ts: `headingAngle?: number` přidáno do rozhraní Waypoint
+- exportKMZ.ts: `fixed` heading mode pro waypointy s `headingAngle` (priorita před towardPOI/followWayline)
+- Map.tsx: nový prop `buildingPolygon`, import Polygon z react-leaflet
+- page.tsx: samostatný stavový automat pro 360° výběr (facade360DrawStep + 5 nových stavů)
+
+### ✅ Dokončeno – Session 5 (Limit waypointů)
+- FacadePanel a GridPanel: barevný řádek "Waypointy: X / 200" v info boxu (zelená/žlutá/červená)
+- Žluté upozornění při 151–200 waypointech, červené při > 200
+- Blokování tlačítka Generovat při překročení 200
 
 ### ✅ Dokončeno – Session 4 (Fasádní sken)
 - FacadePanel: horizontální pasy podél fasády (lawn-mower), 2 body A+B na mapě, kolmý offset dronu
