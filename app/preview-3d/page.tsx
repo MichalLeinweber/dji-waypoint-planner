@@ -2,22 +2,17 @@
 
 // 3D Mission Preview — renders the waypoint route over a 3D MapLibre map.
 // Loaded in a new browser tab; reads mission data from localStorage.
-// MapLibre is imported dynamically inside useEffect to avoid SSR issues
-// (it uses WebGL APIs that are not available in Node.js).
+//
+// Key layout rule: the MapLibre container must use position:absolute with
+// explicit top/left/right/bottom:0 — NOT height:'100%' or CSS-class-based
+// height — because MapLibre reads offsetHeight synchronously at init time,
+// before class-based styles may be computed.
 
 import { useEffect, useRef, useState } from 'react';
 import { Waypoint } from '@/lib/types';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface StoredMission {
-  waypoints: Waypoint[];
-  missionType: string;
-  timestamp: number;
-}
-
-// Minimal interface for map methods called outside the async IIFE
-// (toggle / reset handlers access the map via mapRef)
+// ── Minimal interface for map methods used outside the async IIFE ─────────────
+// (toggle / reset handlers store the live map instance here)
 interface MapHandle {
   flyTo(opts: object): void;
   getLayer(id: string): object | undefined;
@@ -26,78 +21,90 @@ interface MapHandle {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Returns the geographic centroid of a set of waypoints */
+/** Returns the geographic centroid of a waypoint array */
 function centroid(waypoints: Waypoint[]): { lng: number; lat: number } {
   const lng = waypoints.reduce((s, wp) => s + wp.lng, 0) / waypoints.length;
   const lat = waypoints.reduce((s, wp) => s + wp.lat, 0) / waypoints.length;
   return { lng, lat };
 }
 
-/** Creates the orange HTML element used as a waypoint marker */
+/** Creates the orange HTML element used as a numbered waypoint marker */
 function makeMarkerEl(index: number, height: number): HTMLElement {
   const el = document.createElement('div');
   el.style.cssText = `
-    width: 24px; height: 24px; border-radius: 50%;
-    background: #f97316; border: 2px solid #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: bold; color: #fff;
-    cursor: default; user-select: none;
-    box-shadow: 0 2px 6px rgba(0,0,0,.6);
+    width:24px;height:24px;border-radius:50%;
+    background:#f97316;border:2px solid #fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:bold;color:#fff;
+    cursor:default;user-select:none;
+    box-shadow:0 2px 6px rgba(0,0,0,.6);
   `;
   el.textContent = String(index + 1);
   el.title = `WP${index + 1} — ${height} m`;
   return el;
 }
 
-// ── Page component ────────────────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Preview3DPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
-  // Stored as MapHandle so toggle/reset can call map methods without full MapLibre type
   const mapRef = useRef<MapHandle | null>(null);
 
-  const [mission, setMission] = useState<StoredMission | null>(null);
+  // Display-only state — mission data is read inside the single useEffect
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [buildingsVisible, setBuildingsVisible] = useState(true);
+  const [missionMeta, setMissionMeta] = useState<{
+    count: number;
+    timestamp: number;
+    center: { lng: number; lat: number };
+  } | null>(null);
 
-  // ── Step 1: read mission from localStorage ────────────────────────────────
+  // ── Single effect: read data + init MapLibre ──────────────────────────────
+  // Keeping everything in one effect guarantees the container div is already
+  // in the DOM (with its styles applied) when new maplibregl.Map() is called.
   useEffect(() => {
-    const raw = localStorage.getItem('preview3d-mission');
-    if (!raw) {
-      setLoadError('Žádná mise k zobrazení. Otevři 3D náhled z plánovacího panelu.');
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw) as StoredMission;
-      if (!parsed.waypoints?.length) {
-        setLoadError('Mise neobsahuje žádné waypointy.');
-        return;
-      }
-      setMission(parsed);
-    } catch {
-      setLoadError('Nepodařilo se načíst data mise.');
-    }
-  }, []);
+    if (!mapContainer.current) return;
 
-  // ── Step 2: initialise MapLibre once mission data is available ────────────
-  useEffect(() => {
-    if (!mission || !mapContainer.current) return;
-
-    const wps = mission.waypoints;
-    const center = centroid(wps);
-
-    // Minimal cleanup handle — set once the Map is created
-    let removeMap: (() => void) | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let map: any = null;
 
     (async () => {
-      // Dynamic import — runs only in the browser, never on the server
-      const ml = await import('maplibre-gl');
-      await import('maplibre-gl/dist/maplibre-gl.css');
-      const maplibregl = ml.default;
+      // 1. Read mission from localStorage
+      const raw = localStorage.getItem('preview3d-mission');
+      if (!raw) {
+        setLoadError('Žádná mise k zobrazení. Otevři 3D náhled z plánovacího panelu.');
+        return;
+      }
 
-      // Create the MapLibre map — typed by the library itself inside this scope
-      const map = new maplibregl.Map({
+      let wps: Waypoint[];
+      let timestamp: number;
+      try {
+        const parsed = JSON.parse(raw) as {
+          waypoints: Waypoint[];
+          missionType: string;
+          timestamp: number;
+        };
+        if (!parsed.waypoints?.length) {
+          setLoadError('Mise neobsahuje žádné waypointy.');
+          return;
+        }
+        wps = parsed.waypoints;
+        timestamp = parsed.timestamp;
+      } catch {
+        setLoadError('Nepodařilo se načíst data mise.');
+        return;
+      }
+
+      const center = centroid(wps);
+      setMissionMeta({ count: wps.length, timestamp, center });
+
+      // 2. Dynamic import — runs only in the browser, never on the server
+      const maplibregl = (await import('maplibre-gl')).default;
+      await import('maplibre-gl/dist/maplibre-gl.css');
+
+      // 3. Create the map — container div is already in the DOM with correct dimensions
+      map = new maplibregl.Map({
         container: mapContainer.current!,
         style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
         center: [center.lng, center.lat],
@@ -106,20 +113,18 @@ export default function Preview3DPage() {
         bearing: 0,
       });
 
-      // Expose minimal interface to the toggle / reset handlers
-      mapRef.current = map as unknown as MapHandle;
-      removeMap = () => map.remove();
+      mapRef.current = map as MapHandle;
 
       map.on('load', () => {
         // ── Waypoint route as a GeoJSON LineString ────────────────────
-        // Coordinates use [lng, lat, height] for 3D context
+        // Coordinates: [lng, lat, height] for 3D context
         map.addSource('wp-route', {
           type: 'geojson',
           data: {
             type: 'Feature',
             geometry: {
               type: 'LineString',
-              coordinates: wps.map((wp) => [wp.lng, wp.lat, wp.height ?? 50]),
+              coordinates: wps.map((wp: Waypoint) => [wp.lng, wp.lat, wp.height ?? 50]),
             },
             properties: {},
           },
@@ -130,28 +135,21 @@ export default function Preview3DPage() {
           type: 'line',
           source: 'wp-route',
           layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: {
-            'line-color': '#3b82f6',
-            'line-width': 3,
-            'line-opacity': 0.9,
-          },
+          paint: { 'line-color': '#3b82f6', 'line-width': 3, 'line-opacity': 0.9 },
         });
 
         // ── Waypoint markers ──────────────────────────────────────────
-        wps.forEach((wp, i) => {
+        wps.forEach((wp: Waypoint, i: number) => {
           const el = makeMarkerEl(i, wp.height ?? 50);
-          new maplibregl.Marker({ element: el })
-            .setLngLat([wp.lng, wp.lat])
-            .addTo(map);
+          new maplibregl.Marker({ element: el }).setLngLat([wp.lng, wp.lat]).addTo(map);
         });
 
         // ── 3D buildings ──────────────────────────────────────────────
-        // The Carto dark-matter style is based on the OpenMapTiles schema.
-        // We discover the vector tile source at runtime instead of hard-coding
-        // a name that might differ between style versions.
+        // Carto dark-matter is based on OpenMapTiles schema.
+        // Discover the vector source at runtime instead of hard-coding its name.
         const styleSources = map.getStyle().sources as Record<string, { type?: string }>;
         const vectorSourceId = Object.keys(styleSources).find(
-          (id) => styleSources[id].type === 'vector',
+          (id: string) => styleSources[id].type === 'vector',
         );
 
         if (vectorSourceId) {
@@ -164,19 +162,11 @@ export default function Preview3DPage() {
               minzoom: 14,
               paint: {
                 'fill-extrusion-color': '#334155',
-                // Prefer render_height (pre-calculated by tile provider),
-                // fall back to raw height, then default to 10 m
                 'fill-extrusion-height': [
-                  'coalesce',
-                  ['get', 'render_height'],
-                  ['get', 'height'],
-                  10,
+                  'coalesce', ['get', 'render_height'], ['get', 'height'], 10,
                 ],
                 'fill-extrusion-base': [
-                  'coalesce',
-                  ['get', 'render_min_height'],
-                  ['get', 'min_height'],
-                  0,
+                  'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0,
                 ],
                 'fill-extrusion-opacity': 0.75,
               },
@@ -186,7 +176,7 @@ export default function Preview3DPage() {
           }
         }
 
-        // ── Fly to centroid with cinematic pitch ──────────────────────
+        // ── Cinematic flyTo on load ───────────────────────────────────
         map.flyTo({
           center: [center.lng, center.lat],
           zoom: 15,
@@ -200,14 +190,14 @@ export default function Preview3DPage() {
       });
     })();
 
-    // Cleanup: destroy the MapLibre instance when the component unmounts
     return () => {
-      removeMap?.();
+      map?.remove();
       mapRef.current = null;
     };
-  }, [mission]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once — data and map init happen together inside the effect
 
-  // ── Toggle 3D buildings visibility ───────────────────────────────────────
+  // ── Toggle 3D buildings ───────────────────────────────────────────────────
   function handleToggleBuildings() {
     const map = mapRef.current;
     if (!map?.getLayer('3d-buildings')) return;
@@ -218,10 +208,9 @@ export default function Preview3DPage() {
 
   // ── Reset camera to centroid ──────────────────────────────────────────────
   function handleResetView() {
-    if (!mission) return;
-    const center = centroid(mission.waypoints);
+    if (!missionMeta) return;
     mapRef.current?.flyTo({
-      center: [center.lng, center.lat],
+      center: [missionMeta.center.lng, missionMeta.center.lat],
       zoom: 15,
       pitch: 60,
       bearing: 0,
@@ -232,17 +221,16 @@ export default function Preview3DPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  // Error / empty state
   if (loadError) {
     return (
-      <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">
-        <div className="text-center max-w-sm px-6">
-          <p className="text-4xl mb-4">🔭</p>
-          <p className="text-white font-semibold mb-2">3D náhled</p>
-          <p className="text-gray-400 text-sm leading-relaxed">{loadError}</p>
+      <div style={{ minHeight: '100vh', background: '#0f1117', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: 360, padding: '0 24px' }}>
+          <p style={{ fontSize: 40, marginBottom: 16 }}>🔭</p>
+          <p style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}>3D náhled</p>
+          <p style={{ color: '#9ca3af', fontSize: 14, lineHeight: 1.6 }}>{loadError}</p>
           <button
             onClick={() => window.close()}
-            className="mt-6 px-4 py-2 bg-[#1a1d27] border border-gray-600 text-gray-300 text-sm rounded hover:border-blue-500 transition-colors"
+            style={{ marginTop: 24, padding: '8px 16px', background: '#1a1d27', border: '1px solid #4b5563', color: '#d1d5db', fontSize: 14, borderRadius: 6, cursor: 'pointer' }}
           >
             ← Zavřít
           </button>
@@ -252,15 +240,22 @@ export default function Preview3DPage() {
   }
 
   return (
+    // Outer wrapper: explicit 100vw × 100vh with position:relative as containing block
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#0f1117' }}>
-      {/* MapLibre container — inline style required: MapLibre reads offsetHeight at init
-          time, before Tailwind CSS is applied, so explicit px/vh values are needed */}
-      <div ref={mapContainer} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
 
-      {/* Loading overlay — hidden once map fires 'load' */}
+      {/* MapLibre container — position:absolute + top/left/right/bottom:0 fills
+          the containing block reliably. MapLibre reads offsetHeight synchronously
+          at Map() init time; using explicit positioned edges guarantees it sees
+          the full viewport height, not 300px (browser default for unsized divs). */}
+      <div
+        ref={mapContainer}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+
+      {/* Loading overlay */}
       {!mapReady && (
-        <div className="absolute inset-0 bg-[#0f1117] flex items-center justify-center z-10">
-          <p className="text-white text-sm animate-pulse">Načítám 3D náhled...</p>
+        <div style={{ position: 'absolute', inset: 0, background: '#0f1117', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+          <p style={{ color: '#fff', fontSize: 14 }}>Načítám 3D náhled...</p>
         </div>
       )}
 
@@ -273,13 +268,12 @@ export default function Preview3DPage() {
           ← Zpět na mapu
         </button>
 
-        {/* Mission info badge */}
-        {mission && (
+        {missionMeta && (
           <div className="px-3 py-2 bg-[#1a1d27]/90 backdrop-blur border border-gray-700 rounded text-xs text-gray-400 leading-relaxed">
             <div className="text-white font-medium mb-0.5">3D náhled mise</div>
-            <div>{mission.waypoints.length} waypointů</div>
+            <div>{missionMeta.count} waypointů</div>
             <div className="text-gray-600 text-[10px] mt-1">
-              {new Date(mission.timestamp).toLocaleTimeString('cs-CZ', {
+              {new Date(missionMeta.timestamp).toLocaleTimeString('cs-CZ', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
