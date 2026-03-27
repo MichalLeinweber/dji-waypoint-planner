@@ -4,8 +4,8 @@
 // Loaded in a new browser tab; reads mission data from localStorage.
 //
 // CesiumJS requires:
-//   1. window.CESIUM_BASE_URL = '/cesium/' set before Viewer init so the
-//      runtime can find Workers/Assets/ThirdParty files in public/cesium/.
+//   1. window.CESIUM_BASE_URL set to the Cesium CDN URL BEFORE import('cesium')
+//      so Workers, Assets and ThirdParty load from CDN, not from /cesium/.
 //   2. Dynamic import inside useEffect — never top-level — to avoid SSR errors
 //      (Cesium accesses window/document on import).
 
