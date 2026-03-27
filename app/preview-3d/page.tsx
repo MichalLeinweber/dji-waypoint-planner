@@ -11,6 +11,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Waypoint } from '@/lib/types';
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const MAPTILER_KEY = 'NQ17i4ILvwLqvcc4FjbU';
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 // Scroll zoom sensitivity presets — lower value = slower zoom
@@ -107,10 +111,10 @@ export default function Preview3DPage() {
       const maplibregl = (await import('maplibre-gl')).default;
       await import('maplibre-gl/dist/maplibre-gl.css');
 
-      // 3. Create the map — container div is already in the DOM with correct dimensions
+      // 3. Create the map with MapTiler hybrid (satellite + labels) style
       map = new maplibregl.Map({
         container: mapContainer.current!,
-        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        style: `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`,
         center: [center.lng, center.lat],
         zoom: 14,
         pitch: 60,
@@ -124,23 +128,46 @@ export default function Preview3DPage() {
       mapRef.current = map;
 
       // 4. Tune scroll zoom sensitivity (defaults are too fast)
-      // setWheelZoomRate: rate per wheel tick (default ~1/450)
-      // setZoomRate: rate for trackpad pinch/scroll (default ~1/100)
       map.scrollZoom.setWheelZoomRate(SENSITIVITY.medium.wheel);
       map.scrollZoom.setZoomRate(SENSITIVITY.medium.trackpad);
 
       map.on('load', () => {
+        // ── Sky layer — realistic atmosphere effect ────────────────────
+        map.addLayer({
+          id: 'sky',
+          type: 'sky',
+          paint: {
+            'sky-type': 'atmosphere',
+            'sky-atmosphere-sun': [0.0, 90.0],
+            'sky-atmosphere-sun-intensity': 15,
+          },
+        });
+
+        // ── 3D terrain (DEM) ──────────────────────────────────────────
+        // MapTiler terrain-rgb-v2 provides elevation data for realistic 3D terrain.
+        // exaggeration: 1.5 — slightly amplifies hills for better visual effect.
+        map.addSource('terrain-source', {
+          type: 'raster-dem',
+          url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`,
+          tileSize: 256,
+        });
+        map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 });
+
         // ── Waypoint route as a GeoJSON LineString ────────────────────
-        // Coordinates: [lng, lat, height] for 3D context
+        // Coordinates: [lng, lat, height] — height in metres above terrain.
+        // Orange colour is more visible against satellite imagery than blue.
         map.addSource('wp-route', {
           type: 'geojson',
           data: {
-            type: 'Feature',
-            geometry: {
-              type: 'LineString',
-              coordinates: wps.map((wp: Waypoint) => [wp.lng, wp.lat, wp.height ?? 50]),
-            },
-            properties: {},
+            type: 'FeatureCollection',
+            features: [{
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: wps.map((wp: Waypoint) => [wp.lng, wp.lat, wp.height ?? 50]),
+              },
+              properties: {},
+            }],
           },
         });
 
@@ -149,7 +176,7 @@ export default function Preview3DPage() {
           type: 'line',
           source: 'wp-route',
           layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 'line-color': '#3b82f6', 'line-width': 3, 'line-opacity': 0.9 },
+          paint: { 'line-color': '#f97316', 'line-width': 4, 'line-opacity': 1 },
         });
 
         // ── Waypoint markers ──────────────────────────────────────────
@@ -159,8 +186,9 @@ export default function Preview3DPage() {
         });
 
         // ── 3D buildings ──────────────────────────────────────────────
-        // Carto dark-matter is based on OpenMapTiles schema.
-        // Discover the vector source at runtime instead of hard-coding its name.
+        // MapTiler hybrid may already render buildings as 2D polygons.
+        // We attempt to add fill-extrusion on top for a 3D effect.
+        // Runtime source discovery handles different style source naming.
         const styleSources = map.getStyle().sources as Record<string, { type?: string }>;
         const vectorSourceId = Object.keys(styleSources).find(
           (id: string) => styleSources[id].type === 'vector',
@@ -182,11 +210,12 @@ export default function Preview3DPage() {
                 'fill-extrusion-base': [
                   'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0,
                 ],
-                'fill-extrusion-opacity': 0.75,
+                'fill-extrusion-opacity': 0.6,
               },
             });
           } catch {
-            // Building extrusion failed silently — rest of the view still works
+            // Building extrusion failed silently — hybrid style already renders
+            // buildings as 2D, so the view still works without the 3D layer.
           }
         }
 
@@ -220,6 +249,8 @@ export default function Preview3DPage() {
   }
 
   // ── Toggle 3D buildings ───────────────────────────────────────────────────
+  // Only functional if the fill-extrusion layer was successfully added at load.
+  // If hybrid style renders buildings natively (2D), this is silently a no-op.
   function handleToggleBuildings() {
     if (!mapRef.current?.getLayer('3d-buildings')) return;
     const next = !buildingsVisible;
@@ -373,7 +404,7 @@ export default function Preview3DPage() {
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
           <div className="px-4 py-2 bg-[#1a1d27]/90 backdrop-blur border border-gray-700 rounded-full flex items-center gap-4 text-xs text-gray-400">
             <span className="flex items-center gap-1.5">
-              <span className="w-4 h-0.5 bg-blue-500 inline-block rounded" />
+              <span className="w-4 h-0.5 bg-orange-500 inline-block rounded" />
               Trasa
             </span>
             <span className="flex items-center gap-1.5">
