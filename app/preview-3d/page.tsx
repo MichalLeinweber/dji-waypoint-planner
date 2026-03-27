@@ -142,8 +142,6 @@ export default function Preview3DPage() {
         maxZoom: 18,
         antialias: false,       // faster GPU rendering — terrain + satellite is heavy
         fadeDuration: 0,        // no tile fade-in — removes visual jumps during movement
-        pitchWithRotate: false, // decouple pitch from rotation — smoother controls
-        dragRotate: false,      // disable right-mouse rotation — confusing on desktop
       };
       map = new maplibregl.Map(mapOptions);
 
@@ -152,6 +150,13 @@ export default function Preview3DPage() {
       // 4. Tune scroll zoom sensitivity — fixed to low (1/800 wheel, 1/300 trackpad)
       map.scrollZoom.setWheelZoomRate(1 / 800);
       map.scrollZoom.setZoomRate(1 / 300);
+
+      // 5. Enable drag-rotate (pitch via right-mouse) but disable touch rotation.
+      // dragRotate controls both bearing and pitch on desktop — we keep it on.
+      // disableRotation() removes only the rotational component on touch devices,
+      // leaving pinch-zoom intact. On desktop right-mouse drag = pitch up/down.
+      map.dragRotate.enable();
+      map.touchZoomRotate.disableRotation();
 
       map.on('load', () => {
         // ── Sky layer — realistic atmosphere effect ────────────────────
@@ -176,9 +181,14 @@ export default function Preview3DPage() {
         map.setTerrain({ source: 'terrain-source', exaggeration: 1.0 });
 
         // ── Waypoint route as a GeoJSON LineString ────────────────────
-        // Uses absoluteCoords (ground elevation + AGL height) so the route
-        // appears at the correct altitude above the 3D terrain surface.
-        // HTML Markers stay at ground level — only the LineString flies up.
+        // absoluteCoords already contain MSL altitude (ground + AGL).
+        // line-z-offset adds an additional per-feature offset on top of the
+        // terrain surface so the route visually floats above the ground even
+        // when the terrain DEM and the Z coordinate don't align perfectly.
+        // avgHeight = mean AGL height of all waypoints used as z-offset value.
+        const avgHeight =
+          wps.reduce((s: number, wp: Waypoint) => s + (wp.height ?? 50), 0) / wps.length;
+
         map.addSource('wp-route', {
           type: 'geojson',
           data: {
@@ -189,7 +199,7 @@ export default function Preview3DPage() {
                 type: 'LineString',
                 coordinates: absoluteCoords,
               },
-              properties: {},
+              properties: { height: avgHeight },
             }],
           },
         });
@@ -199,7 +209,12 @@ export default function Preview3DPage() {
           type: 'line',
           source: 'wp-route',
           layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 'line-color': '#f97316', 'line-width': 4, 'line-opacity': 1 },
+          paint: {
+            'line-color': '#f97316',
+            'line-width': 4,
+            'line-opacity': 1,
+            'line-z-offset': ['get', 'height'],
+          },
         });
 
         // ── Waypoint markers ──────────────────────────────────────────
@@ -293,8 +308,8 @@ export default function Preview3DPage() {
   }
 
   function handleBirdView() {
-    // pitch 30° = more top-down — overview of the whole route
-    mapRef.current?.easeTo({ pitch: 30, duration: 800 });
+    // pitch 0° + bearing 0° = exactly overhead — true bird's eye view
+    mapRef.current?.easeTo({ pitch: 0, bearing: 0, duration: 800 });
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -407,7 +422,7 @@ export default function Preview3DPage() {
               <span className="w-3 h-3 rounded-full bg-orange-500 inline-block" />
               Waypoint
             </span>
-            <span className="text-gray-600">Pohyb: levé tlač. · Zoom: scroll · Náklon: Ctrl + levé tlač.</span>
+            <span className="text-gray-600">Pohyb: levé tlač. · Zoom: scroll · Náklon: pravé tlač. nahoru/dolů</span>
           </div>
         </div>
       )}
