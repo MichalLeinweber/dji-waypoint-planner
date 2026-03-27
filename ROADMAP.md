@@ -26,6 +26,7 @@
 - [x] Vyhledávání adresy (Nominatim, abstrakční vrstva)
 - [x] Filmařský modul Fáze 3 (Boomerang, Rocket, POI Sequence)
 - [x] Terrain Following (Open-Meteo API, batching, safety floor 2 m)
+- [x] 3D náhled mise (MapLibre GL JS, Carto styl, 3D budovy, route LineString)
 
 ---
 *Aktualizuj tento soubor při každé session kdy se

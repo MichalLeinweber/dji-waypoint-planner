@@ -428,15 +428,32 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* Terrain Following — shown only when there are waypoints */}
+      {/* Terrain Following + 3D Preview — shown only when there are waypoints */}
       {waypoints.length > 0 && (
-        <div className="px-3 pb-2 flex-shrink-0">
+        <div className="px-3 pb-2 flex-shrink-0 flex flex-col gap-2">
           <TerrainFollowingButton
             waypoints={waypoints}
             terrainActive={terrainActive}
             onApply={onTerrainApply}
             onReset={onTerrainReset}
           />
+          <button
+            onClick={() => {
+              // Store mission data in localStorage so the new tab can read it
+              localStorage.setItem(
+                'preview3d-mission',
+                JSON.stringify({
+                  waypoints,
+                  missionType,
+                  timestamp: Date.now(),
+                }),
+              );
+              window.open('/preview-3d', '_blank');
+            }}
+            className="w-full py-1.5 bg-[#0f1117] text-gray-300 text-xs rounded border border-gray-600 hover:border-purple-500 hover:text-white transition-colors"
+          >
+            🔭 3D náhled
+          </button>
         </div>
       )}
 

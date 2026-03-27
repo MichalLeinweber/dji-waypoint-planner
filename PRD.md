@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-27 (Session 15)*
+*Poslední aktualizace: 2026-03-27 (Session 16)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -176,6 +176,7 @@ Aplikace zobrazí krok za krokem:
 - `/missions` – seznam uložených misí
 - `/guide` – detailní návod přenosu KMZ do DJI RC 2 (6 kroků)
 - `/help` – kompletní nápověda (fotogrammetrie + filmařský modul)
+- `/preview-3d` – 3D náhled mise (MapLibre GL JS, nový tab)
 
 **Help sekce (/help):**
 - Navigační kotvy: #foto / #film / #prenos
@@ -184,6 +185,15 @@ Aplikace zobrazí krok za krokem:
 - Filmařský modul: 6 karet záběrů, doporučené rychlosti
 - Hyperlapse výpočet: vzorec + příklad
 - Limit 200 waypointů: barevná legenda + tabulka řešení
+
+**3D náhled mise:**
+- `app/preview-3d/page.tsx` — MapLibre GL JS, otevírá se v novém tabu
+- Data přes `localStorage['preview3d-mission']` (JSON s waypoints + timestamp)
+- Carto dark-matter styl (zdarma, bez API klíče), pitch 60°, bearing 0°
+- 3D budovy z OpenMapTiles/Carto vector tiles (fill-extrusion, runtime source discovery)
+- Trasa jako GeoJSON LineString `[lng, lat, height]`, oranžové waypoint markery
+- Ovládání: ← Zpět, Resetovat pohled, toggle 🏢 Budovy
+- Tlačítko `🔭 3D náhled` v Sidebar, zobrazí se pouze při `waypoints.length > 0`
 
 **Terrain Following:**
 - `lib/terrainFollowing.ts` — Open-Meteo Elevation API, batching po 100 bodech, TODO swap na Mapbox/SRTM
