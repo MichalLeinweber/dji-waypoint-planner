@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-27 (Session 14)*
+*Poslední aktualizace: 2026-03-27 (Session 15)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -185,6 +185,13 @@ Aplikace zobrazí krok za krokem:
 - Hyperlapse výpočet: vzorec + příklad
 - Limit 200 waypointů: barevná legenda + tabulka řešení
 
+**Terrain Following:**
+- `lib/terrainFollowing.ts` — Open-Meteo Elevation API, batching po 100 bodech, TODO swap na Mapbox/SRTM
+- `components/TerrainFollowingButton.tsx` — 3 stavy (idle, loading, active), reset na originální výšky
+- Vzorec: `newHeight = max(2, (elev[i] - elev[0]) + originalHeight[i])` — zachová AGL výšku nad terénem
+- Badge `🏔 Terrain` v hlavičce sidebaru při aktivním terrain following
+- Auto-reset při každém novém generování mise
+
 **Vyhledávání adresy:**
 - `lib/geocoding.ts` — abstrakční vrstva (Nominatim/OSM), připravena na swap na Mapy.cz / Mapbox
 - `components/SearchBar.tsx` — input s lupou, debounce 500ms, dropdown max 5 výsledků, loading/prázdno/chyba
@@ -199,7 +206,6 @@ Aplikace zobrazí krok za krokem:
 
 ### 📋 Plánováno – budoucí rozvoj
 - Import KMZ zpět do aplikace (editace existující mise)
-- Výpočet výšky terénu (terrain following)
 - Sdílení misí jako URL odkaz
 - Anglická jazyková mutace
 

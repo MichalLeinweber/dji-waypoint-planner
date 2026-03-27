@@ -29,6 +29,11 @@ export default function HomePage() {
   const [isExporting, setIsExporting] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
+  // ── Terrain Following state ──────────────────────────────────
+  // originalWaypoints stores heights before terrain adjustment so they can be restored
+  const [originalWaypoints, setOriginalWaypoints] = useState<Waypoint[] | null>(null);
+  const [terrainActive, setTerrainActive] = useState(false);
+
   // ── App mode: photo workflow vs. cinematic film shots ─────────
   const [appMode, setAppMode] = useState<'photo' | 'film'>('photo');
   const [filmType, setFilmType] = useState<FilmType>('dronie');
@@ -250,17 +255,24 @@ export default function HomePage() {
 
   const handleClearAll = useCallback(() => {
     setWaypoints([]);
+    setTerrainActive(false);
+    setOriginalWaypoints(null);
   }, []);
 
   /** Replace all waypoints with a newly generated set (spiral/grid/orbit/film) */
   const handleSetWaypoints = useCallback((wps: Waypoint[]) => {
     setWaypoints(wps);
+    // New mission always starts without terrain following applied
+    setTerrainActive(false);
+    setOriginalWaypoints(null);
   }, []);
 
   /** Change mission type — clear waypoints and any mode-specific state */
   const handleMissionTypeChange = useCallback((type: MissionType) => {
     setMissionType(type);
     setWaypoints([]);
+    setTerrainActive(false);
+    setOriginalWaypoints(null);
     setGridDrawStep('idle');
     setPendingSw(null);
     setIsSelectingPoi(false);
@@ -291,6 +303,25 @@ export default function HomePage() {
     setFacadeMode(mode);
     setWaypoints([]);
   }, []);
+
+  // ── Terrain Following ────────────────────────────────────────
+
+  /** Apply elevation-adjusted waypoints — saves originals so they can be restored */
+  const handleTerrainApply = useCallback((adjusted: Waypoint[]) => {
+    // Save the originals only on first activation (not on re-apply)
+    setOriginalWaypoints((prev) => prev ?? waypoints);
+    setWaypoints(adjusted);
+    setTerrainActive(true);
+  }, [waypoints]);
+
+  /** Restore waypoints to their pre-terrain-following heights */
+  const handleTerrainReset = useCallback(() => {
+    if (originalWaypoints) {
+      setWaypoints(originalWaypoints);
+    }
+    setTerrainActive(false);
+    setOriginalWaypoints(null);
+  }, [originalWaypoints]);
 
   // ── Save / Export ────────────────────────────────────────────
 
@@ -447,6 +478,9 @@ export default function HomePage() {
         poiSeqPoi={poiSeqPoi}
         isSelectingPoiSeq={isSelectingPoiSeq}
         onSelectPoiSeq={() => setIsSelectingPoiSeq(true)}
+        terrainActive={terrainActive}
+        onTerrainApply={handleTerrainApply}
+        onTerrainReset={handleTerrainReset}
         onSaveMission={handleSaveMission}
         onExportKMZ={handleExportKMZ}
         isExporting={isExporting}

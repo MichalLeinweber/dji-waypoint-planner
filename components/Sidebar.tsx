@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import SearchBar from './SearchBar';
+import TerrainFollowingButton from './TerrainFollowingButton';
 import WaypointPanel from './WaypointPanel';
 import SpiralPanel from './SpiralPanel';
 import GridPanel from './GridPanel';
@@ -119,6 +120,10 @@ interface SidebarProps {
   poiSeqPoi: { lat: number; lng: number } | null;
   isSelectingPoiSeq: boolean;
   onSelectPoiSeq: () => void;
+  // Terrain Following
+  terrainActive: boolean;
+  onTerrainApply: (adjusted: import('@/lib/types').Waypoint[]) => void;
+  onTerrainReset: () => void;
   // Save / Export
   onSaveMission: () => void;
   onExportKMZ: () => void;
@@ -189,6 +194,9 @@ export default function Sidebar({
   poiSeqPoi,
   isSelectingPoiSeq,
   onSelectPoiSeq,
+  terrainActive,
+  onTerrainApply,
+  onTerrainReset,
   onSaveMission,
   onExportKMZ,
   isExporting,
@@ -205,7 +213,14 @@ export default function Sidebar({
 
       {/* App logo/title */}
       <div className="px-4 py-3 border-b border-gray-700 flex-shrink-0">
-        <h1 className="text-white font-bold text-sm tracking-wide">DJI Waypoint Planner</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-white font-bold text-sm tracking-wide">DJI Waypoint Planner</h1>
+          {terrainActive && (
+            <span className="text-xs text-green-400 bg-green-400/10 border border-green-700 rounded px-1.5 py-0.5">
+              🏔 Terrain
+            </span>
+          )}
+        </div>
         <p className="text-gray-500 text-xs">Mini 4 Pro</p>
       </div>
 
@@ -412,6 +427,18 @@ export default function Sidebar({
           />
         )}
       </div>
+
+      {/* Terrain Following — shown only when there are waypoints */}
+      {waypoints.length > 0 && (
+        <div className="px-3 pb-2 flex-shrink-0">
+          <TerrainFollowingButton
+            waypoints={waypoints}
+            terrainActive={terrainActive}
+            onApply={onTerrainApply}
+            onReset={onTerrainReset}
+          />
+        </div>
+      )}
 
       {/* Action buttons */}
       <div className="px-3 py-3 border-t border-gray-700 flex flex-col gap-2 flex-shrink-0">

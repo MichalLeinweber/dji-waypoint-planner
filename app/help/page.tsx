@@ -176,6 +176,12 @@ export default function HelpPage() {
             🎬 Filmařský modul
           </a>
           <a
+            href="#terrain"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-green-800 text-green-400 hover:bg-green-900/30 transition-colors"
+          >
+            🏔 Terrain Following
+          </a>
+          <a
             href="#prenos"
             className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-gray-600 text-gray-400 hover:bg-gray-800 transition-colors"
           >
@@ -651,7 +657,40 @@ export default function HelpPage() {
           </table>
         </section>
 
-        {/* ── F: Přenos do RC 2 ── */}
+        {/* ── F: Terrain Following ── */}
+        <section id="terrain" className={sectionClass}>
+          <h2 className={h2Class}>Terrain Following</h2>
+          <p className="text-gray-400 text-sm leading-relaxed mb-4">
+            Terrain Following automaticky upraví výšky waypointů podle skutečného terénu pod trasou.
+            Dron tak letí ve stejné výšce nad zemí po celou trasu — pokud trasa překračuje kopec,
+            výška se automaticky zvýší, aby dron neklesl příliš blízko terénu.
+          </p>
+
+          <div className="bg-[#1a1d27] border border-gray-700 rounded-lg px-4 py-4 text-sm mb-4">
+            <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-3">
+              Jak aktivovat
+            </p>
+            <ol className="flex flex-col gap-2 text-gray-300 text-sm">
+              <li className="flex gap-2"><span className="text-green-500 font-bold">1.</span> Vygeneruj misi (waypoints, grid, film...)</li>
+              <li className="flex gap-2"><span className="text-green-500 font-bold">2.</span> V panelu klikni na tlačítko <span className="text-white font-medium">&quot;🏔 Přizpůsobit terénu&quot;</span></li>
+              <li className="flex gap-2"><span className="text-green-500 font-bold">3.</span> Aplikace stáhne data výšky terénu (Open-Meteo, zdarma)</li>
+              <li className="flex gap-2"><span className="text-green-500 font-bold">4.</span> Výšky waypointů se automaticky upraví</li>
+            </ol>
+            <p className="mt-4 text-xs text-gray-500">
+              Aktivní terrain following zobrazí zelený badge <span className="text-green-400">🏔 Terrain</span> v hlavičce panelu.
+              Tlačítkem <span className="text-white">&quot;Resetovat výšky&quot;</span> se vrátíš k původním hodnotám.
+            </p>
+          </div>
+
+          <div className="bg-yellow-900/20 border border-yellow-800/50 rounded-lg px-4 py-3 text-xs text-yellow-400 leading-relaxed">
+            ⚠ <span className="font-medium">Upozornění:</span> Výšky waypointů jsou vždy relativní od místa vzletu.
+            Terrain following kompenzuje převýšení terénu oproti startovní pozici — nezaručuje však
+            bezpečnou vzdálenost od stromů, budov ani jiných překážek nad terénem.
+            Vždy vizuálně zkontroluj trasu před letem.
+          </div>
+        </section>
+
+        {/* ── G: Přenos do RC 2 ── */}
         <section id="prenos" className={sectionClass}>
           <h2 className={h2Class}>Přenos mise do RC 2</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">

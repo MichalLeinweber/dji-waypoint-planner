@@ -7,8 +7,6 @@
 - [ ] Import KMZ zpět do aplikace (editace existující mise)
 
 ## 📋 Střední priorita
-- [ ] Terrain following – výška waypointů přizpůsobena
-      terénu (Open-Meteo API nebo podobné, zdarma)
 - [ ] Sdílení misí jako URL odkaz (URL encode JSON mise)
 - [ ] Anglická jazyková mutace (i18n)
 
@@ -27,6 +25,7 @@
 - [x] Help sekce – fotogrammetrie + filmařský modul
 - [x] Vyhledávání adresy (Nominatim, abstrakční vrstva)
 - [x] Filmařský modul Fáze 3 (Boomerang, Rocket, POI Sequence)
+- [x] Terrain Following (Open-Meteo API, batching, safety floor 2 m)
 
 ---
 *Aktualizuj tento soubor při každé session kdy se
