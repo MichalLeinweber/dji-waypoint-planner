@@ -1,19 +1,21 @@
 'use client';
 
-// 3D Mission Preview — renders the waypoint route over a 3D MapLibre map.
+// 3D Mission Preview — renders the waypoint route in true 3D using CesiumJS.
 // Loaded in a new browser tab; reads mission data from localStorage.
 //
-// Key layout rule: the MapLibre container must use position:absolute with
-// explicit top/left/right/bottom:0 — NOT height:'100%' or CSS-class-based
-// height — because MapLibre reads offsetHeight synchronously at init time,
-// before class-based styles may be computed.
+// CesiumJS requires:
+//   1. window.CESIUM_BASE_URL = '/cesium/' set before Viewer init so the
+//      runtime can find Workers/Assets/ThirdParty files in public/cesium/.
+//   2. Dynamic import inside useEffect — never top-level — to avoid SSR errors
+//      (Cesium accesses window/document on import).
 
 import { useEffect, useRef, useState } from 'react';
 import { Waypoint } from '@/lib/types';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const MAPTILER_KEY = 'NQ17i4ILvwLqvcc4FjbU';
+const CESIUM_TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2NWEzNjhlMC02NGExLTQwZTItYjViMS04Njg2MTU0Y2MxYmUiLCJpZCI6NDEwMTE1LCJpYXQiOjE3NzQ2MjU2Mzh9.9HUaqrFxt1P7tEG4BS49E_jycr6b4_TpuhAa0tkEjDY';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -24,30 +26,15 @@ function centroid(waypoints: Waypoint[]): { lng: number; lat: number } {
   return { lng, lat };
 }
 
-/** Creates the orange HTML element used as a numbered waypoint marker */
-function makeMarkerEl(index: number, height: number): HTMLElement {
-  const el = document.createElement('div');
-  el.style.cssText = `
-    width:24px;height:24px;border-radius:50%;
-    background:#f97316;border:2px solid #fff;
-    display:flex;align-items:center;justify-content:center;
-    font-size:10px;font-weight:bold;color:#fff;
-    cursor:default;user-select:none;
-    box-shadow:0 2px 6px rgba(0,0,0,.6);
-  `;
-  el.textContent = String(index + 1);
-  el.title = `WP${index + 1} — ${height} m`;
-  return el;
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Preview3DPage() {
-  const mapContainer = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapRef = useRef<any>(null);
+  const viewerRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tilesetRef = useRef<any>(null);
 
-  // Display-only state — mission data is read inside the single useEffect
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [buildingsVisible, setBuildingsVisible] = useState(true);
@@ -57,14 +44,12 @@ export default function Preview3DPage() {
     center: { lng: number; lat: number };
   } | null>(null);
 
-  // ── Single effect: read data + init MapLibre ──────────────────────────────
-  // Keeping everything in one effect guarantees the container div is already
-  // in the DOM (with its styles applied) when new maplibregl.Map() is called.
+  // ── Single effect: read data + init Cesium ────────────────────────────────
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!containerRef.current) return;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let map: any = null;
+    let viewer: any = null;
 
     (async () => {
       // 1. Read mission from localStorage
@@ -96,13 +81,10 @@ export default function Preview3DPage() {
       const center = centroid(wps);
       setMissionMeta({ count: wps.length, timestamp, center });
 
-      // 2. Fetch ground elevation for each waypoint from Open-Meteo.
-      // MapLibre treats GeoJSON Z coordinates as metres above sea level (MSL),
-      // not above ground. We add ground elevation so the route flies at the
-      // correct AGL height above the 3D terrain surface.
-      let absoluteCoords: [number, number, number][] = wps.map(
-        (wp: Waypoint) => [wp.lng, wp.lat, wp.height ?? 50],
-      );
+      // 2. Fetch ground elevation from Open-Meteo for each waypoint.
+      // Cesium World Terrain uses real elevation data, but we still need
+      // ground elevation to compute absolute altitude (MSL = ground + AGL).
+      let groundElevs: number[] = wps.map(() => 0);
       try {
         const lats = wps.map((wp: Waypoint) => wp.lat).join(',');
         const lngs = wps.map((wp: Waypoint) => wp.lng).join(',');
@@ -111,205 +93,192 @@ export default function Preview3DPage() {
         );
         if (elevRes.ok) {
           const elevData = await elevRes.json() as { elevation: number[] };
-          absoluteCoords = wps.map((wp: Waypoint, i: number) => [
-            wp.lng,
-            wp.lat,
-            (elevData.elevation[i] ?? 0) + (wp.height ?? 50),
-          ]);
+          groundElevs = elevData.elevation ?? groundElevs;
         }
       } catch {
-        // Elevation fetch failed — fall back to AGL heights (route may sit on terrain)
+        // Elevation fetch failed — waypoints will use AGL heights from MSL=0
       }
 
-      // 3. Dynamic import — runs only in the browser, never on the server
-      const maplibregl = (await import('maplibre-gl')).default;
-      await import('maplibre-gl/dist/maplibre-gl.css');
-
-      // 3. Create the map with MapTiler hybrid (satellite + labels) style.
-      // Options cast to any: MapLibre TS types omit antialias/fadeDuration
-      // in some versions even though the runtime supports them.
+      // 3. Dynamic import — runs only in the browser, never on the server.
+      // CESIUM_BASE_URL must be set BEFORE the import so Workers load correctly.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mapOptions: any = {
-        container: mapContainer.current!,
-        style: `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`,
-        center: [center.lng, center.lat],
-        zoom: 14,
-        pitch: 60,
-        bearing: 0,
-        bearingSnap: 0,         // no snap — smooth continuous rotation
-        maxPitch: 85,
-        minZoom: 12,
-        maxZoom: 18,
-        antialias: false,       // faster GPU rendering — terrain + satellite is heavy
-        fadeDuration: 0,        // no tile fade-in — removes visual jumps during movement
-      };
-      map = new maplibregl.Map(mapOptions);
+      (window as any).CESIUM_BASE_URL = '/cesium/';
+      const Cesium = (await import('cesium')).default;
+      await import('cesium/Build/Cesium/Widgets/widgets.css');
 
-      mapRef.current = map;
+      Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
 
-      // 4. Tune scroll zoom sensitivity — fixed to low (1/800 wheel, 1/300 trackpad)
-      map.scrollZoom.setWheelZoomRate(1 / 800);
-      map.scrollZoom.setZoomRate(1 / 300);
-
-      // 5. Enable drag-rotate (pitch via right-mouse) but disable touch rotation.
-      // dragRotate controls both bearing and pitch on desktop — we keep it on.
-      // disableRotation() removes only the rotational component on touch devices,
-      // leaving pinch-zoom intact. On desktop right-mouse drag = pitch up/down.
-      map.dragRotate.enable();
-      map.touchZoomRotate.disableRotation();
-
-      map.on('load', () => {
-        // ── Sky layer — realistic atmosphere effect ────────────────────
-        map.addLayer({
-          id: 'sky',
-          type: 'sky',
-          paint: {
-            'sky-type': 'atmosphere',
-            'sky-atmosphere-sun': [0.0, 90.0],
-            'sky-atmosphere-sun-intensity': 15,
-          },
-        });
-
-        // ── 3D terrain (DEM) ──────────────────────────────────────────
-        // MapTiler terrain-rgb-v2 provides elevation data for realistic 3D terrain.
-        // exaggeration: 1.0 — real heights without amplification = stable rendering.
-        map.addSource('terrain-source', {
-          type: 'raster-dem',
-          url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`,
-          tileSize: 256,
-        });
-        map.setTerrain({ source: 'terrain-source', exaggeration: 1.0 });
-
-        // ── Waypoint route as a GeoJSON LineString ────────────────────
-        // absoluteCoords already contain MSL altitude (ground + AGL).
-        // line-z-offset adds an additional per-feature offset on top of the
-        // terrain surface so the route visually floats above the ground even
-        // when the terrain DEM and the Z coordinate don't align perfectly.
-        // avgHeight = mean AGL height of all waypoints used as z-offset value.
-        const avgHeight =
-          wps.reduce((s: number, wp: Waypoint) => s + (wp.height ?? 50), 0) / wps.length;
-
-        map.addSource('wp-route', {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: [{
-              type: 'Feature',
-              geometry: {
-                type: 'LineString',
-                coordinates: absoluteCoords,
-              },
-              properties: { height: avgHeight },
-            }],
-          },
-        });
-
-        map.addLayer({
-          id: 'wp-route-line',
-          type: 'line',
-          source: 'wp-route',
-          layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: {
-            'line-color': '#f97316',
-            'line-width': 4,
-            'line-opacity': 1,
-            'line-z-offset': ['get', 'height'],
-          },
-        });
-
-        // ── Waypoint markers ──────────────────────────────────────────
-        wps.forEach((wp: Waypoint, i: number) => {
-          const el = makeMarkerEl(i, wp.height ?? 50);
-          new maplibregl.Marker({ element: el }).setLngLat([wp.lng, wp.lat]).addTo(map);
-        });
-
-        // ── 3D buildings ──────────────────────────────────────────────
-        // MapTiler hybrid renders buildings as 2D raster (satellite imagery),
-        // so fill-extrusion via the hybrid style's sources doesn't work.
-        // Solution: add a dedicated OpenMapTiles vector source for buildings.
-        // No before-layer reference — avoids silent failure if layer name differs.
-        const style = map.getStyle();
-        console.log('Available sources:', Object.keys(style.sources));
-        try {
-          map.addSource('openmaptiles', {
-            type: 'vector',
-            url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`,
-          });
-          map.addLayer({
-            id: '3d-buildings',
-            source: 'openmaptiles',
-            'source-layer': 'building',
-            type: 'fill-extrusion',
-            minzoom: 14,
-            paint: {
-              'fill-extrusion-color': '#e8d5b0',
-              'fill-extrusion-height': [
-                'coalesce', ['get', 'render_height'], ['get', 'height'], 10,
-              ],
-              'fill-extrusion-base': [
-                'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0,
-              ],
-              'fill-extrusion-opacity': 0.85,
-            },
-          });
-          console.log('3D buildings layer added');
-        } catch (e) {
-          console.warn('3D buildings failed:', e);
-        }
-
-        // ── Cinematic flyTo on load ───────────────────────────────────
-        map.flyTo({
-          center: [center.lng, center.lat],
-          zoom: 15,
-          pitch: 60,
-          bearing: 0,
-          duration: 1500,
-          essential: true,
-        });
-
-        setMapReady(true);
+      // 4. Create Cesium Viewer with World Terrain + Bing satellite imagery.
+      // All built-in UI widgets are disabled — we provide our own overlay.
+      viewer = new Cesium.Viewer(containerRef.current!, {
+        terrainProvider: await Cesium.createWorldTerrainAsync({
+          requestWaterMask: true,
+          requestVertexNormals: true,
+        }),
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        animation: false,
+        timeline: false,
+        fullscreenButton: false,
+        infoBox: false,
+        selectionIndicator: false,
       });
+
+      viewerRef.current = viewer;
+
+      // 5. OSM Buildings — free 3D buildings from Cesium ion
+      try {
+        const tileset = await Cesium.createOsmBuildingsAsync();
+        viewer.scene.primitives.add(tileset);
+        tilesetRef.current = tileset;
+      } catch {
+        // OSM Buildings failed silently — scene still shows terrain + route
+      }
+
+      // 6. Build absolute positions: ground elevation + AGL waypoint height
+      const avgElev = groundElevs.reduce((s, e) => s + e, 0) / groundElevs.length;
+      const positions = wps.map((wp: Waypoint, i: number) =>
+        Cesium.Cartesian3.fromDegrees(
+          wp.lng,
+          wp.lat,
+          (groundElevs[i] ?? 0) + (wp.height ?? 50),
+        ),
+      );
+
+      // 7. Waypoint route as a glowing polyline in the air
+      viewer.entities.add({
+        polyline: {
+          positions,
+          width: 4,
+          material: new Cesium.PolylineGlowMaterialProperty({
+            glowPower: 0.2,
+            color: Cesium.Color.ORANGE,
+          }),
+          clampToGround: false, // fly in the air, not on terrain
+        },
+      });
+
+      // 8. Waypoint markers: orange point + numbered label at flight altitude
+      wps.forEach((wp: Waypoint, i: number) => {
+        viewer.entities.add({
+          position: positions[i],
+          point: {
+            pixelSize: 12,
+            color: Cesium.Color.ORANGE,
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 2,
+            heightReference: Cesium.HeightReference.NONE,
+          },
+          label: {
+            text: String(i + 1),
+            font: '13px sans-serif',
+            fillColor: Cesium.Color.WHITE,
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth: 2,
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(0, -16),
+            heightReference: Cesium.HeightReference.NONE,
+          },
+        });
+      });
+
+      // 9. Initial camera — 45° oblique view over the mission centroid
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(
+          center.lng,
+          center.lat - 0.005,
+          avgElev + 500,
+        ),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-45),
+          roll: 0,
+        },
+      });
+
+      setMapReady(true);
     })();
 
     return () => {
-      map?.remove();
-      mapRef.current = null;
+      viewer?.destroy();
+      viewerRef.current = null;
+      tilesetRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once — data and map init happen together inside the effect
+  }, []);
 
-  // ── Toggle 3D buildings ───────────────────────────────────────────────────
-  // Only functional if the fill-extrusion layer was successfully added at load.
-  // If hybrid style renders buildings natively (2D), this is silently a no-op.
+  // ── Toggle OSM Buildings ──────────────────────────────────────────────────
   function handleToggleBuildings() {
-    if (!mapRef.current?.getLayer('3d-buildings')) return;
+    if (!tilesetRef.current) return;
     const next = !buildingsVisible;
-    mapRef.current.setLayoutProperty('3d-buildings', 'visibility', next ? 'visible' : 'none');
+    tilesetRef.current.show = next;
     setBuildingsVisible(next);
   }
 
-  // ── Reset camera to centroid ──────────────────────────────────────────────
-  function handleResetView() {
-    if (!missionMeta) return;
-    mapRef.current?.flyTo({
-      center: [missionMeta.center.lng, missionMeta.center.lat],
-      zoom: 15,
-      pitch: 60,
-      bearing: 0,
-      duration: 1200,
-      essential: true,
+  // ── Camera presets ────────────────────────────────────────────────────────
+  async function getCesium() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (await import('cesium')).default as any;
+  }
+
+  async function handleResetView() {
+    if (!viewerRef.current || !missionMeta) return;
+    const Cesium = await getCesium();
+    viewerRef.current.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(
+        missionMeta.center.lng,
+        missionMeta.center.lat - 0.005,
+        500,
+      ),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-45),
+        roll: 0,
+      },
+      duration: 1.5,
     });
   }
 
-  // ── Pitch presets ─────────────────────────────────────────────────────────
-  function handleSideView() {
-    // pitch 80° = nearly horizontal — shows building facades and horizon
-    mapRef.current?.easeTo({ pitch: 80, duration: 800 });
+  async function handleSideView() {
+    // pitch -30° = low angle, shows facades and horizon
+    if (!viewerRef.current || !missionMeta) return;
+    const Cesium = await getCesium();
+    viewerRef.current.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(
+        missionMeta.center.lng,
+        missionMeta.center.lat - 0.008,
+        300,
+      ),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-30),
+        roll: 0,
+      },
+      duration: 1.0,
+    });
   }
 
-  function handleBirdView() {
-    // pitch 0° + bearing 0° = exactly overhead — true bird's eye view
-    mapRef.current?.easeTo({ pitch: 0, bearing: 0, duration: 800 });
+  async function handleBirdView() {
+    // pitch -90° = exactly overhead — true bird's eye view
+    if (!viewerRef.current || !missionMeta) return;
+    const Cesium = await getCesium();
+    viewerRef.current.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(
+        missionMeta.center.lng,
+        missionMeta.center.lat,
+        800,
+      ),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-90),
+        roll: 0,
+      },
+      duration: 1.0,
+    });
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -333,15 +302,11 @@ export default function Preview3DPage() {
   }
 
   return (
-    // Outer wrapper: explicit 100vw × 100vh with position:relative as containing block
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#0f1117' }}>
 
-      {/* MapLibre container — position:absolute + top/left/right/bottom:0 fills
-          the containing block reliably. MapLibre reads offsetHeight synchronously
-          at Map() init time; using explicit positioned edges guarantees it sees
-          the full viewport height, not 300px (browser default for unsized divs). */}
+      {/* Cesium container — must fill full viewport */}
       <div
-        ref={mapContainer}
+        ref={containerRef}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
 
@@ -371,7 +336,6 @@ export default function Preview3DPage() {
                 minute: '2-digit',
               })}
             </div>
-
           </div>
         )}
       </div>
@@ -422,7 +386,7 @@ export default function Preview3DPage() {
               <span className="w-3 h-3 rounded-full bg-orange-500 inline-block" />
               Waypoint
             </span>
-            <span className="text-gray-600">Pohyb: levé tlač. · Zoom: scroll · Náklon: pravé tlač. nahoru/dolů</span>
+            <span className="text-gray-600">Orbit: levé tlač. · Pan: střední tlač. · Zoom: pravé tlač. / scroll</span>
           </div>
         </div>
       )}

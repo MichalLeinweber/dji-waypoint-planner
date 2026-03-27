@@ -11,8 +11,8 @@ const nextConfig = {
   // Empty turbopack config tells Next.js 16 that we intentionally use webpack
   // (required because next-pwa adds a webpack plugin)
   turbopack: {},
-  // maplibre-gl is an ESM package that webpack needs to transpile
-  transpilePackages: ['maplibre-gl'],
+  // cesium is an ESM package that webpack needs to transpile
+  transpilePackages: ['cesium'],
 };
 
 module.exports = withPWA(nextConfig);
