@@ -111,6 +111,7 @@ export default function Preview3DPage() {
         zoom: 14,
         pitch: 60,
         bearing: 0,
+        maxPitch: 85,
       });
 
       mapRef.current = map as MapHandle;
@@ -219,6 +220,23 @@ export default function Preview3DPage() {
     });
   }
 
+  // ── Pitch presets ─────────────────────────────────────────────────────────
+  function handleSideView() {
+    // pitch 80° = nearly horizontal — shows building facades and horizon
+    (mapRef.current as unknown as { easeTo(opts: object): void } | null)?.easeTo({
+      pitch: 80,
+      duration: 800,
+    });
+  }
+
+  function handleBirdView() {
+    // pitch 30° = more top-down — overview of the whole route
+    (mapRef.current as unknown as { easeTo(opts: object): void } | null)?.easeTo({
+      pitch: 30,
+      duration: 800,
+    });
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (loadError) {
@@ -284,12 +302,26 @@ export default function Preview3DPage() {
 
       {/* ── Top-right controls ── */}
       <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 items-end">
-        <button
-          onClick={handleResetView}
-          className="px-3 py-1.5 bg-[#1a1d27]/90 backdrop-blur border border-gray-600 text-gray-300 text-xs rounded hover:border-blue-500 hover:text-white transition-colors"
-        >
-          Resetovat pohled
-        </button>
+        <div className="flex gap-1">
+          <button
+            onClick={handleResetView}
+            className="px-3 py-1.5 bg-[#1a1d27]/90 backdrop-blur border border-gray-600 text-gray-300 text-xs rounded hover:border-blue-500 hover:text-white transition-colors"
+          >
+            Resetovat pohled
+          </button>
+          <button
+            onClick={handleSideView}
+            className="px-3 py-1.5 bg-[#1a1d27]/90 backdrop-blur border border-gray-600 text-gray-300 text-xs rounded hover:border-blue-500 hover:text-white transition-colors"
+          >
+            👁 Boční pohled
+          </button>
+          <button
+            onClick={handleBirdView}
+            className="px-3 py-1.5 bg-[#1a1d27]/90 backdrop-blur border border-gray-600 text-gray-300 text-xs rounded hover:border-blue-500 hover:text-white transition-colors"
+          >
+            🔭 Ptačí pohled
+          </button>
+        </div>
         <button
           onClick={handleToggleBuildings}
           className={`px-3 py-1.5 backdrop-blur border text-xs rounded transition-colors ${
