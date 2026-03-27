@@ -3,6 +3,7 @@
 // Interactive Leaflet map component (must be imported with next/dynamic + ssr:false)
 // Leaflet uses browser-only APIs (window, document) so it cannot run on the server.
 import { useEffect, useRef } from 'react';
+import type { LatLngExpression } from 'leaflet';
 import { MapContainer, TileLayer, Polyline, Rectangle, Polygon, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -87,6 +88,8 @@ interface MapProps {
   facadeLine: [[number, number], [number, number]] | null;
   /** Optional building polygon for 360° facade mode — 4 corners [[lat,lng],...] */
   buildingPolygon: [[number, number], [number, number], [number, number], [number, number]] | null;
+  /** When set, the map smoothly flies to these coordinates at the given zoom level */
+  flyToTarget: { lat: number; lng: number; zoom: number } | null;
 }
 
 export default function MapView({
@@ -99,6 +102,7 @@ export default function MapView({
   gridRect,
   facadeLine,
   buildingPolygon,
+  flyToTarget,
 }: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
@@ -117,6 +121,13 @@ export default function MapView({
       container.classList.add('leaflet-grab');
     }
   }, [crosshairCursor]);
+
+  // Fly to a location when flyToTarget changes (triggered by address search)
+  useEffect(() => {
+    if (!mapRef.current || !flyToTarget) return;
+    const target: LatLngExpression = [flyToTarget.lat, flyToTarget.lng];
+    mapRef.current.flyTo(target, flyToTarget.zoom, { animate: true, duration: 1 });
+  }, [flyToTarget]);
 
   // Sync markers whenever waypoints or draggable flag changes
   useEffect(() => {

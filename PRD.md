@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-26 (Session 12)*
+*Poslední aktualizace: 2026-03-27 (Session 13)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -181,6 +181,14 @@ Aplikace zobrazí krok za krokem:
 - Filmařský modul: 6 karet záběrů, doporučené rychlosti
 - Hyperlapse výpočet: vzorec + příklad
 - Limit 200 waypointů: barevná legenda + tabulka řešení
+
+**Vyhledávání adresy:**
+- `lib/geocoding.ts` — abstrakční vrstva (Nominatim/OSM), připravena na swap na Mapy.cz / Mapbox
+- `components/SearchBar.tsx` — input s lupou, debounce 500ms, dropdown max 5 výsledků, loading/prázdno/chyba
+- Integrováno do sidebaru jako první element (před Foto/Film přepínačem)
+- Kliknutí na výsledek → `map.flyTo([lat,lng], zoom 17)` přes `flyToTarget` prop
+- Omezeno na ČR (`countrycodes=cz`), User-Agent: `DJI-Waypoint-Planner/1.0`
+- Help stránka: přidán krok 1 „Najdi lokaci pomocí vyhledávacího pole..."
 
 **Opravené bugy:**
 - Leaflet crosshair cursor (leaflet-grab přebíjel CSS – oprava přes classList)

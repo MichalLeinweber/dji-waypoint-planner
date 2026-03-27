@@ -36,6 +36,14 @@ export default function HomePage() {
   // ── Map state ────────────────────────────────────────────────
   const [mapCenter, setMapCenter] = useState({ lat: 50.08, lng: 14.42 });
 
+  // ── Fly-to target (driven by address search in SearchBar) ─────
+  // Setting a new object triggers the useEffect in Map.tsx which calls map.flyTo().
+  const [flyToTarget, setFlyToTarget] = useState<{ lat: number; lng: number; zoom: number } | null>(null);
+
+  const handleFlyTo = useCallback((lat: number, lng: number) => {
+    setFlyToTarget({ lat, lng, zoom: 17 });
+  }, []);
+
   // ── Grid state ───────────────────────────────────────────────
   const [gridCorners, setGridCorners] = useState<{ sw: [number, number]; ne: [number, number] } | null>(null);
   const [gridDrawStep, setGridDrawStep] = useState<'idle' | 'sw' | 'ne'>('idle');
@@ -337,6 +345,7 @@ export default function HomePage() {
         waypoints={waypoints}
         missionType={missionType}
         onMissionTypeChange={handleMissionTypeChange}
+        onFlyTo={handleFlyTo}
         appMode={appMode}
         onAppModeChange={handleAppModeChange}
         filmType={filmType}
@@ -403,6 +412,7 @@ export default function HomePage() {
           gridRect={gridRect}
           facadeLine={facadeLine}
           buildingPolygon={buildingPolygon}
+          flyToTarget={flyToTarget}
         />
       </main>
     </div>

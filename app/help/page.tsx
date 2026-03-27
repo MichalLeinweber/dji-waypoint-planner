@@ -171,6 +171,7 @@ export default function HelpPage() {
           </p>
           <ol className="space-y-2 text-sm text-gray-300 list-none">
             {[
+              'Najdi lokaci pomocí vyhledávacího pole adresy nahoře v panelu, nebo přibliž mapu ručně',
               'Vyber režim (📷 Foto nebo 🎬 Film) a typ mise v záložkách',
               'Nastav parametry a klikni na mapu nebo stiskni Generovat',
               'Zkontroluj trasu zobrazenou na mapě',

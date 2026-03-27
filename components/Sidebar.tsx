@@ -3,6 +3,7 @@
 // Left sidebar (desktop) / bottom drawer (mobile) with mission controls
 import { useState } from 'react';
 import Link from 'next/link';
+import SearchBar from './SearchBar';
 import WaypointPanel from './WaypointPanel';
 import SpiralPanel from './SpiralPanel';
 import GridPanel from './GridPanel';
@@ -102,6 +103,8 @@ interface SidebarProps {
   onSaveMission: () => void;
   onExportKMZ: () => void;
   isExporting: boolean;
+  // Address search — flies the map to the selected location
+  onFlyTo: (lat: number, lng: number) => void;
 }
 
 export default function Sidebar({
@@ -158,11 +161,17 @@ export default function Sidebar({
   onSaveMission,
   onExportKMZ,
   isExporting,
+  onFlyTo,
 }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const content = (
     <div className="flex flex-col h-full">
+      {/* Address search — above everything else */}
+      <div className="px-3 pt-3 pb-2 flex-shrink-0">
+        <SearchBar onFlyTo={onFlyTo} />
+      </div>
+
       {/* App logo/title */}
       <div className="px-4 py-3 border-b border-gray-700 flex-shrink-0">
         <h1 className="text-white font-bold text-sm tracking-wide">DJI Waypoint Planner</h1>
