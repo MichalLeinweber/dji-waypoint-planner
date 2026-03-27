@@ -70,6 +70,7 @@ export default function Preview3DPage() {
     count: number;
     timestamp: number;
     center: { lng: number; lat: number };
+    avgDisplayHeight: number;
   } | null>(null);
 
   // ── Single effect: read data + init Cesium ────────────────────────────────
@@ -119,7 +120,7 @@ export default function Preview3DPage() {
         }
 
         const center = centroid(wps);
-        setMissionMeta({ count: wps.length, timestamp, center });
+        setMissionMeta({ count: wps.length, timestamp, center, avgDisplayHeight: 0 });
 
         // 3. Fetch ground elevation from Open-Meteo for each waypoint.
         // Cesium World Terrain renders real elevation, but positions need
@@ -177,15 +178,23 @@ export default function Preview3DPage() {
           console.warn('[preview-3d] OSM Buildings failed to load');
         }
 
-        // 6. Build absolute positions: ground elevation + AGL waypoint height
+        // 6. Build absolute positions: ground elevation + AGL waypoint height.
+        // For visualization only — KMZ export uses the original heights unchanged.
+        // Minimum AGL is raised to 80 m so the route flies clearly above buildings.
         const avgElev = groundElevs.reduce((s, e) => s + e, 0) / groundElevs.length;
-        const positions = wps.map((wp: Waypoint, i: number) =>
-          Cesium.Cartesian3.fromDegrees(
+        const positions = wps.map((wp: Waypoint, i: number) => {
+          const aglHeight = Math.max(wp.height ?? 50, 80);
+          return Cesium.Cartesian3.fromDegrees(
             wp.lng,
             wp.lat,
-            (groundElevs[i] ?? 0) + (wp.height ?? 50),
-          ),
+            (groundElevs[i] ?? 0) + aglHeight,
+          );
+        });
+        const avgDisplayHeight = Math.round(
+          wps.reduce((s, wp) => s + Math.max(wp.height ?? 50, 80), 0) / wps.length,
         );
+        // Update meta with the computed display height
+        setMissionMeta(prev => prev ? { ...prev, avgDisplayHeight } : prev);
 
         // 7. Waypoint route as a glowing polyline in the air
         viewer.entities.add({
@@ -376,6 +385,11 @@ export default function Preview3DPage() {
           <div className="px-3 py-2 bg-[#1a1d27]/90 backdrop-blur border border-gray-700 rounded text-xs text-gray-400 leading-relaxed">
             <div className="text-white font-medium mb-0.5">3D náhled mise</div>
             <div>{missionMeta.count} waypointů</div>
+            {missionMeta.avgDisplayHeight > 0 && (
+              <div className="text-gray-500 text-[10px] mt-0.5">
+                Výška v náhledu: {missionMeta.avgDisplayHeight} m AGL
+              </div>
+            )}
             <div className="text-gray-600 text-[10px] mt-1">
               {new Date(missionMeta.timestamp).toLocaleTimeString('cs-CZ', {
                 hour: '2-digit',
