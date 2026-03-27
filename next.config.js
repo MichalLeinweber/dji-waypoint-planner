@@ -11,8 +11,7 @@ const nextConfig = {
   // Empty turbopack config tells Next.js 16 that we intentionally use webpack
   // (required because next-pwa adds a webpack plugin)
   turbopack: {},
-  // cesium is an ESM package that webpack needs to transpile
-  transpilePackages: ['cesium'],
+  // No transpilePackages needed — Cesium is loaded via CDN script tag
 };
 
 module.exports = withPWA(nextConfig);

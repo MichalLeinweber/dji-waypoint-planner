@@ -3,11 +3,8 @@
 // 3D Mission Preview — renders the waypoint route in true 3D using CesiumJS.
 // Loaded in a new browser tab; reads mission data from localStorage.
 //
-// CesiumJS requires:
-//   1. window.CESIUM_BASE_URL set to the Cesium CDN URL BEFORE import('cesium')
-//      so Workers, Assets and ThirdParty load from CDN, not from /cesium/.
-//   2. Dynamic import inside useEffect — never top-level — to avoid SSR errors
-//      (Cesium accesses window/document on import).
+// Cesium is loaded via CDN <script> tag (not npm dynamic import) to avoid
+// Next.js bundling issues with the large CesiumJS package on Vercel.
 
 import { useEffect, useRef, useState } from 'react';
 import { Waypoint } from '@/lib/types';
@@ -17,6 +14,9 @@ import { Waypoint } from '@/lib/types';
 const CESIUM_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2NWEzNjhlMC02NGExLTQwZTItYjViMS04Njg2MTU0Y2MxYmUiLCJpZCI6NDEwMTE1LCJpYXQiOjE3NzQ2MjU2Mzh9.9HUaqrFxt1P7tEG4BS49E_jycr6b4_TpuhAa0tkEjDY';
 
+const CESIUM_CDN =
+  'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium';
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Returns the geographic centroid of a waypoint array */
@@ -24,6 +24,33 @@ function centroid(waypoints: Waypoint[]): { lng: number; lat: number } {
   const lng = waypoints.reduce((s, wp) => s + wp.lng, 0) / waypoints.length;
   const lat = waypoints.reduce((s, wp) => s + wp.lat, 0) / waypoints.length;
   return { lng, lat };
+}
+
+/**
+ * Injects Cesium CSS + JS from CDN and resolves when window.Cesium is ready.
+ * Skips injection if Cesium is already present (idempotent).
+ */
+function loadCesiumScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).Cesium) {
+      resolve();
+      return;
+    }
+
+    // CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `${CESIUM_CDN}/Widgets/widgets.css`;
+    document.head.appendChild(link);
+
+    // JS
+    const script = document.createElement('script');
+    script.src = `${CESIUM_CDN}/Cesium.js`;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Nepodařilo se načíst Cesium z CDN.'));
+    document.head.appendChild(script);
+  });
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -36,6 +63,7 @@ export default function Preview3DPage() {
   const tilesetRef = useRef<any>(null);
 
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<string>('Načítám Cesium...');
   const [mapReady, setMapReady] = useState(false);
   const [buildingsVisible, setBuildingsVisible] = useState(true);
   const [missionMeta, setMissionMeta] = useState<{
@@ -53,170 +81,162 @@ export default function Preview3DPage() {
 
     (async () => {
       try {
-      // 1. Set CDN base URL BEFORE import('cesium') — Cesium reads this on module init.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).CESIUM_BASE_URL =
-        'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/';
+        // 1. Load Cesium from CDN via script tag
+        setLoading('Načítám Cesium...');
+        await loadCesiumScript();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const Cesium = (window as any).Cesium;
+        console.log('[preview-3d] Cesium loaded from CDN:', !!Cesium);
 
-      // 2. Read mission from localStorage
-      const raw = localStorage.getItem('preview3d-mission');
-      console.log('[preview-3d] localStorage key exists:', !!raw);
-      if (!raw) {
-        setLoadError('Žádná mise k zobrazení. Otevři 3D náhled z plánovacího panelu.');
-        return;
-      }
+        Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
 
-      let wps: Waypoint[];
-      let timestamp: number;
-      try {
-        const parsed = JSON.parse(raw) as {
-          waypoints: Waypoint[];
-          missionType: string;
-          timestamp: number;
-        };
-        if (!parsed.waypoints?.length) {
-          setLoadError('Mise neobsahuje žádné waypointy.');
+        // 2. Read mission from localStorage
+        const raw = localStorage.getItem('preview3d-mission');
+        console.log('[preview-3d] localStorage key exists:', !!raw);
+        if (!raw) {
+          setLoadError('Žádná mise k zobrazení. Otevři 3D náhled z plánovacího panelu.');
           return;
         }
-        wps = parsed.waypoints;
-        timestamp = parsed.timestamp;
-        console.log('[preview-3d] Waypoints loaded:', wps.length);
-      } catch {
-        setLoadError('Nepodařilo se načíst data mise.');
-        return;
-      }
 
-      const center = centroid(wps);
-      setMissionMeta({ count: wps.length, timestamp, center });
-
-      // 3. Fetch ground elevation from Open-Meteo for each waypoint.
-      // Cesium World Terrain uses real elevation data, but we still need
-      // ground elevation to compute absolute altitude (MSL = ground + AGL).
-      let groundElevs: number[] = wps.map(() => 0);
-      try {
-        const lats = wps.map((wp: Waypoint) => wp.lat).join(',');
-        const lngs = wps.map((wp: Waypoint) => wp.lng).join(',');
-        const elevRes = await fetch(
-          `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`,
-        );
-        if (elevRes.ok) {
-          const elevData = await elevRes.json() as { elevation: number[] };
-          groundElevs = elevData.elevation ?? groundElevs;
-          console.log('[preview-3d] Elevations fetched, first value:', groundElevs[0]);
+        let wps: Waypoint[];
+        let timestamp: number;
+        try {
+          const parsed = JSON.parse(raw) as {
+            waypoints: Waypoint[];
+            missionType: string;
+            timestamp: number;
+          };
+          if (!parsed.waypoints?.length) {
+            setLoadError('Mise neobsahuje žádné waypointy.');
+            return;
+          }
+          wps = parsed.waypoints;
+          timestamp = parsed.timestamp;
+          console.log('[preview-3d] Waypoints loaded:', wps.length);
+        } catch {
+          setLoadError('Nepodařilo se načíst data mise.');
+          return;
         }
-      } catch {
-        console.warn('[preview-3d] Elevation fetch failed, using 0');
-      }
 
-      // 4. Dynamic import Cesium — runs only in the browser, never on the server.
-      console.log('[preview-3d] Importing Cesium...');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const CesiumModule = await import('cesium') as any;
-      const Cesium = CesiumModule.default ?? CesiumModule;
-      console.log('[preview-3d] Cesium imported:', !!Cesium);
+        const center = centroid(wps);
+        setMissionMeta({ count: wps.length, timestamp, center });
 
-      try {
-        await import('cesium/Build/Cesium/Widgets/widgets.css');
-      } catch (cssErr) {
-        console.warn('[preview-3d] CSS import failed (ok in some environments):', cssErr);
-      }
+        // 3. Fetch ground elevation from Open-Meteo for each waypoint.
+        // Cesium World Terrain renders real elevation, but positions need
+        // absolute MSL altitude = ground elevation + AGL waypoint height.
+        setLoading('Načítám výšková data...');
+        let groundElevs: number[] = wps.map(() => 0);
+        try {
+          const lats = wps.map((wp: Waypoint) => wp.lat).join(',');
+          const lngs = wps.map((wp: Waypoint) => wp.lng).join(',');
+          const elevRes = await fetch(
+            `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`,
+          );
+          if (elevRes.ok) {
+            const elevData = await elevRes.json() as { elevation: number[] };
+            groundElevs = elevData.elevation ?? groundElevs;
+            console.log('[preview-3d] Elevations fetched, first value:', groundElevs[0]);
+          }
+        } catch {
+          console.warn('[preview-3d] Elevation fetch failed, using 0');
+        }
 
-      Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
-
-      // 4. Create Cesium Viewer with World Terrain + Bing satellite imagery.
-      // All built-in UI widgets are disabled — we provide our own overlay.
-      viewer = new Cesium.Viewer(containerRef.current!, {
-        terrainProvider: await Cesium.createWorldTerrainAsync({
-          requestWaterMask: true,
-          requestVertexNormals: true,
-        }),
-        baseLayerPicker: false,
-        geocoder: false,
-        homeButton: false,
-        sceneModePicker: false,
-        navigationHelpButton: false,
-        animation: false,
-        timeline: false,
-        fullscreenButton: false,
-        infoBox: false,
-        selectionIndicator: false,
-      });
-
-      viewerRef.current = viewer;
-
-      // 5. OSM Buildings — free 3D buildings from Cesium ion
-      try {
-        const tileset = await Cesium.createOsmBuildingsAsync();
-        viewer.scene.primitives.add(tileset);
-        tilesetRef.current = tileset;
-      } catch {
-        // OSM Buildings failed silently — scene still shows terrain + route
-      }
-
-      // 6. Build absolute positions: ground elevation + AGL waypoint height
-      const avgElev = groundElevs.reduce((s, e) => s + e, 0) / groundElevs.length;
-      const positions = wps.map((wp: Waypoint, i: number) =>
-        Cesium.Cartesian3.fromDegrees(
-          wp.lng,
-          wp.lat,
-          (groundElevs[i] ?? 0) + (wp.height ?? 50),
-        ),
-      );
-
-      // 7. Waypoint route as a glowing polyline in the air
-      viewer.entities.add({
-        polyline: {
-          positions,
-          width: 4,
-          material: new Cesium.PolylineGlowMaterialProperty({
-            glowPower: 0.2,
-            color: Cesium.Color.ORANGE,
+        // 4. Create Cesium Viewer with World Terrain + Bing satellite imagery
+        setLoading('Inicializuji 3D scénu...');
+        viewer = new Cesium.Viewer(containerRef.current!, {
+          terrainProvider: await Cesium.createWorldTerrainAsync({
+            requestWaterMask: true,
+            requestVertexNormals: true,
           }),
-          clampToGround: false, // fly in the air, not on terrain
-        },
-      });
+          baseLayerPicker: false,
+          geocoder: false,
+          homeButton: false,
+          sceneModePicker: false,
+          navigationHelpButton: false,
+          animation: false,
+          timeline: false,
+          fullscreenButton: false,
+          infoBox: false,
+          selectionIndicator: false,
+        });
 
-      // 8. Waypoint markers: orange point + numbered label at flight altitude
-      wps.forEach((wp: Waypoint, i: number) => {
+        viewerRef.current = viewer;
+        console.log('[preview-3d] Viewer created');
+
+        // 5. OSM Buildings — free 3D buildings from Cesium ion
+        try {
+          const tileset = await Cesium.createOsmBuildingsAsync();
+          viewer.scene.primitives.add(tileset);
+          tilesetRef.current = tileset;
+        } catch {
+          // OSM Buildings failed silently — scene still shows terrain + route
+          console.warn('[preview-3d] OSM Buildings failed to load');
+        }
+
+        // 6. Build absolute positions: ground elevation + AGL waypoint height
+        const avgElev = groundElevs.reduce((s, e) => s + e, 0) / groundElevs.length;
+        const positions = wps.map((wp: Waypoint, i: number) =>
+          Cesium.Cartesian3.fromDegrees(
+            wp.lng,
+            wp.lat,
+            (groundElevs[i] ?? 0) + (wp.height ?? 50),
+          ),
+        );
+
+        // 7. Waypoint route as a glowing polyline in the air
         viewer.entities.add({
-          position: positions[i],
-          point: {
-            pixelSize: 12,
-            color: Cesium.Color.ORANGE,
-            outlineColor: Cesium.Color.WHITE,
-            outlineWidth: 2,
-            heightReference: Cesium.HeightReference.NONE,
-          },
-          label: {
-            text: String(i + 1),
-            font: '13px sans-serif',
-            fillColor: Cesium.Color.WHITE,
-            outlineColor: Cesium.Color.BLACK,
-            outlineWidth: 2,
-            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            pixelOffset: new Cesium.Cartesian2(0, -16),
-            heightReference: Cesium.HeightReference.NONE,
+          polyline: {
+            positions,
+            width: 4,
+            material: new Cesium.PolylineGlowMaterialProperty({
+              glowPower: 0.2,
+              color: Cesium.Color.ORANGE,
+            }),
+            clampToGround: false, // fly in the air, not on terrain
           },
         });
-      });
 
-      // 9. Initial camera — 45° oblique view over the mission centroid
-      viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(
-          center.lng,
-          center.lat - 0.005,
-          avgElev + 500,
-        ),
-        orientation: {
-          heading: Cesium.Math.toRadians(0),
-          pitch: Cesium.Math.toRadians(-45),
-          roll: 0,
-        },
-      });
+        // 8. Waypoint markers: orange point + numbered label at flight altitude
+        wps.forEach((wp: Waypoint, i: number) => {
+          viewer.entities.add({
+            position: positions[i],
+            point: {
+              pixelSize: 12,
+              color: Cesium.Color.ORANGE,
+              outlineColor: Cesium.Color.WHITE,
+              outlineWidth: 2,
+              heightReference: Cesium.HeightReference.NONE,
+            },
+            label: {
+              text: String(i + 1),
+              font: '13px sans-serif',
+              fillColor: Cesium.Color.WHITE,
+              outlineColor: Cesium.Color.BLACK,
+              outlineWidth: 2,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              pixelOffset: new Cesium.Cartesian2(0, -16),
+              heightReference: Cesium.HeightReference.NONE,
+            },
+          });
+        });
 
-      console.log('[preview-3d] Cesium ready');
-      setMapReady(true);
+        // 9. Initial camera — 45° oblique view over the mission centroid
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(
+            center.lng,
+            center.lat - 0.005,
+            avgElev + 500,
+          ),
+          orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-45),
+            roll: 0,
+          },
+        });
+
+        console.log('[preview-3d] Scene ready');
+        setMapReady(true);
 
       } catch (err) {
         console.error('[preview-3d] Initialization error:', err);
@@ -240,15 +260,16 @@ export default function Preview3DPage() {
     setBuildingsVisible(next);
   }
 
-  // ── Camera presets ────────────────────────────────────────────────────────
-  async function getCesium() {
+  // ── Camera helpers — window.Cesium is available after CDN script loads ────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function getCesium(): any {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (await import('cesium')).default as any;
+    return (window as any).Cesium;
   }
 
-  async function handleResetView() {
+  function handleResetView() {
     if (!viewerRef.current || !missionMeta) return;
-    const Cesium = await getCesium();
+    const Cesium = getCesium();
     viewerRef.current.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(
         missionMeta.center.lng,
@@ -264,10 +285,10 @@ export default function Preview3DPage() {
     });
   }
 
-  async function handleSideView() {
-    // pitch -30° = low angle, shows facades and horizon
+  function handleSideView() {
+    // pitch -30° = low angle, shows building facades and horizon
     if (!viewerRef.current || !missionMeta) return;
-    const Cesium = await getCesium();
+    const Cesium = getCesium();
     viewerRef.current.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(
         missionMeta.center.lng,
@@ -283,10 +304,10 @@ export default function Preview3DPage() {
     });
   }
 
-  async function handleBirdView() {
+  function handleBirdView() {
     // pitch -90° = exactly overhead — true bird's eye view
     if (!viewerRef.current || !missionMeta) return;
-    const Cesium = await getCesium();
+    const Cesium = getCesium();
     viewerRef.current.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(
         missionMeta.center.lng,
@@ -331,23 +352,10 @@ export default function Preview3DPage() {
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
 
-      {/* Loading / error overlay */}
+      {/* Loading overlay — shows step-by-step progress */}
       {!mapReady && (
         <div style={{ position: 'absolute', inset: 0, background: '#0f1117', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-          {loadError ? (
-            <div style={{ textAlign: 'center', maxWidth: 400, padding: '0 24px' }}>
-              <p style={{ color: '#f97316', fontWeight: 600, marginBottom: 8 }}>Chyba načítání</p>
-              <p style={{ color: '#9ca3af', fontSize: 13, lineHeight: 1.6 }}>{loadError}</p>
-              <button
-                onClick={() => window.close()}
-                style={{ marginTop: 20, padding: '6px 14px', background: '#1a1d27', border: '1px solid #4b5563', color: '#d1d5db', fontSize: 13, borderRadius: 6, cursor: 'pointer' }}
-              >
-                ← Zavřít
-              </button>
-            </div>
-          ) : (
-            <p style={{ color: '#fff', fontSize: 14 }}>Načítám 3D náhled...</p>
-          )}
+          <p style={{ color: '#9ca3af', fontSize: 14 }}>{loading}</p>
         </div>
       )}
 
