@@ -111,19 +111,26 @@ export default function Preview3DPage() {
       const maplibregl = (await import('maplibre-gl')).default;
       await import('maplibre-gl/dist/maplibre-gl.css');
 
-      // 3. Create the map with MapTiler hybrid (satellite + labels) style
-      map = new maplibregl.Map({
+      // 3. Create the map with MapTiler hybrid (satellite + labels) style.
+      // Options cast to any: MapLibre TS types omit antialias/fadeDuration
+      // in some versions even though the runtime supports them.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mapOptions: any = {
         container: mapContainer.current!,
         style: `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`,
         center: [center.lng, center.lat],
         zoom: 14,
         pitch: 60,
         bearing: 0,
-        bearingSnap: 0,   // no snap — smooth continuous rotation
+        bearingSnap: 0,         // no snap — smooth continuous rotation
         maxPitch: 85,
         minZoom: 12,
         maxZoom: 18,
-      });
+        antialias: false,       // faster GPU rendering — terrain + satellite is heavy
+        fadeDuration: 0,        // no tile fade-in — removes visual jumps during movement
+        pitchWithRotate: false, // decouple pitch from rotation — smoother controls
+      };
+      map = new maplibregl.Map(mapOptions);
 
       mapRef.current = map;
 
@@ -145,13 +152,13 @@ export default function Preview3DPage() {
 
         // ── 3D terrain (DEM) ──────────────────────────────────────────
         // MapTiler terrain-rgb-v2 provides elevation data for realistic 3D terrain.
-        // exaggeration: 1.5 — slightly amplifies hills for better visual effect.
+        // exaggeration: 1.0 — real heights without amplification = stable rendering.
         map.addSource('terrain-source', {
           type: 'raster-dem',
           url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`,
           tileSize: 256,
         });
-        map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 });
+        map.setTerrain({ source: 'terrain-source', exaggeration: 1.0 });
 
         // ── Waypoint route as a GeoJSON LineString ────────────────────
         // Coordinates: [lng, lat, height] — height in metres above terrain.
@@ -186,37 +193,37 @@ export default function Preview3DPage() {
         });
 
         // ── 3D buildings ──────────────────────────────────────────────
-        // MapTiler hybrid may already render buildings as 2D polygons.
-        // We attempt to add fill-extrusion on top for a 3D effect.
-        // Runtime source discovery handles different style source naming.
-        const styleSources = map.getStyle().sources as Record<string, { type?: string }>;
-        const vectorSourceId = Object.keys(styleSources).find(
-          (id: string) => styleSources[id].type === 'vector',
-        );
-
-        if (vectorSourceId) {
-          try {
-            map.addLayer({
+        // MapTiler hybrid renders buildings as 2D raster (satellite imagery),
+        // so fill-extrusion via the hybrid style's sources doesn't work.
+        // Solution: add a dedicated OpenMapTiles vector source for buildings.
+        try {
+          map.addSource('openmaptiles', {
+            type: 'vector',
+            url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`,
+          });
+          map.addLayer(
+            {
               id: '3d-buildings',
-              source: vectorSourceId,
+              source: 'openmaptiles',
               'source-layer': 'building',
               type: 'fill-extrusion',
               minzoom: 14,
               paint: {
-                'fill-extrusion-color': '#334155',
+                'fill-extrusion-color': '#aaaaaa',
+                // Interpolate height so buildings appear to grow in as you zoom in
                 'fill-extrusion-height': [
-                  'coalesce', ['get', 'render_height'], ['get', 'height'], 10,
+                  'interpolate', ['linear'], ['zoom'],
+                  14, 0,
+                  16, ['coalesce', ['get', 'render_height'], 10],
                 ],
-                'fill-extrusion-base': [
-                  'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0,
-                ],
-                'fill-extrusion-opacity': 0.6,
+                'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+                'fill-extrusion-opacity': 0.8,
               },
-            });
-          } catch {
-            // Building extrusion failed silently — hybrid style already renders
-            // buildings as 2D, so the view still works without the 3D layer.
-          }
+            },
+            'waterway', // insert below waterway layer so labels stay on top
+          );
+        } catch {
+          // Building source/layer failed silently — satellite view still works.
         }
 
         // ── Cinematic flyTo on load ───────────────────────────────────
