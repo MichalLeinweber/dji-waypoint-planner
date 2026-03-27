@@ -14,7 +14,7 @@ import { saveMission } from '@/lib/missionStore';
 const MapView = dynamic(() => import('@/components/Map'), { ssr: false });
 
 /** Shot types available in film mode */
-export type FilmType = 'dronie' | 'reveal' | 'topdown' | 'craneup' | 'hyperlapse' | 'arcshot';
+export type FilmType = 'dronie' | 'reveal' | 'topdown' | 'craneup' | 'hyperlapse' | 'arcshot' | 'boomerang' | 'rocket' | 'poisequence';
 
 function generateId(): string {
   return `wp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -87,6 +87,16 @@ export default function HomePage() {
   // Arc Shot
   const [arcShotPoi, setArcShotPoi] = useState<{ lat: number; lng: number } | null>(null);
   const [isSelectingArcShotPoi, setIsSelectingArcShotPoi] = useState(false);
+  // Boomerang
+  const [boomerangStart, setBoomerangStart] = useState<{ lat: number; lng: number } | null>(null);
+  const [boomerangEnd, setBoomerangEnd] = useState<{ lat: number; lng: number } | null>(null);
+  const [boomerangSelectStep, setBoomerangSelectStep] = useState<'idle' | 'start' | 'end'>('idle');
+  // Rocket
+  const [rocketPos, setRocketPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSelectingRocket, setIsSelectingRocket] = useState(false);
+  // POI Sequence
+  const [poiSeqPoi, setPoiSeqPoi] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSelectingPoiSeq, setIsSelectingPoiSeq] = useState(false);
 
   // ── Map interaction ──────────────────────────────────────────
 
@@ -99,7 +109,10 @@ export default function HomePage() {
     isSelectingTopDownEnd ||
     isSelectingCraneUpPos ||
     hyperlapseSelectStep !== 'idle' ||
-    isSelectingArcShotPoi;
+    isSelectingArcShotPoi ||
+    boomerangSelectStep !== 'idle' ||
+    isSelectingRocket ||
+    isSelectingPoiSeq;
 
   /** Single handler for all map clicks — behavior depends on current mode */
   const handleMapClick = useCallback((lat: number, lng: number) => {
@@ -149,6 +162,26 @@ export default function HomePage() {
       setIsSelectingArcShotPoi(false);
       return;
     }
+    if (boomerangSelectStep === 'start') {
+      setBoomerangStart({ lat, lng });
+      setBoomerangSelectStep('idle');
+      return;
+    }
+    if (boomerangSelectStep === 'end') {
+      setBoomerangEnd({ lat, lng });
+      setBoomerangSelectStep('idle');
+      return;
+    }
+    if (isSelectingRocket) {
+      setRocketPos({ lat, lng });
+      setIsSelectingRocket(false);
+      return;
+    }
+    if (isSelectingPoiSeq) {
+      setPoiSeqPoi({ lat, lng });
+      setIsSelectingPoiSeq(false);
+      return;
+    }
 
     // ── Photo mode ───────────────────────────────────────────
 
@@ -196,6 +229,7 @@ export default function HomePage() {
     isSelectingDronieStart, isSelectingRevealPoi, isSelectingRevealStart,
     isSelectingTopDownStart, isSelectingTopDownEnd, isSelectingCraneUpPos,
     hyperlapseSelectStep, isSelectingArcShotPoi,
+    boomerangSelectStep, isSelectingRocket, isSelectingPoiSeq,
     isSelectingPoi, facadeDrawStep, pendingFacadeA, gridDrawStep, pendingSw,
     missionType, facadeMode,
   ]);
@@ -247,6 +281,9 @@ export default function HomePage() {
     setIsSelectingCraneUpPos(false);
     setHyperlapseSelectStep('idle');
     setIsSelectingArcShotPoi(false);
+    setBoomerangSelectStep('idle');
+    setIsSelectingRocket(false);
+    setIsSelectingPoiSeq(false);
   }, []);
 
   /** Switch between single-side and 360° facade modes — clears waypoints */
@@ -396,6 +433,20 @@ export default function HomePage() {
         arcShotPoi={arcShotPoi}
         isSelectingArcShotPoi={isSelectingArcShotPoi}
         onSelectArcShotPoi={() => setIsSelectingArcShotPoi(true)}
+        // Boomerang props
+        boomerangStart={boomerangStart}
+        boomerangEnd={boomerangEnd}
+        boomerangSelectStep={boomerangSelectStep}
+        onSelectBoomerangStart={() => setBoomerangSelectStep('start')}
+        onSelectBoomerangEnd={() => setBoomerangSelectStep('end')}
+        // Rocket props
+        rocketPos={rocketPos}
+        isSelectingRocket={isSelectingRocket}
+        onSelectRocket={() => setIsSelectingRocket(true)}
+        // POI Sequence props
+        poiSeqPoi={poiSeqPoi}
+        isSelectingPoiSeq={isSelectingPoiSeq}
+        onSelectPoiSeq={() => setIsSelectingPoiSeq(true)}
         onSaveMission={handleSaveMission}
         onExportKMZ={handleExportKMZ}
         isExporting={isExporting}

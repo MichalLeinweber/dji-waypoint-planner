@@ -11,10 +11,6 @@
       terénu (Open-Meteo API nebo podobné, zdarma)
 - [ ] Sdílení misí jako URL odkaz (URL encode JSON mise)
 - [ ] Anglická jazyková mutace (i18n)
-- [ ] Filmařský modul Fáze 3:
-      - Boomerang (tam a zpět po stejné trase)
-      - Rocket (přímý výstup kolmo nahoru)
-      - Point of Interest sequence (série POI záběrů)
 
 ## 💡 Nápady a budoucí rozvoj
 - [ ] Komercionalizace – multi-user, přihlášení, Supabase
@@ -30,6 +26,7 @@
 - [x] Filmařský modul Fáze 2 (Hyperlapse, Arc Shot)
 - [x] Help sekce – fotogrammetrie + filmařský modul
 - [x] Vyhledávání adresy (Nominatim, abstrakční vrstva)
+- [x] Filmařský modul Fáze 3 (Boomerang, Rocket, POI Sequence)
 
 ---
 *Aktualizuj tento soubor při každé session kdy se

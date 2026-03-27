@@ -99,6 +99,24 @@ const FILM_SHOT_TYPES: {
     when: 'Chceš dramatický obletový záběr',
     example: 'Oblet budovy s měnící se výškou',
   },
+  {
+    type: 'Boomerang',
+    tab: 'Film → Boomerang',
+    when: 'Chceš záběr tam a zpět po stejné trase',
+    example: 'Let nad řekou, přes pole, kolem budovy',
+  },
+  {
+    type: 'Rocket',
+    tab: 'Film → Rocket',
+    when: 'Chceš dramatický vzlet kolmo nahoru',
+    example: 'Rocket shot při úvodu videa',
+  },
+  {
+    type: 'POI Sequence',
+    tab: 'Film → POI Seq',
+    when: 'Chceš objekt z více perspektiv za sebou',
+    example: 'Budova ze 4 světových stran',
+  },
 ];
 
 // ── Film speed recommendations ────────────────────────────────
@@ -109,7 +127,10 @@ const FILM_SPEEDS: { shot: string; speed: string; why: string }[] = [
   { shot: 'Top-down',   speed: '1–3 m/s',   why: 'Stabilní obraz při pohledu dolů' },
   { shot: 'Crane Up',   speed: '0.5–1.5 m/s', why: 'Velmi pomalé = dramatické' },
   { shot: 'Hyperlapse', speed: '0.5–2 m/s', why: 'Závisí na intervalu focení' },
-  { shot: 'Arc Shot',   speed: '1–3 m/s',   why: 'Plynulý oblet bez rozmazání' },
+  { shot: 'Arc Shot',      speed: '1–3 m/s',   why: 'Plynulý oblet bez rozmazání' },
+  { shot: 'Boomerang',     speed: '2–4 m/s',   why: 'Plynulý pohyb tam i zpět' },
+  { shot: 'Rocket',        speed: '3–6 m/s',   why: 'Rychlejší = dramatičtější efekt' },
+  { shot: 'POI Sequence',  speed: '1–3 m/s',   why: 'Pomalý přechod mezi perspektivami' },
 ];
 
 // ── Shared style helpers ─────────────────────────────────────

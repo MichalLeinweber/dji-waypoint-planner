@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-27 (Session 13)*
+*Poslední aktualizace: 2026-03-27 (Session 14)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -162,6 +162,9 @@ Aplikace zobrazí krok za krokem:
 - Crane Up – vertikální stoupání, interpolace gimbalu -60°→0°
 - Hyperlapse – focení v intervalech, 3 gimbal módy, live výpočet délky videa
 - Arc Shot – oblet s měnící se výškou, headingAngle k POI per bod
+- Boomerang – přímá trasa tam a zpět, 6 WP, pauza v cíli, konstantní gimbal
+- Rocket – vertikální vzlet, pevný gimbal -70°, 4 WP (rychlejší než Crane Up)
+- POI Sequence – série zastávek kolem POI, editovatelná tabulka, headingAngle k POI
 
 **Správa misí:**
 - Uložení do localStorage s vlastním názvem (SaveMissionDialog)
@@ -195,7 +198,6 @@ Aplikace zobrazí krok za krokem:
 - Stale closure v useMapEvents (useRef pattern pro callbacky)
 
 ### 📋 Plánováno – budoucí rozvoj
-- Filmařský modul Fáze 3: další záběry (Boomerang, Rocket...)
 - Import KMZ zpět do aplikace (editace existující mise)
 - Výpočet výšky terénu (terrain following)
 - Sdílení misí jako URL odkaz
@@ -220,7 +222,7 @@ Aplikace zobrazí krok za krokem:
 - [x] Spirála, grid, orbit a fasáda generují validní WPML soubor
 - [x] Aplikace je instalovatelná jako PWA na Windows PC a Android telefon
 - [x] Mise se ukládají a znovu načítají správně
-- [x] Filmařský modul – 6 typů záběrů funkčních (Dronie, Reveal, Top-down, Crane Up, Hyperlapse, Arc Shot)
+- [x] Filmařský modul – 9 typů záběrů funkčních (Dronie, Reveal, Top-down, Crane Up, Hyperlapse, Arc Shot, Boomerang, Rocket, POI Sequence)
 - [x] Help sekce pokrývá všechny funkcionality (foto i film)
 
 ### Budoucí kritéria

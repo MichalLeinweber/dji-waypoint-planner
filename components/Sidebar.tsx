@@ -15,6 +15,9 @@ import TopDownPanel from './film/TopDownPanel';
 import CraneUpPanel from './film/CraneUpPanel';
 import HyperlapsePanel from './film/HyperlapsePanel';
 import ArcShotPanel from './film/ArcShotPanel';
+import BoomerangPanel from './film/BoomerangPanel';
+import RocketPanel from './film/RocketPanel';
+import PoiSequencePanel from './film/PoiSequencePanel';
 import { Waypoint, MissionType } from '@/lib/types';
 import { FilmType } from '@/app/page';
 
@@ -27,12 +30,15 @@ const PHOTO_TABS: { type: MissionType; label: string }[] = [
 ];
 
 const FILM_TABS: { type: FilmType; label: string }[] = [
-  { type: 'dronie',     label: 'Dronie'     },
-  { type: 'reveal',     label: 'Reveal'     },
-  { type: 'topdown',    label: 'Top-down'   },
-  { type: 'craneup',    label: 'Crane Up'   },
-  { type: 'hyperlapse', label: 'Hyperlapse' },
-  { type: 'arcshot',    label: 'Arc Shot'   },
+  { type: 'dronie',      label: 'Dronie'     },
+  { type: 'reveal',      label: 'Reveal'     },
+  { type: 'topdown',     label: 'Top-down'   },
+  { type: 'craneup',     label: 'Crane Up'   },
+  { type: 'hyperlapse',  label: 'Hyperlapse' },
+  { type: 'arcshot',     label: 'Arc Shot'   },
+  { type: 'boomerang',   label: 'Boomerang'  },
+  { type: 'rocket',      label: 'Rocket'     },
+  { type: 'poisequence', label: 'POI Seq'    },
 ];
 
 interface SidebarProps {
@@ -99,6 +105,20 @@ interface SidebarProps {
   arcShotPoi: { lat: number; lng: number } | null;
   isSelectingArcShotPoi: boolean;
   onSelectArcShotPoi: () => void;
+  // Film — Boomerang
+  boomerangStart: { lat: number; lng: number } | null;
+  boomerangEnd: { lat: number; lng: number } | null;
+  boomerangSelectStep: 'idle' | 'start' | 'end';
+  onSelectBoomerangStart: () => void;
+  onSelectBoomerangEnd: () => void;
+  // Film — Rocket
+  rocketPos: { lat: number; lng: number } | null;
+  isSelectingRocket: boolean;
+  onSelectRocket: () => void;
+  // Film — POI Sequence
+  poiSeqPoi: { lat: number; lng: number } | null;
+  isSelectingPoiSeq: boolean;
+  onSelectPoiSeq: () => void;
   // Save / Export
   onSaveMission: () => void;
   onExportKMZ: () => void;
@@ -158,6 +178,17 @@ export default function Sidebar({
   arcShotPoi,
   isSelectingArcShotPoi,
   onSelectArcShotPoi,
+  boomerangStart,
+  boomerangEnd,
+  boomerangSelectStep,
+  onSelectBoomerangStart,
+  onSelectBoomerangEnd,
+  rocketPos,
+  isSelectingRocket,
+  onSelectRocket,
+  poiSeqPoi,
+  isSelectingPoiSeq,
+  onSelectPoiSeq,
   onSaveMission,
   onExportKMZ,
   isExporting,
@@ -348,6 +379,35 @@ export default function Sidebar({
             poi={arcShotPoi}
             isSelectingPoi={isSelectingArcShotPoi}
             onSelectPoi={onSelectArcShotPoi}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {appMode === 'film' && filmType === 'boomerang' && (
+          <BoomerangPanel
+            start={boomerangStart}
+            end={boomerangEnd}
+            selectStep={boomerangSelectStep}
+            onSelectStart={onSelectBoomerangStart}
+            onSelectEnd={onSelectBoomerangEnd}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {appMode === 'film' && filmType === 'rocket' && (
+          <RocketPanel
+            pos={rocketPos}
+            isSelectingPos={isSelectingRocket}
+            onSelectPos={onSelectRocket}
+            onGenerate={onSetWaypoints}
+          />
+        )}
+
+        {appMode === 'film' && filmType === 'poisequence' && (
+          <PoiSequencePanel
+            poi={poiSeqPoi}
+            isSelectingPoi={isSelectingPoiSeq}
+            onSelectPoi={onSelectPoiSeq}
             onGenerate={onSetWaypoints}
           />
         )}
