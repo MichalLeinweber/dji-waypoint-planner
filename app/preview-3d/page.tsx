@@ -101,8 +101,10 @@ export default function Preview3DPage() {
 
       // 3. Dynamic import — runs only in the browser, never on the server.
       // CESIUM_BASE_URL must be set BEFORE the import so Workers load correctly.
+      // Using Cesium CDN avoids copying static files to public/ on every build.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).CESIUM_BASE_URL = '/cesium/';
+      (window as any).CESIUM_BASE_URL =
+        'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/';
       const Cesium = (await import('cesium')).default;
       await import('cesium/Build/Cesium/Widgets/widgets.css');
 
