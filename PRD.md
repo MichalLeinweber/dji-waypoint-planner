@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-27 (Session 16)*
+*Poslední aktualizace: 2026-03-27 (Session 17)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -176,7 +176,7 @@ Aplikace zobrazí krok za krokem:
 - `/missions` – seznam uložených misí
 - `/guide` – detailní návod přenosu KMZ do DJI RC 2 (6 kroků)
 - `/help` – kompletní nápověda (fotogrammetrie + filmařský modul)
-- `/preview-3d` – 3D náhled mise (MapLibre GL JS, nový tab)
+- `/preview-3d` – 3D náhled mise (CesiumJS, nový tab)
 
 **Help sekce (/help):**
 - Navigační kotvy: #foto / #film / #prenos
@@ -186,17 +186,20 @@ Aplikace zobrazí krok za krokem:
 - Hyperlapse výpočet: vzorec + příklad
 - Limit 200 waypointů: barevná legenda + tabulka řešení
 
-**3D náhled mise:**
-- `app/preview-3d/page.tsx` — MapLibre GL JS, otevírá se v novém tabu
+**3D náhled mise (CesiumJS):**
+- `app/preview-3d/page.tsx` — CesiumJS načítán z CDN script tagem (bez npm bundle), nový tab
 - Data přes `localStorage['preview3d-mission']` (JSON s waypoints + timestamp)
-- Carto dark-matter styl (zdarma, bez API klíče), pitch 60°, bearing 0°
-- 3D budovy z OpenMapTiles/Carto vector tiles (fill-extrusion, runtime source discovery)
-- Trasa jako GeoJSON LineString `[lng, lat, height]`, oranžové waypoint markery
-- Ovládání: ← Zpět, Resetovat pohled, toggle 🏢 Budovy
+- World Terrain (Cesium ion) — reálný 3D terén s vertex normály a vodními maskami
+- OSM Buildings (Cesium ion) — miliony 3D budov z OpenStreetMap, toggle tlačítkem
+- Trasa jako CesiumJS polyline s PolylineGlowMaterialProperty, `clampToGround: false`
+- Absolutní výšky: Open-Meteo MSL elevace + AGL výška waypointu (min. 80 m pro náhled)
+- Oranžové waypoint markery (pixelSize 16) s číslovanými labely ve výšce letu
+- Ovládání: orbit/pan/zoom (Cesium nativní), Ptačí pohled (pitch -90°), Boční (pitch -30°)
+- Info box: počet WP, čas mise, výška v náhledu AGL
 - Tlačítko `🔭 3D náhled` v Sidebar, zobrazí se pouze při `waypoints.length > 0`
 
 **Terrain Following:**
-- `lib/terrainFollowing.ts` — Open-Meteo Elevation API, batching po 100 bodech, TODO swap na Mapbox/SRTM
+- `lib/terrainFollowing.ts` — Open-Meteo Elevation API, batching po 100 bodech
 - `components/TerrainFollowingButton.tsx` — 3 stavy (idle, loading, active), reset na originální výšky
 - Vzorec: `newHeight = max(2, (elev[i] - elev[0]) + originalHeight[i])` — zachová AGL výšku nad terénem
 - Badge `🏔 Terrain` v hlavičce sidebaru při aktivním terrain following
@@ -242,6 +245,7 @@ Aplikace zobrazí krok za krokem:
 - [x] Help sekce pokrývá všechny funkcionality (foto i film)
 
 ### Budoucí kritéria
-- [ ] Terrain following – výška přizpůsobena terénu
+- [x] Terrain following – výška přizpůsobena terénu
 - [ ] Import KMZ zpět do editoru
 - [ ] Anglická lokalizace
+- [ ] Google Photorealistic 3D Tiles v 3D náhledu

@@ -9,6 +9,9 @@
 ## 📋 Střední priorita
 - [ ] Sdílení misí jako URL odkaz (URL encode JSON mise)
 - [ ] Anglická jazyková mutace (i18n)
+- [ ] Google Photorealistic 3D Tiles integrace do 3D náhledu
+      (Google Cloud projekt "DJI Waypoint planner" vytvořen,
+       Map Tiles API aktivována, zbývá verifikace karty a API klíč)
 
 ## 💡 Nápady a budoucí rozvoj
 - [ ] Komercionalizace – multi-user, přihlášení, Supabase
@@ -26,7 +29,7 @@
 - [x] Vyhledávání adresy (Nominatim, abstrakční vrstva)
 - [x] Filmařský modul Fáze 3 (Boomerang, Rocket, POI Sequence)
 - [x] Terrain Following (Open-Meteo API, batching, safety floor 2 m)
-- [x] 3D náhled mise (MapLibre GL JS, Carto styl, 3D budovy, route LineString)
+- [x] 3D náhled mise (CesiumJS, World Terrain, OSM Buildings, trasa ve vzduchu)
 
 ---
 *Aktualizuj tento soubor při každé session kdy se
