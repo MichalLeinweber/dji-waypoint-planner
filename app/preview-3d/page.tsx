@@ -15,16 +15,6 @@ import { Waypoint } from '@/lib/types';
 
 const MAPTILER_KEY = 'NQ17i4ILvwLqvcc4FjbU';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-// Scroll zoom sensitivity presets — lower value = slower zoom
-type SensitivityLevel = 'low' | 'medium' | 'high';
-const SENSITIVITY: Record<SensitivityLevel, { wheel: number; trackpad: number; label: string }> = {
-  low:    { wheel: 1 / 800, trackpad: 1 / 300, label: 'Nízká' },
-  medium: { wheel: 1 / 600, trackpad: 1 / 200, label: 'Střední' },
-  high:   { wheel: 1 / 400, trackpad: 1 / 150, label: 'Vysoká' },
-};
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Returns the geographic centroid of a waypoint array */
@@ -61,7 +51,6 @@ export default function Preview3DPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [buildingsVisible, setBuildingsVisible] = useState(true);
-  const [sensitivity, setSensitivity] = useState<SensitivityLevel>('medium');
   const [missionMeta, setMissionMeta] = useState<{
     count: number;
     timestamp: number;
@@ -154,14 +143,15 @@ export default function Preview3DPage() {
         antialias: false,       // faster GPU rendering — terrain + satellite is heavy
         fadeDuration: 0,        // no tile fade-in — removes visual jumps during movement
         pitchWithRotate: false, // decouple pitch from rotation — smoother controls
+        dragRotate: false,      // disable right-mouse rotation — confusing on desktop
       };
       map = new maplibregl.Map(mapOptions);
 
       mapRef.current = map;
 
-      // 4. Tune scroll zoom sensitivity (defaults are too fast)
-      map.scrollZoom.setWheelZoomRate(SENSITIVITY.medium.wheel);
-      map.scrollZoom.setZoomRate(SENSITIVITY.medium.trackpad);
+      // 4. Tune scroll zoom sensitivity — fixed to low (1/800 wheel, 1/300 trackpad)
+      map.scrollZoom.setWheelZoomRate(1 / 800);
+      map.scrollZoom.setZoomRate(1 / 300);
 
       map.on('load', () => {
         // ── Sky layer — realistic atmosphere effect ────────────────────
@@ -273,14 +263,6 @@ export default function Preview3DPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once — data and map init happen together inside the effect
 
-  // ── Sensitivity change ────────────────────────────────────────────────────
-  function handleSensitivityChange(level: SensitivityLevel) {
-    setSensitivity(level);
-    if (!mapRef.current) return;
-    mapRef.current.scrollZoom.setWheelZoomRate(SENSITIVITY[level].wheel);
-    mapRef.current.scrollZoom.setZoomRate(SENSITIVITY[level].trackpad);
-  }
-
   // ── Toggle 3D buildings ───────────────────────────────────────────────────
   // Only functional if the fill-extrusion layer was successfully added at load.
   // If hybrid style renders buildings natively (2D), this is silently a no-op.
@@ -375,25 +357,6 @@ export default function Preview3DPage() {
               })}
             </div>
 
-            {/* Sensitivity selector */}
-            <div className="mt-2 pt-2 border-t border-gray-700">
-              <div className="text-gray-500 text-[10px] mb-1">Citlivost ovládání:</div>
-              <div className="flex gap-1">
-                {(['low', 'medium', 'high'] as SensitivityLevel[]).map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => handleSensitivityChange(level)}
-                    className={`flex-1 py-0.5 text-[10px] rounded border transition-colors ${
-                      sensitivity === level
-                        ? 'bg-blue-600/80 border-blue-500 text-white'
-                        : 'bg-transparent border-gray-600 text-gray-500 hover:border-gray-400 hover:text-gray-300'
-                    }`}
-                  >
-                    {SENSITIVITY[level].label}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </div>
@@ -444,7 +407,7 @@ export default function Preview3DPage() {
               <span className="w-3 h-3 rounded-full bg-orange-500 inline-block" />
               Waypoint
             </span>
-            <span className="text-gray-600">Pravé tlač. = rotace · Scroll = zoom</span>
+            <span className="text-gray-600">Pohyb: levé tlač. · Zoom: scroll · Náklon: Ctrl + levé tlač.</span>
           </div>
         </div>
       )}
