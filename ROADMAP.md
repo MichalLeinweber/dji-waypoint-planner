@@ -1,0 +1,36 @@
+# Roadmap – DJI Waypoint Planner
+
+## 🔥 Vysoká priorita
+- [ ] Geocoding swap na Mapy.cz API pro komerční provoz
+      (abstrakční vrstva lib/geocoding.ts je připravena,
+       stačí vyměnit funkci searchAddress())
+- [ ] Import KMZ zpět do aplikace (editace existující mise)
+
+## 📋 Střední priorita
+- [ ] Terrain following – výška waypointů přizpůsobena
+      terénu (Open-Meteo API nebo podobné, zdarma)
+- [ ] Sdílení misí jako URL odkaz (URL encode JSON mise)
+- [ ] Anglická jazyková mutace (i18n)
+- [ ] Filmařský modul Fáze 3:
+      - Boomerang (tam a zpět po stejné trase)
+      - Rocket (přímý výstup kolmo nahoru)
+      - Point of Interest sequence (série POI záběrů)
+
+## 💡 Nápady a budoucí rozvoj
+- [ ] Komercionalizace – multi-user, přihlášení, Supabase
+- [ ] Help sekce – rozšíření o více tipů a diagramů
+- [ ] Odhad spotřeby baterie a doby letu
+- [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
+- [ ] Export do formátu Litchi CSV (pro starší drony)
+
+## ✅ Dokončeno (přesunuto z plánů)
+- [x] Fasáda 360° – celá budova v jedné misi
+- [x] Filmařský modul Fáze 1 (Dronie, Reveal, Top-down,
+      Crane Up)
+- [x] Filmařský modul Fáze 2 (Hyperlapse, Arc Shot)
+- [x] Help sekce – fotogrammetrie + filmařský modul
+- [x] Vyhledávání adresy (Nominatim, abstrakční vrstva)
+
+---
+*Aktualizuj tento soubor při každé session kdy se
+implementuje nová funkce nebo vznikne nový nápad.*
