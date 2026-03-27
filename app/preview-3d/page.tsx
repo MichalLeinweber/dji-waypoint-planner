@@ -252,9 +252,10 @@ export default function Preview3DPage() {
   }
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#0f1117]">
-      {/* MapLibre container — fills the whole screen */}
-      <div ref={mapContainer} className="absolute inset-0" />
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#0f1117' }}>
+      {/* MapLibre container — inline style required: MapLibre reads offsetHeight at init
+          time, before Tailwind CSS is applied, so explicit px/vh values are needed */}
+      <div ref={mapContainer} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
 
       {/* Loading overlay — hidden once map fires 'load' */}
       {!mapReady && (
