@@ -107,7 +107,32 @@ export default function Preview3DPage() {
       const center = centroid(wps);
       setMissionMeta({ count: wps.length, timestamp, center });
 
-      // 2. Dynamic import — runs only in the browser, never on the server
+      // 2. Fetch ground elevation for each waypoint from Open-Meteo.
+      // MapLibre treats GeoJSON Z coordinates as metres above sea level (MSL),
+      // not above ground. We add ground elevation so the route flies at the
+      // correct AGL height above the 3D terrain surface.
+      let absoluteCoords: [number, number, number][] = wps.map(
+        (wp: Waypoint) => [wp.lng, wp.lat, wp.height ?? 50],
+      );
+      try {
+        const lats = wps.map((wp: Waypoint) => wp.lat).join(',');
+        const lngs = wps.map((wp: Waypoint) => wp.lng).join(',');
+        const elevRes = await fetch(
+          `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`,
+        );
+        if (elevRes.ok) {
+          const elevData = await elevRes.json() as { elevation: number[] };
+          absoluteCoords = wps.map((wp: Waypoint, i: number) => [
+            wp.lng,
+            wp.lat,
+            (elevData.elevation[i] ?? 0) + (wp.height ?? 50),
+          ]);
+        }
+      } catch {
+        // Elevation fetch failed — fall back to AGL heights (route may sit on terrain)
+      }
+
+      // 3. Dynamic import — runs only in the browser, never on the server
       const maplibregl = (await import('maplibre-gl')).default;
       await import('maplibre-gl/dist/maplibre-gl.css');
 
@@ -161,8 +186,9 @@ export default function Preview3DPage() {
         map.setTerrain({ source: 'terrain-source', exaggeration: 1.0 });
 
         // ── Waypoint route as a GeoJSON LineString ────────────────────
-        // Coordinates: [lng, lat, height] — height in metres above terrain.
-        // Orange colour is more visible against satellite imagery than blue.
+        // Uses absoluteCoords (ground elevation + AGL height) so the route
+        // appears at the correct altitude above the 3D terrain surface.
+        // HTML Markers stay at ground level — only the LineString flies up.
         map.addSource('wp-route', {
           type: 'geojson',
           data: {
@@ -171,7 +197,7 @@ export default function Preview3DPage() {
               type: 'Feature',
               geometry: {
                 type: 'LineString',
-                coordinates: wps.map((wp: Waypoint) => [wp.lng, wp.lat, wp.height ?? 50]),
+                coordinates: absoluteCoords,
               },
               properties: {},
             }],
@@ -196,34 +222,34 @@ export default function Preview3DPage() {
         // MapTiler hybrid renders buildings as 2D raster (satellite imagery),
         // so fill-extrusion via the hybrid style's sources doesn't work.
         // Solution: add a dedicated OpenMapTiles vector source for buildings.
+        // No before-layer reference — avoids silent failure if layer name differs.
+        const style = map.getStyle();
+        console.log('Available sources:', Object.keys(style.sources));
         try {
           map.addSource('openmaptiles', {
             type: 'vector',
             url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`,
           });
-          map.addLayer(
-            {
-              id: '3d-buildings',
-              source: 'openmaptiles',
-              'source-layer': 'building',
-              type: 'fill-extrusion',
-              minzoom: 14,
-              paint: {
-                'fill-extrusion-color': '#aaaaaa',
-                // Interpolate height so buildings appear to grow in as you zoom in
-                'fill-extrusion-height': [
-                  'interpolate', ['linear'], ['zoom'],
-                  14, 0,
-                  16, ['coalesce', ['get', 'render_height'], 10],
-                ],
-                'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-                'fill-extrusion-opacity': 0.8,
-              },
+          map.addLayer({
+            id: '3d-buildings',
+            source: 'openmaptiles',
+            'source-layer': 'building',
+            type: 'fill-extrusion',
+            minzoom: 14,
+            paint: {
+              'fill-extrusion-color': '#e8d5b0',
+              'fill-extrusion-height': [
+                'coalesce', ['get', 'render_height'], ['get', 'height'], 10,
+              ],
+              'fill-extrusion-base': [
+                'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0,
+              ],
+              'fill-extrusion-opacity': 0.85,
             },
-            'waterway', // insert below waterway layer so labels stay on top
-          );
-        } catch {
-          // Building source/layer failed silently — satellite view still works.
+          });
+          console.log('3D buildings layer added');
+        } catch (e) {
+          console.warn('3D buildings failed:', e);
         }
 
         // ── Cinematic flyTo on load ───────────────────────────────────
