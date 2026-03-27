@@ -163,6 +163,10 @@ export default function Preview3DPage() {
         viewerRef.current = viewer;
         console.log('[preview-3d] Viewer created');
 
+        // Hide Cesium commercial-use watermark via CSS
+        const creditContainer = viewer.cesiumWidget.creditContainer as HTMLElement;
+        creditContainer.style.display = 'none';
+
         // 5. OSM Buildings — free 3D buildings from Cesium ion
         try {
           const tileset = await Cesium.createOsmBuildingsAsync();
@@ -190,7 +194,7 @@ export default function Preview3DPage() {
             width: 4,
             material: new Cesium.PolylineGlowMaterialProperty({
               glowPower: 0.2,
-              color: Cesium.Color.ORANGE,
+              color: Cesium.Color.fromCssColorString('#f97316'),
             }),
             clampToGround: false, // fly in the air, not on terrain
           },
@@ -201,15 +205,15 @@ export default function Preview3DPage() {
           viewer.entities.add({
             position: positions[i],
             point: {
-              pixelSize: 12,
-              color: Cesium.Color.ORANGE,
+              pixelSize: 16,
+              color: Cesium.Color.fromCssColorString('#f97316'),
               outlineColor: Cesium.Color.WHITE,
               outlineWidth: 2,
               heightReference: Cesium.HeightReference.NONE,
             },
             label: {
               text: String(i + 1),
-              font: '13px sans-serif',
+              font: '16px bold sans-serif',
               fillColor: Cesium.Color.WHITE,
               outlineColor: Cesium.Color.BLACK,
               outlineWidth: 2,
