@@ -52,8 +52,15 @@ export default function Preview3DPage() {
     let viewer: any = null;
 
     (async () => {
-      // 1. Read mission from localStorage
+      try {
+      // 1. Set CDN base URL BEFORE import('cesium') — Cesium reads this on module init.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).CESIUM_BASE_URL =
+        'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/';
+
+      // 2. Read mission from localStorage
       const raw = localStorage.getItem('preview3d-mission');
+      console.log('[preview-3d] localStorage key exists:', !!raw);
       if (!raw) {
         setLoadError('Žádná mise k zobrazení. Otevři 3D náhled z plánovacího panelu.');
         return;
@@ -73,6 +80,7 @@ export default function Preview3DPage() {
         }
         wps = parsed.waypoints;
         timestamp = parsed.timestamp;
+        console.log('[preview-3d] Waypoints loaded:', wps.length);
       } catch {
         setLoadError('Nepodařilo se načíst data mise.');
         return;
@@ -81,7 +89,7 @@ export default function Preview3DPage() {
       const center = centroid(wps);
       setMissionMeta({ count: wps.length, timestamp, center });
 
-      // 2. Fetch ground elevation from Open-Meteo for each waypoint.
+      // 3. Fetch ground elevation from Open-Meteo for each waypoint.
       // Cesium World Terrain uses real elevation data, but we still need
       // ground elevation to compute absolute altitude (MSL = ground + AGL).
       let groundElevs: number[] = wps.map(() => 0);
@@ -94,19 +102,24 @@ export default function Preview3DPage() {
         if (elevRes.ok) {
           const elevData = await elevRes.json() as { elevation: number[] };
           groundElevs = elevData.elevation ?? groundElevs;
+          console.log('[preview-3d] Elevations fetched, first value:', groundElevs[0]);
         }
       } catch {
-        // Elevation fetch failed — waypoints will use AGL heights from MSL=0
+        console.warn('[preview-3d] Elevation fetch failed, using 0');
       }
 
-      // 3. Dynamic import — runs only in the browser, never on the server.
-      // CESIUM_BASE_URL must be set BEFORE the import so Workers load correctly.
-      // Using Cesium CDN avoids copying static files to public/ on every build.
+      // 4. Dynamic import Cesium — runs only in the browser, never on the server.
+      console.log('[preview-3d] Importing Cesium...');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).CESIUM_BASE_URL =
-        'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/';
-      const Cesium = (await import('cesium')).default;
-      await import('cesium/Build/Cesium/Widgets/widgets.css');
+      const CesiumModule = await import('cesium') as any;
+      const Cesium = CesiumModule.default ?? CesiumModule;
+      console.log('[preview-3d] Cesium imported:', !!Cesium);
+
+      try {
+        await import('cesium/Build/Cesium/Widgets/widgets.css');
+      } catch (cssErr) {
+        console.warn('[preview-3d] CSS import failed (ok in some environments):', cssErr);
+      }
 
       Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
 
@@ -202,7 +215,13 @@ export default function Preview3DPage() {
         },
       });
 
+      console.log('[preview-3d] Cesium ready');
       setMapReady(true);
+
+      } catch (err) {
+        console.error('[preview-3d] Initialization error:', err);
+        setLoadError('Chyba při načítání 3D náhledu: ' + String(err));
+      }
     })();
 
     return () => {
@@ -312,10 +331,23 @@ export default function Preview3DPage() {
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
 
-      {/* Loading overlay */}
+      {/* Loading / error overlay */}
       {!mapReady && (
         <div style={{ position: 'absolute', inset: 0, background: '#0f1117', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-          <p style={{ color: '#fff', fontSize: 14 }}>Načítám 3D náhled...</p>
+          {loadError ? (
+            <div style={{ textAlign: 'center', maxWidth: 400, padding: '0 24px' }}>
+              <p style={{ color: '#f97316', fontWeight: 600, marginBottom: 8 }}>Chyba načítání</p>
+              <p style={{ color: '#9ca3af', fontSize: 13, lineHeight: 1.6 }}>{loadError}</p>
+              <button
+                onClick={() => window.close()}
+                style={{ marginTop: 20, padding: '6px 14px', background: '#1a1d27', border: '1px solid #4b5563', color: '#d1d5db', fontSize: 13, borderRadius: 6, cursor: 'pointer' }}
+              >
+                ← Zavřít
+              </button>
+            </div>
+          ) : (
+            <p style={{ color: '#fff', fontSize: 14 }}>Načítám 3D náhled...</p>
+          )}
         </div>
       )}
 
