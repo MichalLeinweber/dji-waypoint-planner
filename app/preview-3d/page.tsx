@@ -11,14 +11,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Waypoint } from '@/lib/types';
 
-// ── Minimal interface for map methods used outside the async IIFE ─────────────
-// (toggle / reset handlers store the live map instance here)
-interface MapHandle {
-  flyTo(opts: object): void;
-  getLayer(id: string): object | undefined;
-  setLayoutProperty(layer: string, prop: string, val: unknown): void;
-}
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Returns the geographic centroid of a waypoint array */
@@ -48,7 +40,8 @@ function makeMarkerEl(index: number, height: number): HTMLElement {
 
 export default function Preview3DPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MapHandle | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null);
 
   // Display-only state — mission data is read inside the single useEffect
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -114,7 +107,7 @@ export default function Preview3DPage() {
         maxPitch: 85,
       });
 
-      mapRef.current = map as MapHandle;
+      mapRef.current = map;
 
       map.on('load', () => {
         // ── Waypoint route as a GeoJSON LineString ────────────────────
@@ -200,10 +193,9 @@ export default function Preview3DPage() {
 
   // ── Toggle 3D buildings ───────────────────────────────────────────────────
   function handleToggleBuildings() {
-    const map = mapRef.current;
-    if (!map?.getLayer('3d-buildings')) return;
+    if (!mapRef.current?.getLayer('3d-buildings')) return;
     const next = !buildingsVisible;
-    map.setLayoutProperty('3d-buildings', 'visibility', next ? 'visible' : 'none');
+    mapRef.current.setLayoutProperty('3d-buildings', 'visibility', next ? 'visible' : 'none');
     setBuildingsVisible(next);
   }
 
@@ -223,18 +215,12 @@ export default function Preview3DPage() {
   // ── Pitch presets ─────────────────────────────────────────────────────────
   function handleSideView() {
     // pitch 80° = nearly horizontal — shows building facades and horizon
-    (mapRef.current as unknown as { easeTo(opts: object): void } | null)?.easeTo({
-      pitch: 80,
-      duration: 800,
-    });
+    mapRef.current?.easeTo({ pitch: 80, duration: 800 });
   }
 
   function handleBirdView() {
     // pitch 30° = more top-down — overview of the whole route
-    (mapRef.current as unknown as { easeTo(opts: object): void } | null)?.easeTo({
-      pitch: 30,
-      duration: 800,
-    });
+    mapRef.current?.easeTo({ pitch: 30, duration: 800 });
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
