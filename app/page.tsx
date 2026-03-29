@@ -36,6 +36,17 @@ export default function HomePage() {
   const [originalWaypoints, setOriginalWaypoints] = useState<Waypoint[] | null>(null);
   const [terrainActive, setTerrainActive] = useState(false);
 
+  // ── Airspace zones state ─────────────────────────────────────
+  const [showAirspace, setShowAirspace] = useState(false);
+  const [airspaceLoading, setAirspaceLoading] = useState(false);
+  const [airspaceError, setAirspaceError] = useState<string | null>(null);
+
+  const handleToggleAirspace = useCallback(() => {
+    setShowAirspace((prev) => !prev);
+    // Clear any previous error when re-toggling
+    setAirspaceError(null);
+  }, []);
+
   // ── App mode: photo workflow vs. cinematic film shots ─────────
   const [appMode, setAppMode] = useState<'photo' | 'film'>('photo');
   const [filmType, setFilmType] = useState<FilmType>('dronie');
@@ -550,6 +561,10 @@ export default function HomePage() {
         terrainActive={terrainActive}
         onTerrainApply={handleTerrainApply}
         onTerrainReset={handleTerrainReset}
+        showAirspace={showAirspace}
+        airspaceLoading={airspaceLoading}
+        airspaceError={airspaceError}
+        onToggleAirspace={handleToggleAirspace}
         onSaveMission={handleSaveMission}
         onShareMission={handleShareMission}
         onImportKmz={handleImportKmz}
@@ -576,6 +591,9 @@ export default function HomePage() {
           facadeLine={facadeLine}
           buildingPolygon={buildingPolygon}
           flyToTarget={flyToTarget}
+          showAirspace={showAirspace}
+          onAirspaceLoadingChange={setAirspaceLoading}
+          onAirspaceError={setAirspaceError}
         />
       </main>
     </div>

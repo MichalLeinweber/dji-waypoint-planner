@@ -26,3 +26,22 @@ html, body {
     font-size: 8px;
   }
 }
+
+/* Airspace zone tooltip */
+.airspace-tooltip {
+  background: #1a1d27;
+  border: 1px solid #4b5563;
+  color: #e5e7eb;
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.airspace-tooltip strong {
+  color: #ffffff;
+  display: block;
+  margin-bottom: 2px;
+}
+.airspace-tooltip span {
+  color: #9ca3af;
+}

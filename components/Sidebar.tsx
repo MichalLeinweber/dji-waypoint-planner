@@ -125,6 +125,11 @@ interface SidebarProps {
   terrainActive: boolean;
   onTerrainApply: (adjusted: import('@/lib/types').Waypoint[]) => void;
   onTerrainReset: () => void;
+  // Airspace zones toggle
+  showAirspace: boolean;
+  airspaceLoading: boolean;
+  airspaceError: string | null;
+  onToggleAirspace: () => void;
   // Save / Export / Share
   onSaveMission: () => void;
   onShareMission: () => void;
@@ -200,6 +205,10 @@ export default function Sidebar({
   terrainActive,
   onTerrainApply,
   onTerrainReset,
+  showAirspace,
+  airspaceLoading,
+  airspaceError,
+  onToggleAirspace,
   onSaveMission,
   onShareMission,
   onImportKmz,
@@ -507,6 +516,28 @@ export default function Sidebar({
           </div>
         );
       })()}
+
+      {/* Airspace zones toggle — always visible, independent of waypoints */}
+      <div className="px-3 pb-2 flex-shrink-0">
+        <button
+          onClick={onToggleAirspace}
+          disabled={airspaceLoading}
+          className={`w-full py-1.5 text-xs rounded border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            showAirspace
+              ? 'bg-orange-600/20 border-orange-500 text-orange-300 hover:bg-orange-600/30'
+              : 'bg-[#0f1117] border-gray-600 text-gray-300 hover:border-orange-500 hover:text-white'
+          }`}
+        >
+          {airspaceLoading
+            ? 'Načítám letové zóny...'
+            : showAirspace
+            ? '🚧 Skrýt letové zóny'
+            : '🚧 Zobrazit letové zóny'}
+        </button>
+        {airspaceError && (
+          <p className="text-[10px] text-red-400 mt-1 leading-tight">{airspaceError}</p>
+        )}
+      </div>
 
       {/* Action buttons */}
       <div className="px-3 py-3 border-t border-gray-700 flex flex-col gap-2 flex-shrink-0">

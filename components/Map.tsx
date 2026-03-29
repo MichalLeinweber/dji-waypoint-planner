@@ -8,6 +8,7 @@ import { MapContainer, Polyline, Rectangle, Polygon, useMapEvents, useMap } from
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Waypoint } from '@/lib/types';
+import AirspaceLayer from './AirspaceLayer';
 
 // Fix Leaflet's default icon URLs broken by webpack
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -178,6 +179,12 @@ interface MapProps {
   buildingPolygon: [[number, number], [number, number], [number, number], [number, number]] | null;
   /** When set, the map smoothly flies to these coordinates at the given zoom level */
   flyToTarget: { lat: number; lng: number; zoom: number } | null;
+  /** Whether to show CTR/TRA airspace zones on the map */
+  showAirspace: boolean;
+  /** Called when airspace data fetch starts or finishes */
+  onAirspaceLoadingChange: (loading: boolean) => void;
+  /** Called when an airspace fetch error occurs (null = clear the error) */
+  onAirspaceError: (error: string | null) => void;
 }
 
 export default function MapView({
@@ -191,6 +198,9 @@ export default function MapView({
   facadeLine,
   buildingPolygon,
   flyToTarget,
+  showAirspace,
+  onAirspaceLoadingChange,
+  onAirspaceError,
 }: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
@@ -272,6 +282,13 @@ export default function MapView({
           No <TileLayer> in JSX — avoids conflicts with L.control.layers(). */}
       <LayersControl />
       <MapEventHandler onMapClick={onMapClick} onCenterChange={onCenterChange} />
+
+      {/* Airspace overlay — renders only when showAirspace is true */}
+      <AirspaceLayer
+        active={showAirspace}
+        onLoadingChange={onAirspaceLoadingChange}
+        onError={onAirspaceError}
+      />
 
       {/* Waypoint connection line */}
       {polylinePositions.length > 1 && (
