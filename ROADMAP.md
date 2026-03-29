@@ -1,6 +1,8 @@
 # Roadmap – DJI Waypoint Planner
 
 ## 🔥 Vysoká priorita
+- [x] Letové zóny CTR/TRA + NP/CHKO přírodní rezervace na mapě
+      (OpenAIP statický GeoJSON + OSM Overpass data, toggle tlačítka, barevné polygony, tooltips)
 - [ ] Geocoding swap na Mapy.cz API pro komerční provoz
       (abstrakční vrstva lib/geocoding.ts je připravena,
        stačí vyměnit funkci searchAddress())

@@ -43,6 +43,13 @@ export default function HomePage() {
     setShowAirspace((prev) => !prev);
   }, []);
 
+  // ── Protected areas (NP/CHKO) state ──────────────────────────
+  const [showProtectedAreas, setShowProtectedAreas] = useState(false);
+
+  const handleToggleProtectedAreas = useCallback(() => {
+    setShowProtectedAreas((prev) => !prev);
+  }, []);
+
   // ── App mode: photo workflow vs. cinematic film shots ─────────
   const [appMode, setAppMode] = useState<'photo' | 'film'>('photo');
   const [filmType, setFilmType] = useState<FilmType>('dronie');
@@ -559,6 +566,8 @@ export default function HomePage() {
         onTerrainReset={handleTerrainReset}
         showAirspace={showAirspace}
         onToggleAirspace={handleToggleAirspace}
+        showProtectedAreas={showProtectedAreas}
+        onToggleProtectedAreas={handleToggleProtectedAreas}
         onSaveMission={handleSaveMission}
         onShareMission={handleShareMission}
         onImportKmz={handleImportKmz}
@@ -586,6 +595,7 @@ export default function HomePage() {
           buildingPolygon={buildingPolygon}
           flyToTarget={flyToTarget}
           showAirspace={showAirspace}
+          showProtectedAreas={showProtectedAreas}
         />
       </main>
     </div>

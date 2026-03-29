@@ -205,6 +205,12 @@ export default function HelpPage() {
           >
             📡 Přenos do RC 2
           </a>
+          <a
+            href="#priroda"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-green-700 text-green-400 hover:bg-green-900/30 transition-colors"
+          >
+            🌿 NP a CHKO
+          </a>
         </div>
 
         {/* ── 0: Co aplikace umí ── */}
@@ -990,6 +996,75 @@ export default function HelpPage() {
             waypointy — speciální parametry záběru nejsou zachovány. Podporován je standardní
             DJI WPML formát (waylines.wpml) i obecné KML soubory.
           </p>
+        </section>
+
+        {/* ── NP a CHKO ──────────────────────────────────────────────────── */}
+        <section id="priroda" className={sectionClass}>
+          <h2 className="text-white font-semibold text-base mb-4">🌿 Národní parky a CHKO</h2>
+
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Tlačítko <span className="text-green-400 font-medium">🌿 Zobrazit NP a CHKO</span> v postranním
+            panelu přidá do mapy vrstvu přírodních ochranných území ČR — národních parků (zeleně)
+            a chráněných krajinných oblastí (modře).
+          </p>
+
+          {/* Type cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div className="bg-[#0f1117] border border-green-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#22c55e' }} />
+                <span className="text-green-400 font-medium text-sm">Národní parky (NP)</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                4 parky: Šumava, Krkonoše, České Švýcarsko, Podyjí.
+                Létání dronem je <strong className="text-red-400">zakázáno</strong> mimo
+                zastavěná území bez výjimky (§ 29 zákona č. 114/1992 Sb.).
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-blue-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#3b82f6' }} />
+                <span className="text-blue-400 font-medium text-sm">CHKO (26 oblastí)</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Chráněné krajinné oblasti: Šumava, Beskydy, Jeseníky a další.
+                Létání je <strong className="text-yellow-400">omezeno</strong> — záleží na
+                konkrétní zóně. Vždy ověřte aktuální podmínky před letem.
+              </p>
+            </div>
+          </div>
+
+          <h3 className="text-white font-medium text-sm mb-2">📋 Pravidla pro drony v NP</h3>
+          <ul className="text-gray-300 text-sm space-y-1 mb-4 list-disc list-inside">
+            <li>Zákaz létání v celém území NP bez výjimky udělené správou parku</li>
+            <li>Výjimka se nevztahuje na záchranné složky a vědecký výzkum</li>
+            <li>Přistávání i vzlet dronu v NP je zakázán</li>
+            <li>Pokuty za porušení: až 100 000 Kč pro fyzické osoby</li>
+          </ul>
+
+          <h3 className="text-white font-medium text-sm mb-2">📋 Pravidla pro drony v CHKO</h3>
+          <ul className="text-gray-300 text-sm space-y-1 mb-4 list-disc list-inside">
+            <li>Záleží na zóně CHKO — 1. zóna (nejpřísnější) = faktický zákaz</li>
+            <li>Ve 2.–4. zóně jsou drony zpravidla povoleny se zdravým rozumem</li>
+            <li>Vždy dodržujte klid přírody, neplaší zvěř, nevstupujte do porostů</li>
+            <li>Doporučeno: informovat správu CHKO před plánovaným letem</li>
+          </ul>
+
+          <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+            <p className="text-yellow-300 text-xs leading-relaxed">
+              <strong>⚠ Upozornění:</strong> Data NP a CHKO jsou orientační (zdroj: OpenStreetMap).
+              Před letem vždy ověřte aktuální legislativu a podmínky správy území.
+              Aktuální pravidla:{' '}
+              <a
+                href="https://www.letejtezodpovedne.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-200 underline hover:text-white"
+              >
+                letejtezodpovedne.cz
+              </a>
+            </p>
+          </div>
         </section>
 
       </div>

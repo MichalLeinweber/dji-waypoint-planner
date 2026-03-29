@@ -128,6 +128,9 @@ interface SidebarProps {
   // Airspace zones toggle
   showAirspace: boolean;
   onToggleAirspace: () => void;
+  // Protected areas (NP/CHKO) toggle
+  showProtectedAreas: boolean;
+  onToggleProtectedAreas: () => void;
   // Save / Export / Share
   onSaveMission: () => void;
   onShareMission: () => void;
@@ -205,6 +208,8 @@ export default function Sidebar({
   onTerrainReset,
   showAirspace,
   onToggleAirspace,
+  showProtectedAreas,
+  onToggleProtectedAreas,
   onSaveMission,
   onShareMission,
   onImportKmz,
@@ -524,6 +529,16 @@ export default function Sidebar({
           }`}
         >
           {showAirspace ? '🚧 Skrýt letové zóny' : '🚧 Zobrazit letové zóny'}
+        </button>
+        <button
+          onClick={onToggleProtectedAreas}
+          className={`w-full py-1.5 text-xs rounded border transition-colors ${
+            showProtectedAreas
+              ? 'bg-green-600/20 border-green-500 text-green-300 hover:bg-green-600/30'
+              : 'bg-[#0f1117] border-gray-600 text-gray-300 hover:border-green-500 hover:text-white'
+          }`}
+        >
+          {showProtectedAreas ? '🌿 Skrýt NP a CHKO' : '🌿 Zobrazit NP a CHKO'}
         </button>
       </div>
 
