@@ -2,13 +2,21 @@
 
 // Panel for managing individual waypoints in a mission
 import { Waypoint, CameraAction } from '@/lib/types';
+import { Collision, Severity } from '@/lib/collisionDetection';
 
 interface WaypointPanelProps {
   waypoints: Waypoint[];
   onUpdateWaypoint: (id: string, updates: Partial<Waypoint>) => void;
   onDeleteWaypoint: (id: string) => void;
   onClearAll: () => void;
+  collisions: Collision[];
 }
+
+const SEVERITY_ICON: Record<Severity, string> = {
+  DANGER:  '⛔',
+  WARNING: '⚠️',
+  CAUTION: 'ℹ️',
+};
 
 /** Label text for camera action options */
 const CAMERA_ACTION_LABELS: Record<CameraAction, string> = {
@@ -23,6 +31,7 @@ export default function WaypointPanel({
   onUpdateWaypoint,
   onDeleteWaypoint,
   onClearAll,
+  collisions,
 }: WaypointPanelProps) {
   if (waypoints.length === 0) {
     return (
@@ -36,14 +45,35 @@ export default function WaypointPanel({
   return (
     <div className="flex flex-col gap-2">
       {/* List of waypoints */}
-      {waypoints.map((wp, index) => (
-        <div key={wp.id} className="bg-[#0f1117] rounded-lg p-3 border border-gray-700">
+      {waypoints.map((wp, index) => {
+        // Find highest severity collision for this waypoint (if any)
+        const wpCollisions = collisions.filter((c) => c.waypointId === wp.id);
+        const wpSeverity: Severity | null =
+          wpCollisions.some((c) => c.severity === 'DANGER')  ? 'DANGER'  :
+          wpCollisions.some((c) => c.severity === 'WARNING') ? 'WARNING' :
+          wpCollisions.length > 0 ? 'CAUTION' : null;
+
+        return (
+        <div
+          key={wp.id}
+          className={`bg-[#0f1117] rounded-lg p-3 border ${
+            wpSeverity === 'DANGER'  ? 'border-red-700' :
+            wpSeverity === 'WARNING' ? 'border-orange-700' :
+            wpSeverity === 'CAUTION' ? 'border-yellow-700' :
+            'border-gray-700'
+          }`}
+        >
           {/* Waypoint header */}
           <div className="flex items-center justify-between mb-2">
             <span className="flex items-center gap-2">
               <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
                 {index + 1}
               </span>
+              {wpSeverity && (
+                <span title={wpCollisions.map((c) => c.zoneName).join(', ')}>
+                  {SEVERITY_ICON[wpSeverity]}
+                </span>
+              )}
               <span className="text-gray-300 text-xs font-mono">
                 {wp.lat.toFixed(5)}, {wp.lng.toFixed(5)}
               </span>
@@ -116,7 +146,8 @@ export default function WaypointPanel({
             </select>
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {/* Clear all button */}
       <button

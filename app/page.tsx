@@ -11,6 +11,7 @@ import { exportKMZ } from '@/lib/exportKMZ';
 import { saveMission } from '@/lib/missionStore';
 import { encodeMission, decodeMission } from '@/lib/shareUrl';
 import { importKmz } from '@/lib/importKmz';
+import { checkWaypointCollisions, Collision } from '@/lib/collisionDetection';
 
 // Leaflet map must be loaded client-side only (it uses browser APIs)
 const MapView = dynamic(() => import('@/components/Map'), { ssr: false });
@@ -46,9 +47,21 @@ export default function HomePage() {
   // ── Protected areas (NP/CHKO) state ──────────────────────────
   const [showProtectedAreas, setShowProtectedAreas] = useState(false);
 
+  // ── Collision detection state ─────────────────────────────────
+  const [collisions, setCollisions] = useState<Collision[]>([]);
+
   const handleToggleProtectedAreas = useCallback(() => {
     setShowProtectedAreas((prev) => !prev);
   }, []);
+
+  // Re-run collision check whenever waypoints change
+  useEffect(() => {
+    if (waypoints.length === 0) {
+      setCollisions([]);
+      return;
+    }
+    checkWaypointCollisions(waypoints).then(setCollisions);
+  }, [waypoints]);
 
   // ── App mode: photo workflow vs. cinematic film shots ─────────
   const [appMode, setAppMode] = useState<'photo' | 'film'>('photo');
@@ -431,6 +444,14 @@ export default function HomePage() {
 
   const handleExportKMZ = useCallback(async () => {
     if (waypoints.length === 0) return;
+    // Warn (but don't block) if any waypoint is in a DANGER zone
+    const hasDanger = collisions.some((c) => c.severity === 'DANGER');
+    if (hasDanger) {
+      const proceed = window.confirm(
+        '⚠️ Mise obsahuje waypointy v zakázané zóně.\n\nPokud máš platné povolení, můžeš pokračovat. Chceš exportovat KMZ?'
+      );
+      if (!proceed) return;
+    }
     setIsExporting(true);
     try {
       const effectiveMissionType: MissionType = appMode === 'film' ? 'film' : missionType;
@@ -568,6 +589,7 @@ export default function HomePage() {
         onToggleAirspace={handleToggleAirspace}
         showProtectedAreas={showProtectedAreas}
         onToggleProtectedAreas={handleToggleProtectedAreas}
+        collisions={collisions}
         onSaveMission={handleSaveMission}
         onShareMission={handleShareMission}
         onImportKmz={handleImportKmz}

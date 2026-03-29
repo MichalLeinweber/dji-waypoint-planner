@@ -22,6 +22,8 @@ import PoiSequencePanel from './film/PoiSequencePanel';
 import { Waypoint, MissionType } from '@/lib/types';
 import { FilmType } from '@/app/page';
 import { estimateBattery } from '@/lib/batteryEstimate';
+import { Collision, highestSeverity } from '@/lib/collisionDetection';
+import CollisionPanel from './CollisionPanel';
 
 const PHOTO_TABS: { type: MissionType; label: string }[] = [
   { type: 'waypoints', label: 'Body' },
@@ -131,6 +133,8 @@ interface SidebarProps {
   // Protected areas (NP/CHKO) toggle
   showProtectedAreas: boolean;
   onToggleProtectedAreas: () => void;
+  // Collision detection results
+  collisions: Collision[];
   // Save / Export / Share
   onSaveMission: () => void;
   onShareMission: () => void;
@@ -210,6 +214,7 @@ export default function Sidebar({
   onToggleAirspace,
   showProtectedAreas,
   onToggleProtectedAreas,
+  collisions,
   onSaveMission,
   onShareMission,
   onImportKmz,
@@ -218,6 +223,10 @@ export default function Sidebar({
   onFlyTo,
 }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showCollisionPanel, setShowCollisionPanel] = useState(false);
+
+  // Derive banner color from highest severity in current collisions
+  const topSeverity = highestSeverity(collisions);
 
   const content = (
     <div className="flex flex-col h-full">
@@ -307,6 +316,7 @@ export default function Sidebar({
             onUpdateWaypoint={onUpdateWaypoint}
             onDeleteWaypoint={onDeleteWaypoint}
             onClearAll={onClearAll}
+            collisions={collisions}
           />
         )}
 
@@ -518,6 +528,36 @@ export default function Sidebar({
         );
       })()}
 
+      {/* Collision warning banner — shown when any waypoint is inside a restricted zone */}
+      {collisions.length > 0 && (
+        <div className={`mx-3 mb-2 rounded-lg border px-3 py-2 flex-shrink-0 ${
+          topSeverity === 'DANGER'  ? 'bg-red-900/30 border-red-700' :
+          topSeverity === 'WARNING' ? 'bg-orange-900/30 border-orange-700' :
+          'bg-yellow-900/30 border-yellow-700'
+        }`}>
+          <div className="flex items-center justify-between gap-2">
+            <span className={`text-xs font-medium ${
+              topSeverity === 'DANGER'  ? 'text-red-300' :
+              topSeverity === 'WARNING' ? 'text-orange-300' :
+              'text-yellow-300'
+            }`}>
+              {topSeverity === 'DANGER' ? '⛔' : topSeverity === 'WARNING' ? '⚠️' : 'ℹ️'}{' '}
+              {collisions.length} waypoint{collisions.length > 1 ? 'y' : ''} v omezené zóně
+            </span>
+            <button
+              onClick={() => setShowCollisionPanel(true)}
+              className={`text-xs underline flex-shrink-0 ${
+                topSeverity === 'DANGER'  ? 'text-red-400 hover:text-red-200' :
+                topSeverity === 'WARNING' ? 'text-orange-400 hover:text-orange-200' :
+                'text-yellow-400 hover:text-yellow-200'
+              }`}
+            >
+              Detail
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Airspace zones toggle — always visible, independent of waypoints */}
       <div className="px-3 pb-2 flex-shrink-0">
         <button
@@ -597,6 +637,14 @@ export default function Sidebar({
 
   return (
     <>
+      {/* Collision detail modal — rendered as portal-like overlay above everything */}
+      {showCollisionPanel && (
+        <CollisionPanel
+          collisions={collisions}
+          onClose={() => setShowCollisionPanel(false)}
+        />
+      )}
+
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-80 bg-[#1a1d27] border-r border-gray-700 h-full flex-shrink-0">
         {content}

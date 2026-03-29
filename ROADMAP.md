@@ -25,6 +25,17 @@
 - [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
 - [ ] Export do formátu Litchi CSV (pro starší drony)
 
+## 🔮 Budoucí rozšíření leteckých omezení
+- [ ] NPR/NPP/PR/PP – menší přírodní rezervace
+      z AOPK ČR (statický GeoJSON)
+- [ ] Vodní zdroje – ochranná pásma (LKR313)
+- [ ] Železnice – buffer 60 m od osy koleje (LKR311)
+- [ ] Elektrické vedení – 7–30 m dle napětí (LKR312)
+- [ ] Silnice/dálnice – 50 m výška + šířka (LKR310)
+- [ ] NOTAMy – dočasná omezení v reálném čase
+- [ ] Check-in do DroneMap (vyžaduje partnerství
+      s ŘLP ČR)
+
 ## 🎨 Design a vzhled (až po dokončení funkcionalit)
 
 - [ ] Finální redesign UI – konzistentní barevná paleta,
