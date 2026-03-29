@@ -179,7 +179,7 @@ Aplikace zobrazí krok za krokem:
 - `/preview-3d` – 3D náhled mise (CesiumJS, nový tab)
 
 **Help sekce (/help):**
-- Navigační kotvy: #funkce / #foto / #film / #parametry / #terrain / #sdileni-baterie / #prenos
+- Navigační kotvy: #funkce / #foto / #film / #parametry / #terrain / #sdileni-baterie / #prenos / #priroda
 - Přehled funkcí aplikace (9 karet s ikonami)
 - Parametry waypointu: výška, rychlost, čekání, kamera (tabulka)
 - Fotogrammetrie: výběr mise, překryv %, vzdálenost od fasády
@@ -194,6 +194,7 @@ Aplikace zobrazí krok za krokem:
 - Severka (2D mapa) a rotující kompas (3D náhled), dblclick chování
 - 3D náhled: Google Photorealistic 3D Tiles, ovládání, kompas
 - Import KMZ: popis, omezení (filmové mise → waypointy)
+- NP a CHKO: pravidla pro drony, barevné karty NP/CHKO, odkaz letejtezodpovedne.cz
 
 **3D náhled mise (CesiumJS):**
 - `app/preview-3d/page.tsx` — CesiumJS načítán z CDN script tagem (bez npm bundle), nový tab
