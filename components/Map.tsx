@@ -103,12 +103,13 @@ function LayersControl() {
     ).addTo(map);
 
     // ── Static compass — Leaflet map never rotates, north is always up ─────────
+    // Double-click resets the view to the center of Czech Republic at zoom 8.
     const CompassClass = L.Control.extend({
       options: { position: 'bottomleft' },
       onAdd() {
         const div = L.DomUtil.create('div');
-        div.style.cssText = 'background:transparent;pointer-events:none;';
-        div.title = 'Sever je vždy nahoře';
+        div.style.cssText = 'background:transparent;cursor:pointer;';
+        div.title = 'Dvojklik pro reset pohledu';
         div.innerHTML = `<svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
           <circle cx="22" cy="22" r="20" fill="#1a1a2e" stroke="#555" stroke-width="1.5"/>
           <polygon points="22,4 26,22 22,18 18,22" fill="#ef4444"/>
@@ -117,7 +118,12 @@ function LayersControl() {
           <text x="22" y="38" text-anchor="middle" fill="white" font-size="7" opacity="0.6">S</text>
           <text x="9"  y="26" text-anchor="middle" fill="white" font-size="7" opacity="0.6">W</text>
           <text x="35" y="26" text-anchor="middle" fill="white" font-size="7" opacity="0.6">E</text>
-        </svg>`;
+        </svg>
+        <div style="text-align:center;color:#aaa;font-size:9px;margin-top:2px;">2× sever</div>`;
+        L.DomEvent.on(div, 'dblclick', () => {
+          map.setView([49.8, 15.5], 8); // střed ČR, zoom 8
+        });
+        L.DomEvent.disableClickPropagation(div);
         return div;
       },
     });

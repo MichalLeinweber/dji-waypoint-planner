@@ -515,8 +515,10 @@ export default function Preview3DPage() {
       </div>
 
       {/* ── Rotating compass — mirrors camera heading, north always at top when heading=0 ── */}
+      {/* Double-click resets camera bearing to north (heading=0) with smooth animation.   */}
       {mapReady && (
         <div
+          title="Dvojklik pro srovnání na sever"
           style={{
             position: 'absolute',
             bottom: 70,
@@ -526,6 +528,20 @@ export default function Preview3DPage() {
             flexDirection: 'column',
             alignItems: 'center',
             gap: 2,
+            cursor: 'pointer',
+          }}
+          onDoubleClick={() => {
+            if (!viewerRef.current) return;
+            const camera = viewerRef.current.camera;
+            viewerRef.current.camera.flyTo({
+              destination: camera.positionWC,
+              orientation: {
+                heading: 0.0, // north
+                pitch: camera.pitch,
+                roll: 0.0,
+              },
+              duration: 0.8,
+            });
           }}
         >
           <div
@@ -543,6 +559,16 @@ export default function Preview3DPage() {
               <text x="9"  y="26" textAnchor="middle" fill="white" fontSize="7" opacity="0.6">W</text>
               <text x="35" y="26" textAnchor="middle" fill="white" fontSize="7" opacity="0.6">E</text>
             </svg>
+          </div>
+          <div style={{
+            textAlign: 'center',
+            color: '#9ca3af',
+            fontSize: 9,
+            marginTop: 2,
+            userSelect: 'none',
+            pointerEvents: 'none',
+          }}>
+            2× ↑N
           </div>
         </div>
       )}
