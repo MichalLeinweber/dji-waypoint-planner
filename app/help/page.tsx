@@ -211,6 +211,12 @@ export default function HelpPage() {
           >
             🌿 NP a CHKO
           </a>
+          <a
+            href="#legislativa"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-yellow-700 text-yellow-400 hover:bg-yellow-900/30 transition-colors"
+          >
+            ⚖️ Legislativa
+          </a>
         </div>
 
         {/* ── 0: Co aplikace umí ── */}
@@ -1063,6 +1069,135 @@ export default function HelpPage() {
               >
                 letejtezodpovedne.cz
               </a>
+            </p>
+          </div>
+        </section>
+
+        {/* ── Legislativa a povinnosti pilota ── */}
+        <section id="legislativa" className={sectionClass}>
+          <h2 className="text-lg font-semibold mb-4 text-yellow-400 border-b border-gray-800 pb-2">
+            ⚖️ Legislativa a povinnosti pilota
+          </h2>
+
+          {/* C0 kategorie */}
+          <h3 className="text-white font-medium text-sm mb-2">DJI Mini 4 Pro – kategorie C0</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-3">
+            DJI Mini 4 Pro váží 249 g a nese štítek <strong className="text-yellow-300">C0</strong> —
+            nejvolnější regulační kategorie v Evropě (EASA Open A1). Platí od 31. 12. 2023.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+            {[
+              { ok: true,  text: 'Nevyžaduje zkoušku pilota (pod 250 g bez C1 štítku)' },
+              { ok: true,  text: 'Nevyžaduje registraci provozovatele' },
+              { ok: true,  text: 'Lze létat prakticky kdekoliv mimo zakázané zóny' },
+              { ok: true,  text: 'Dron musí být stále na dohled (VLOS)' },
+              { ok: false, text: 'Max výška: 120 m nad terénem' },
+              { ok: false, text: 'Nesmí přelétat shromáždění lidí' },
+              { ok: false, text: 'Musí dát přednost pilotovaným letadlům' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-start gap-2 bg-[#1a1d27] rounded-lg px-3 py-2 border border-gray-700">
+                <span className={`flex-shrink-0 text-sm font-bold ${item.ok ? 'text-green-400' : 'text-red-400'}`}>
+                  {item.ok ? '✓' : '✗'}
+                </span>
+                <span className="text-gray-300 text-xs leading-relaxed">{item.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Předletová příprava */}
+          <h3 className="text-white font-medium text-sm mb-2">📋 Povinná předletová příprava</h3>
+          <p className="text-gray-400 text-xs mb-3">
+            Platí od <strong className="text-white">1. 9. 2025</strong> dle nového zákona č. 49/1997 Sb.
+          </p>
+          <ol className="space-y-2 text-sm text-gray-300 list-none mb-5">
+            {[
+              <>Zkontroluj letové zóny v aplikaci <strong className="text-white">DroneMap</strong>{' '}(<a href="https://www.dronemap.gov.cz" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">dronemap.gov.cz</a>) — povinná od 1. 9. 2025</>,
+              <>V některých zónách povinný <strong className="text-white">check-in</strong> — vložení info o letu do DroneMap před vzletem</>,
+              'Zkontroluj počasí, vítr a stav baterie',
+              'Ověř vizuálně že dron není poškozen (vrtule, tělo, kamera)',
+            ].map((step, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-700 text-white text-xs flex items-center justify-center font-bold">
+                  {i + 1}
+                </span>
+                <span className="pt-0.5 text-sm">{step}</span>
+              </li>
+            ))}
+          </ol>
+
+          {/* Zakázané oblasti */}
+          <h3 className="text-white font-medium text-sm mb-2">🚫 Zakázané oblasti</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div className="bg-[#0f1117] border border-red-800 rounded-lg p-3">
+              <p className="text-red-400 font-medium text-xs mb-2">Bez povolení NELZE létat</p>
+              <ul className="text-gray-300 text-xs space-y-1 list-disc list-inside">
+                <li>CTR – řízený vzdušný prostor kolem letišť</li>
+                <li>PROHIBITED / RESTRICTED – vojenské a zakázané zóny</li>
+                <li>Nad Pražským hradem a dalšími chráněnými objekty</li>
+                <li>Nad hustě obsazenými shromážděními lidí</li>
+                <li>NP – národní parky (mimo zastavěná území)</li>
+                <li>Výšky nad 120 m bez zvláštního povolení</li>
+              </ul>
+            </div>
+            <div className="bg-[#0f1117] border border-yellow-800 rounded-lg p-3">
+              <p className="text-yellow-400 font-medium text-xs mb-2">Se souhlasem správce zóny</p>
+              <ul className="text-gray-300 text-xs space-y-1 list-disc list-inside">
+                <li>CHKO (záleží na zóně I–IV)</li>
+                <li>Blízkost silnic, železnic, vodních zdrojů</li>
+                <li>Ochranná pásma (vedení, vysílače)</li>
+                <li className="text-gray-500">Od 1. 9. 2025: souhlas přes DroneMap místo žádosti na ÚCL</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Sankce */}
+          <div className="bg-red-900/20 border border-red-800 rounded-lg p-3 mb-5">
+            <p className="text-red-300 text-xs leading-relaxed">
+              <strong>⚠ Sankce:</strong> Pokuta až <strong className="text-white">3 000 000 Kč</strong> za
+              porušení zákona č. 49/1997 Sb. o civilním letectví. Za létání v zakázaných zónách hrozí
+              také trestní odpovědnost.
+            </p>
+          </div>
+
+          {/* Užitečné odkazy */}
+          <h3 className="text-white font-medium text-sm mb-2">🔗 Užitečné odkazy</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+            {[
+              { label: 'DroneMap – předletová příprava', url: 'https://www.dronemap.gov.cz', note: 'dronemap.gov.cz' },
+              { label: 'ÚCL – registrace, zkoušky', url: 'https://www.caa.gov.cz', note: 'caa.gov.cz' },
+              { label: 'Pravidla srozumitelně', url: 'https://www.letejtezodpovedne.cz', note: 'letejtezodpovedne.cz' },
+              { label: 'Nová pravidla od 1. 9. 2025', url: 'https://www.djishop.cz/blog/nova-pravidla', note: 'djishop.cz/blog' },
+            ].map((link) => (
+              <a
+                key={link.url}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-[#1a1d27] rounded-lg px-3 py-2.5 border border-gray-700 hover:border-gray-500 transition-colors group"
+              >
+                <span className="text-base flex-shrink-0">↗</span>
+                <div>
+                  <p className="text-white text-xs font-medium group-hover:text-blue-300 transition-colors">{link.label}</p>
+                  <p className="text-gray-500 text-xs">{link.note}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+
+          {/* Disclaimer */}
+          <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+            <p className="text-yellow-300 text-xs leading-relaxed">
+              <strong>⚠ Upozornění:</strong> Tato aplikace slouží k plánování tras a neposkytuje
+              právní poradenství. Vždy si ověřte aktuální pravidla na{' '}
+              <a
+                href="https://www.dronemap.gov.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-200 underline hover:text-white"
+              >
+                dronemap.gov.cz
+              </a>{' '}
+              před každým letem. <strong>Legislativa se mění.</strong>
             </p>
           </div>
         </section>
