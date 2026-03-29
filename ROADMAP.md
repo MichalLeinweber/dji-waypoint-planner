@@ -8,7 +8,6 @@
 
 ## 📋 Střední priorita
 - [x] Sdílení misí jako URL odkaz (URL encode JSON mise)
-- [ ] Anglická jazyková mutace (i18n)
 - [x] Google Photorealistic 3D Tiles integrace do 3D náhledu
       (hotovo – toggle tlačítko 🌍 Google 3D, fallback na OSM Buildings)
 
@@ -36,6 +35,8 @@
 - [ ] Animace a přechody – plynulejší UX
 - [ ] Dark/light mode (volitelné)
 - [ ] 3D náhled – tmavší overlay UI, modernější tlačítka
+- [ ] Anglická lokalizace (i18n) – až po finálním
+      designu, poslední krok před vydáním
 
 *Poznámka: Design se dělá až po dokončení všech funkcionalit.*
 
