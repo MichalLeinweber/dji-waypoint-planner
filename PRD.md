@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-29 (Session 19)*
+*Poslední aktualizace: 2026-03-29 (Session 20)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -225,8 +225,19 @@ Aplikace zobrazí krok za krokem:
 - `lib/batteryEstimate.ts` — Haversine 3D vzdálenost, Mini 4 Pro 33.48 Wh / 7 W avg / 20% rezerva
 - Panel v sidebaru s progress barem (zelená/oranžová/červená), zobrazí se od 2 waypointů
 
+**Letové a přírodní zóny na mapě:**
+- CTR/TRA letové zóny – `components/AirspaceLayer.tsx`, statický GeoJSON `/data/airspaces-cz.json`
+  (352 zón: CTR, TRA, PROHIBITED, RESTRICTED, DANGER, ATZ, TMA, TSA; barevné polygony, tooltip)
+  Script: `scripts/fetch-airspaces.js` (OpenAIP Core API, node-only, cache soubor v public/data)
+- NP/CHKO přírodní ochranná území – `components/ProtectedAreasLayer.tsx`, statický GeoJSON `/data/protected-areas-cz.json`
+  (4 NP zelená + 26 CHKO modrá = 30 features; OSM Overpass; tooltip s omezením pro drony)
+  Script: `scripts/fetch-protected-areas.js` (Overpass API, OSM way-stitching, coord simplification)
+- Toggle tlačítka v sidebaru: 🚧 Letové zóny (oranžová), 🌿 NP a CHKO (zelená)
+- Help sekce: kotva `#priroda` s pravidly pro drony v NP/CHKO
+
 **OpenAIP integrace (příprava):**
 - Účet vytvořen, API klíč vygenerován: `NEXT_PUBLIC_OPENAIP_API_KEY` v `.env.local` a Vercel
+- Poznámka: API domain je `api.core.openaip.net` (ne `api.openaip.net`); fetch jen z Node.js (CORS)
 
 **Terrain Following:**
 - `lib/terrainFollowing.ts` — Open-Meteo Elevation API, batching po 100 bodech
@@ -248,7 +259,8 @@ Aplikace zobrazí krok za krokem:
 - Stale closure v useMapEvents (useRef pattern pro callbacky)
 
 ### 📋 Plánováno – budoucí rozvoj
-- CTR/TRA letové zóny – zobrazení na mapě (OpenAIP API klíč připraven)
+- Geocoding swap na Mapy.cz API pro komerční provoz (abstrakční vrstva `lib/geocoding.ts` připravena)
+- Google Maps API klíč omezit na produkční doménu (security)
 - Anglická jazyková mutace
 
 ---
