@@ -105,7 +105,7 @@ function LayersControl() {
     // ── Static compass — Leaflet map never rotates, north is always up ─────────
     // Double-click resets the view to the center of Czech Republic at zoom 8.
     const CompassClass = L.Control.extend({
-      options: { position: 'bottomleft' },
+      options: { position: 'bottomright' },
       onAdd() {
         const div = L.DomUtil.create('div');
         div.style.cssText = 'background:transparent;';
