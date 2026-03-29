@@ -29,9 +29,11 @@ export async function GET() {
   }
 
   if (!res.ok) {
+    const errorText = await res.text();
+    console.error('OpenAIP error:', res.status, errorText);
     return NextResponse.json(
-      { error: `OpenAIP error: ${res.status}` },
-      { status: res.status },
+      { error: `OpenAIP error: ${res.status}`, detail: errorText },
+      { status: 502 },
     );
   }
 
