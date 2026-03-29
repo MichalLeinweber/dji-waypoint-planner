@@ -4,7 +4,7 @@
 // Leaflet uses browser-only APIs (window, document) so it cannot run on the server.
 import { useEffect, useRef } from 'react';
 import type { LatLngExpression } from 'leaflet';
-import { MapContainer, Polyline, Rectangle, Polygon, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Rectangle, Polygon, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Waypoint } from '@/lib/types';
@@ -107,12 +107,17 @@ export default function MapView({
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
 
-  // One-time setup: tile layers control + static compass — runs after MapContainer mounts
+  // One-time setup: tile layers control + static compass — runs after MapContainer mounts.
+  // <TileLayer> in JSX handles the default OSM rendering; this useEffect only adds
+  // the layers control (for switching) and the compass. Both can coexist.
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
 
-    // ── Tile layers ────────────────────────────────────────────────────────────
+    // ── Layers control ─────────────────────────────────────────────────────────
+    // These layer objects are managed by the control. The default OSM display
+    // comes from the <TileLayer> JSX element above, so osmLayer here starts
+    // unattached — the control adds/removes it when the user switches layers.
     const osmLayer = L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       { attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
@@ -125,8 +130,6 @@ export default function MapView({
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
       { attribution: '© Esri' },
     );
-
-    osmLayer.addTo(map); // OSM is the default layer
 
     L.control.layers(
       { '🗺 Mapa': osmLayer, '🛰 Satelit': esriSatellite, '🏔 Terén': esriTopo },
@@ -229,7 +232,12 @@ export default function MapView({
       }}
       ref={mapRef}
     >
-      {/* Tile layer is managed imperatively in the useEffect above via L.tileLayer */}
+      {/* Default OSM tile layer — always visible. The layers control in useEffect
+          adds Esri Satellite and Topo as switchable alternatives. */}
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
       <MapEventHandler onMapClick={onMapClick} onCenterChange={onCenterChange} />
 
       {/* Waypoint connection line */}
