@@ -25,6 +25,20 @@
 - [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
 - [ ] Export do formátu Litchi CSV (pro starší drony)
 
+## 🎨 Design a vzhled (až po dokončení funkcionalit)
+
+- [ ] Finální redesign UI – konzistentní barevná paleta,
+      typografie, ikony
+- [ ] Sidebar – vizuální hierarchie, lepší spacing,
+      aktivní stavy tlačítek
+- [ ] Mobilní responzivita – přizpůsobení pro tablet/mobil
+- [ ] Branding – logo, název, favicon
+- [ ] Animace a přechody – plynulejší UX
+- [ ] Dark/light mode (volitelné)
+- [ ] 3D náhled – tmavší overlay UI, modernější tlačítka
+
+*Poznámka: Design se dělá až po dokončení všech funkcionalit.*
+
 ## ✅ Dokončeno (přesunuto z plánů)
 - [x] Fasáda 360° – celá budova v jedné misi
 - [x] Filmařský modul Fáze 1 (Dronie, Reveal, Top-down,
