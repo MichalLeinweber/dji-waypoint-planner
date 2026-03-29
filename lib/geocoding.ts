@@ -50,21 +50,31 @@ export async function searchAddress(query: string): Promise<GeocodingResult[]> {
     limit: '5',
   });
 
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-    {
-      headers: {
-        // Nominatim requires a valid User-Agent identifying the application
-        'User-Agent': 'DJI-Waypoint-Planner/1.0',
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Geocoding request failed: ${response.status}`);
+  let response: Response;
+  try {
+    response = await fetch(
+      `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+      {
+        headers: {
+          // Nominatim requires a valid User-Agent identifying the application
+          'User-Agent': 'DJI-Waypoint-Planner/1.0',
+        },
+      }
+    );
+  } catch {
+    throw new Error('Nepodařilo se připojit k geocoding API. Zkontroluj internetové připojení.');
   }
 
-  const data: NominatimResult[] = await response.json();
+  if (!response.ok) {
+    throw new Error(`Geocoding API vrátila chybu ${response.status}. Zkus to znovu.`);
+  }
+
+  let data: NominatimResult[];
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('Geocoding API vrátila neplatná data.');
+  }
 
   return data.map((item) => {
     // Build a short name from address components when available

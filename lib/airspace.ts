@@ -1,21 +1,8 @@
 // Airspace zone types and color mapping — used by AirspaceLayer component.
 // Data is pre-fetched by scripts/fetch-airspaces.js and stored in public/data/airspaces-cz.json.
 
-/** Human-readable names for OpenAIP airspace type IDs */
-export const AIRSPACE_TYPE_NAMES: Record<number, string> = {
-  1:  'RESTRICTED',
-  2:  'DANGER',
-  3:  'PROHIBITED',
-  4:  'CTR',
-  6:  'RMZ',
-  7:  'TMA',
-  8:  'TRA',
-  9:  'TSA',
-  13: 'ATZ',
-  21: 'Kluzáky',
-  28: 'FURUTABAI',
-  29: 'Letecký sport',
-};
+import { AIRSPACE_TYPE_NAMES } from './airspaceTypes';
+export { AIRSPACE_TYPE_NAMES } from './airspaceTypes';
 
 /** ICAO airspace class IDs → letters */
 export const ICAO_CLASS_NAMES: Record<number, string> = {

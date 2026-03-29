@@ -3,6 +3,7 @@
 // GeoJSON data is fetched once and cached in module-level variables.
 
 import { Waypoint } from '@/lib/types';
+import { AIRSPACE_TYPE_NAMES } from './airspaceTypes';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -32,24 +33,6 @@ interface Zone {
 let zonesCache: Zone[] | null = null;
 
 // ── Severity + instructions mapping ───────────────────────────────────────
-
-// OpenAIP numeric type → string key for severity lookup
-// https://docs.core.openaip.net (type enum)
-const AIRSPACE_TYPE_NAMES: Record<number, string> = {
-  0:  'OTHER',
-  1:  'RESTRICTED',
-  2:  'DANGER',
-  3:  'PROHIBITED',
-  4:  'CTR',
-  6:  'TMZ',
-  7:  'RMZ',
-  8:  'TMA',
-  9:  'TRA',
-  13: 'ATZ',
-  21: 'FIR',
-  28: 'TSA',
-  29: 'ADIZ',
-};
 
 function airspaceSeverity(typeNum: number): Severity {
   const t = AIRSPACE_TYPE_NAMES[typeNum] ?? 'OTHER';
@@ -85,8 +68,7 @@ function airspaceInstructions(typeNum: number): string {
 
 function protectedAreaSeverity(type: string): Severity {
   if (type === 'NP') return 'DANGER';
-  if (type === 'CHKO') return 'CAUTION';
-  return 'CAUTION';
+  return 'CAUTION'; // CHKO and other protected area types
 }
 
 function protectedAreaInstructions(type: string): string {
