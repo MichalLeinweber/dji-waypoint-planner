@@ -181,10 +181,6 @@ interface MapProps {
   flyToTarget: { lat: number; lng: number; zoom: number } | null;
   /** Whether to show CTR/TRA airspace zones on the map */
   showAirspace: boolean;
-  /** Called when airspace data fetch starts or finishes */
-  onAirspaceLoadingChange: (loading: boolean) => void;
-  /** Called when an airspace fetch error occurs (null = clear the error) */
-  onAirspaceError: (error: string | null) => void;
 }
 
 export default function MapView({
@@ -199,8 +195,6 @@ export default function MapView({
   buildingPolygon,
   flyToTarget,
   showAirspace,
-  onAirspaceLoadingChange,
-  onAirspaceError,
 }: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
@@ -284,11 +278,7 @@ export default function MapView({
       <MapEventHandler onMapClick={onMapClick} onCenterChange={onCenterChange} />
 
       {/* Airspace overlay — renders only when showAirspace is true */}
-      <AirspaceLayer
-        active={showAirspace}
-        onLoadingChange={onAirspaceLoadingChange}
-        onError={onAirspaceError}
-      />
+      <AirspaceLayer active={showAirspace} />
 
       {/* Waypoint connection line */}
       {polylinePositions.length > 1 && (

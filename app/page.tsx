@@ -38,13 +38,9 @@ export default function HomePage() {
 
   // ── Airspace zones state ─────────────────────────────────────
   const [showAirspace, setShowAirspace] = useState(false);
-  const [airspaceLoading, setAirspaceLoading] = useState(false);
-  const [airspaceError, setAirspaceError] = useState<string | null>(null);
 
   const handleToggleAirspace = useCallback(() => {
     setShowAirspace((prev) => !prev);
-    // Clear any previous error when re-toggling
-    setAirspaceError(null);
   }, []);
 
   // ── App mode: photo workflow vs. cinematic film shots ─────────
@@ -562,8 +558,6 @@ export default function HomePage() {
         onTerrainApply={handleTerrainApply}
         onTerrainReset={handleTerrainReset}
         showAirspace={showAirspace}
-        airspaceLoading={airspaceLoading}
-        airspaceError={airspaceError}
         onToggleAirspace={handleToggleAirspace}
         onSaveMission={handleSaveMission}
         onShareMission={handleShareMission}
@@ -592,8 +586,6 @@ export default function HomePage() {
           buildingPolygon={buildingPolygon}
           flyToTarget={flyToTarget}
           showAirspace={showAirspace}
-          onAirspaceLoadingChange={setAirspaceLoading}
-          onAirspaceError={setAirspaceError}
         />
       </main>
     </div>
