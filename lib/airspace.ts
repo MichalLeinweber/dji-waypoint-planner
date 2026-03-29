@@ -52,15 +52,24 @@ export interface AirspaceZone {
  */
 export async function fetchAirspaces(countryCode: string): Promise<AirspaceZone[]> {
   const apiKey = process.env.NEXT_PUBLIC_OPENAIP_API_KEY;
+
+  // Diagnostics — visible in browser DevTools console
+  console.log('[airspace] NEXT_PUBLIC_OPENAIP_API_KEY:', apiKey ? `set (${apiKey.length} chars)` : 'UNDEFINED');
+
   if (!apiKey) {
     throw new Error('OpenAIP API klíč není nastaven (NEXT_PUBLIC_OPENAIP_API_KEY).');
   }
 
-  // Request only the relevant type IDs
+  // Send the key both as a query param and as a header — OpenAIP supports both.
+  // The header alone sometimes causes 503 when the CDN layer does not forward it.
   const typeParams = Object.keys(RELEVANT_TYPES)
     .map((t) => `type[]=${t}`)
     .join('&');
-  const url = `https://api.openaip.net/api/airspaces?page=1&limit=1000&country=${countryCode}&${typeParams}`;
+  const url =
+    `https://api.openaip.net/api/airspaces?apiKey=${apiKey}` +
+    `&page=1&limit=1000&country=${countryCode}&${typeParams}`;
+
+  console.log('[airspace] Fetching URL (key redacted):', url.replace(apiKey, '***'));
 
   let response: Response;
   try {
@@ -70,6 +79,8 @@ export async function fetchAirspaces(countryCode: string): Promise<AirspaceZone[
   } catch {
     throw new Error('Nepodařilo se připojit k OpenAIP API. Zkontroluj internetové připojení.');
   }
+
+  console.log('[airspace] Response status:', response.status);
 
   if (!response.ok) {
     throw new Error(`OpenAIP API vrátila chybu ${response.status}. Zkus to znovu.`);
