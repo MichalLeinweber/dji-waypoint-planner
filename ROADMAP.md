@@ -7,7 +7,7 @@
 - [ ] Import KMZ zpět do aplikace (editace existující mise)
 
 ## 📋 Střední priorita
-- [ ] Sdílení misí jako URL odkaz (URL encode JSON mise)
+- [x] Sdílení misí jako URL odkaz (URL encode JSON mise)
 - [ ] Anglická jazyková mutace (i18n)
 - [x] Google Photorealistic 3D Tiles integrace do 3D náhledu
       (hotovo – toggle tlačítko 🌍 Google 3D, fallback na OSM Buildings)
@@ -21,7 +21,7 @@
       Aktuálně: klíč bez omezení (OK pro vývoj a testování).
 - [ ] Komercionalizace – multi-user, přihlášení, Supabase
 - [ ] Help sekce – rozšíření o více tipů a diagramů
-- [ ] Odhad spotřeby baterie a doby letu
+- [x] Odhad spotřeby baterie a doby letu (Mini 4 Pro, Haversine 3D, progress bar)
 - [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
 - [ ] Export do formátu Litchi CSV (pro starší drony)
 

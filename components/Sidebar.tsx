@@ -21,6 +21,7 @@ import RocketPanel from './film/RocketPanel';
 import PoiSequencePanel from './film/PoiSequencePanel';
 import { Waypoint, MissionType } from '@/lib/types';
 import { FilmType } from '@/app/page';
+import { estimateBattery } from '@/lib/batteryEstimate';
 
 const PHOTO_TABS: { type: MissionType; label: string }[] = [
   { type: 'waypoints', label: 'Body' },
@@ -124,8 +125,9 @@ interface SidebarProps {
   terrainActive: boolean;
   onTerrainApply: (adjusted: import('@/lib/types').Waypoint[]) => void;
   onTerrainReset: () => void;
-  // Save / Export
+  // Save / Export / Share
   onSaveMission: () => void;
+  onShareMission: () => void;
   onExportKMZ: () => void;
   isExporting: boolean;
   // Address search — flies the map to the selected location
@@ -198,6 +200,7 @@ export default function Sidebar({
   onTerrainApply,
   onTerrainReset,
   onSaveMission,
+  onShareMission,
   onExportKMZ,
   isExporting,
   onFlyTo,
@@ -457,14 +460,71 @@ export default function Sidebar({
         </div>
       )}
 
+      {/* Battery estimate panel — shown when mission has at least 2 waypoints */}
+      {waypoints.length >= 2 && (() => {
+        const est = estimateBattery(waypoints);
+        const barColor =
+          est.batteryPercent > 80 ? '#ef4444' :
+          est.batteryPercent > 60 ? '#f97316' :
+          '#22c55e';
+        const barWidth = Math.min(est.batteryPercent, 100);
+        return (
+          <div className="px-3 pb-2 flex-shrink-0">
+            <div className="bg-[#1a1d27] border border-gray-700 rounded-lg px-3 py-2.5">
+              <div className="text-xs font-semibold text-gray-400 mb-2">🔋 Odhad baterie</div>
+              <div className="flex flex-col gap-1 text-xs text-gray-300 mb-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Vzdálenost:</span>
+                  <span>{est.totalDistanceM.toLocaleString('cs-CZ')} m</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Doba letu:</span>
+                  <span>~{est.flightTimeMin} min</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Spotřeba:</span>
+                  <span style={{ color: barColor }}>~{est.batteryPercent} %</span>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden mb-1">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${barWidth}%`, background: barColor }}
+                />
+              </div>
+              {est.isWarning && (
+                <div className="text-[10px] text-red-400 mt-1">
+                  ⚠️ Mise překračuje bezpečnou hranici baterie!
+                </div>
+              )}
+              <div className="text-[10px] text-gray-600 mt-1">
+                Odhad pro DJI Mini 4 Pro, bez větru
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Action buttons */}
       <div className="px-3 py-3 border-t border-gray-700 flex flex-col gap-2 flex-shrink-0">
-        <button
-          onClick={onSaveMission}
-          className="w-full py-2 bg-[#1a1d27] text-white text-sm rounded-lg border border-gray-600 hover:border-blue-500 transition-colors"
-        >
-          Ulozit misi
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={onSaveMission}
+            className="flex-1 py-2 bg-[#1a1d27] text-white text-sm rounded-lg border border-gray-600 hover:border-blue-500 transition-colors"
+          >
+            Ulozit misi
+          </button>
+          {waypoints.length > 0 && (
+            <button
+              onClick={onShareMission}
+              title="Zkopírovat odkaz na misi"
+              className="px-3 py-2 bg-[#1a1d27] text-gray-300 text-sm rounded-lg border border-gray-600 hover:border-green-500 hover:text-white transition-colors"
+            >
+              🔗
+            </button>
+          )}
+        </div>
         <button
           onClick={onExportKMZ}
           disabled={isExporting || waypoints.length === 0}

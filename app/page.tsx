@@ -2,13 +2,14 @@
 
 // Main application page — full-screen map with sidebar
 import dynamic from 'next/dynamic';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import SaveMissionDialog from '@/components/SaveMissionDialog';
 import { Waypoint, Mission, MissionType } from '@/lib/types';
 import { exportKMZ } from '@/lib/exportKMZ';
 import { saveMission } from '@/lib/missionStore';
+import { encodeMission, decodeMission } from '@/lib/shareUrl';
 
 // Leaflet map must be loaded client-side only (it uses browser APIs)
 const MapView = dynamic(() => import('@/components/Map'), { ssr: false });
@@ -38,6 +39,9 @@ export default function HomePage() {
   const [appMode, setAppMode] = useState<'photo' | 'film'>('photo');
   const [filmType, setFilmType] = useState<FilmType>('dronie');
 
+  // ── Toast notification (used for share URL feedback) ──────────
+  const [toast, setToast] = useState<string | null>(null);
+
   // ── Map state ────────────────────────────────────────────────
   const [mapCenter, setMapCenter] = useState({ lat: 50.08, lng: 14.42 });
 
@@ -48,6 +52,38 @@ export default function HomePage() {
   const handleFlyTo = useCallback((lat: number, lng: number) => {
     setFlyToTarget({ lat, lng, zoom: 17 });
   }, []);
+
+  // ── URL mission import — runs once on mount ───────────────────
+  // When someone opens a shared link (?mission=...) this effect reads,
+  // decodes and loads the mission, then cleans the URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('mission');
+    if (!encoded) return;
+    const data = decodeMission(encoded);
+    if (data) {
+      setWaypoints(data.waypoints);
+      setMissionType(data.missionType);
+      setAppMode(data.missionType === 'film' ? 'film' : 'photo');
+    }
+    // Remove the ?mission= param so the URL stays clean
+    window.history.replaceState({}, '', window.location.pathname);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Share mission as URL ──────────────────────────────────────
+  const handleShareMission = useCallback(() => {
+    const effectiveMissionType: MissionType = appMode === 'film' ? 'film' : missionType;
+    const encoded = encodeMission({ waypoints, missionType: effectiveMissionType });
+    const url = `${window.location.origin}?mission=${encoded}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setToast('🔗 Odkaz zkopírován!');
+      setTimeout(() => setToast(null), 3000);
+    }).catch(() => {
+      setToast('❌ Kopírování selhalo');
+      setTimeout(() => setToast(null), 3000);
+    });
+  }, [waypoints, missionType, appMode]);
 
   // ── Grid state ───────────────────────────────────────────────
   const [gridCorners, setGridCorners] = useState<{ sw: [number, number]; ne: [number, number] } | null>(null);
@@ -482,9 +518,17 @@ export default function HomePage() {
         onTerrainApply={handleTerrainApply}
         onTerrainReset={handleTerrainReset}
         onSaveMission={handleSaveMission}
+        onShareMission={handleShareMission}
         onExportKMZ={handleExportKMZ}
         isExporting={isExporting}
       />
+
+      {/* Toast notification — appears bottom-right, auto-dismisses after 3 s */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2 bg-[#1a1d27] border border-gray-600 text-white text-sm rounded-lg shadow-lg animate-fade-in">
+          {toast}
+        </div>
+      )}
 
       <main className="flex-1 relative">
         <MapView
