@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-27 (Session 17)*
+*Poslední aktualizace: 2026-03-29 (Session 18)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -218,8 +218,7 @@ Aplikace zobrazí krok za krokem:
 - Stale closure v useMapEvents (useRef pattern pro callbacky)
 
 ### 📋 Plánováno – budoucí rozvoj
-- Import KMZ zpět do aplikace (editace existující mise)
-- Sdílení misí jako URL odkaz
+- Sdílení misí jako URL odkaz (hotovo)
 - Anglická jazyková mutace
 
 ---
@@ -246,6 +245,6 @@ Aplikace zobrazí krok za krokem:
 
 ### Budoucí kritéria
 - [x] Terrain following – výška přizpůsobena terénu
-- [ ] Import KMZ zpět do editoru
+- [x] Import KMZ zpět do editoru
 - [ ] Anglická lokalizace
 - [ ] Google Photorealistic 3D Tiles v 3D náhledu

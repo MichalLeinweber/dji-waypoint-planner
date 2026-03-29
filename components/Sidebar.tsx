@@ -128,6 +128,7 @@ interface SidebarProps {
   // Save / Export / Share
   onSaveMission: () => void;
   onShareMission: () => void;
+  onImportKmz: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExportKMZ: () => void;
   isExporting: boolean;
   // Address search — flies the map to the selected location
@@ -201,6 +202,7 @@ export default function Sidebar({
   onTerrainReset,
   onSaveMission,
   onShareMission,
+  onImportKmz,
   onExportKMZ,
   isExporting,
   onFlyTo,
@@ -535,7 +537,7 @@ export default function Sidebar({
       </div>
 
       {/* Navigation links */}
-      <div className="px-3 pb-3 flex gap-3 flex-shrink-0">
+      <div className="px-3 pb-3 flex gap-3 flex-shrink-0 flex-wrap">
         <Link href="/missions" className="text-xs text-gray-500 hover:text-blue-400 transition-colors">
           Ulozene mise
         </Link>
@@ -545,6 +547,16 @@ export default function Sidebar({
         <Link href="/help" className="text-xs text-gray-500 hover:text-blue-400 transition-colors">
           Napoveda
         </Link>
+        {/* KMZ import — hidden file input triggered by label click */}
+        <label className="text-xs text-gray-500 hover:text-blue-400 transition-colors cursor-pointer">
+          📂 Import KMZ
+          <input
+            type="file"
+            accept=".kmz"
+            style={{ display: 'none' }}
+            onChange={onImportKmz}
+          />
+        </label>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { Waypoint, Mission, MissionType } from '@/lib/types';
 import { exportKMZ } from '@/lib/exportKMZ';
 import { saveMission } from '@/lib/missionStore';
 import { encodeMission, decodeMission } from '@/lib/shareUrl';
+import { importKmz } from '@/lib/importKmz';
 
 // Leaflet map must be loaded client-side only (it uses browser APIs)
 const MapView = dynamic(() => import('@/components/Map'), { ssr: false });
@@ -84,6 +85,38 @@ export default function HomePage() {
       setTimeout(() => setToast(null), 3000);
     });
   }, [waypoints, missionType, appMode]);
+
+  // ── KMZ import ───────────────────────────────────────────────
+
+  /** Handle file input change — parse KMZ and load waypoints into the map */
+  const handleImportKmz = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const { waypoints: imported } = await importKmz(file);
+
+      setWaypoints(imported);
+      setMissionType('waypoints');
+      setAppMode('photo');
+      setTerrainActive(false);
+      setOriginalWaypoints(null);
+
+      // Fly to centroid of imported waypoints
+      const avgLat = imported.reduce((sum, wp) => sum + wp.lat, 0) / imported.length;
+      const avgLng = imported.reduce((sum, wp) => sum + wp.lng, 0) / imported.length;
+      setFlyToTarget({ lat: avgLat, lng: avgLng, zoom: 15 });
+
+      setToast(`✅ Mise načtena – ${imported.length} waypointů`);
+      setTimeout(() => setToast(null), 3000);
+    } catch (err) {
+      setToast(`❌ ${String(err).replace('Error: ', '')}`);
+      setTimeout(() => setToast(null), 4000);
+    }
+
+    // Reset file input so the same file can be re-imported if needed
+    e.target.value = '';
+  }, []);
 
   // ── Grid state ───────────────────────────────────────────────
   const [gridCorners, setGridCorners] = useState<{ sw: [number, number]; ne: [number, number] } | null>(null);
@@ -519,6 +552,7 @@ export default function HomePage() {
         onTerrainReset={handleTerrainReset}
         onSaveMission={handleSaveMission}
         onShareMission={handleShareMission}
+        onImportKmz={handleImportKmz}
         onExportKMZ={handleExportKMZ}
         isExporting={isExporting}
       />

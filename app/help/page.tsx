@@ -747,6 +747,18 @@ export default function HelpPage() {
           >
             Zobrazit detailní návod krok za krokem →
           </Link>
+
+          <h3 className="text-white font-medium text-sm mt-5 mb-2">📂 Import KMZ</h3>
+          <p className="text-gray-300 text-sm leading-relaxed">
+            Exportovaný KMZ soubor můžeš kdykoli načíst zpět do editoru tlačítkem{' '}
+            <span className="text-gray-100 font-medium">📂 Import KMZ</span> v dolní liště.
+            Mise se načte jako sada ručních waypointů připravených k editaci.
+          </p>
+          <p className="text-gray-400 text-xs leading-relaxed mt-2">
+            Omezení: filmové mise (Spirála, Grid, Orbit, Dronie…) se importují jako základní
+            waypointy — speciální parametry záběru nejsou zachovány. Podporován je standardní
+            DJI WPML formát (waylines.wpml) i obecné KML soubory.
+          </p>
         </section>
 
       </div>
