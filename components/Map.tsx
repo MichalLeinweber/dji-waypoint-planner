@@ -123,13 +123,16 @@ function LayersControl() {
         L.DomEvent.on(div, 'dblclick', () => {
           // Collect bounds from all markers currently on the map
           const bounds = L.latLngBounds([]);
+          let markerCount = 0;
           map.eachLayer((layer) => {
             if (layer instanceof L.Marker) {
               bounds.extend(layer.getLatLng());
+              markerCount++;
             }
           });
-          if (bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [60, 60] });
+          console.log('[compass] Markers found:', markerCount, '| Bounds valid:', bounds.isValid());
+          if (bounds.isValid() && markerCount > 0) {
+            map.fitBounds(bounds, { padding: [80, 80], maxZoom: 17 });
           } else {
             map.setView([49.8, 15.5], 8); // fallback: centre of Czech Republic
           }
