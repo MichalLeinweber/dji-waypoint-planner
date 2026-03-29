@@ -4,6 +4,8 @@
 - [ ] Geocoding swap na Mapy.cz API pro komerční provoz
       (abstrakční vrstva lib/geocoding.ts je připravena,
        stačí vyměnit funkci searchAddress())
+- [ ] CTR/TRA zóny – implementace zobrazení na mapě
+      (OpenAIP API klíč připraven: NEXT_PUBLIC_OPENAIP_API_KEY)
 
 ## 📋 Střední priorita
 - [x] Sdílení misí jako URL odkaz (URL encode JSON mise)
@@ -52,6 +54,7 @@
 - [x] Terrain Following (Open-Meteo API, batching, safety floor 2 m)
 - [x] 3D náhled mise (CesiumJS, World Terrain, OSM Buildings, trasa ve vzduchu)
 - [x] Import KMZ zpět do aplikace (JSZip + DOMParser, WPML namespace, flyTo centroid)
+- [x] Zobrazení letových zón CTR/TRA (OpenAIP API, registrace hotova, klíč v .env.local a Vercel)
 
 ---
 *Aktualizuj tento soubor při každé session kdy se

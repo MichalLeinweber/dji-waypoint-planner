@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-29 (Session 18)*
+*Poslední aktualizace: 2026-03-29 (Session 19)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -179,24 +179,54 @@ Aplikace zobrazí krok za krokem:
 - `/preview-3d` – 3D náhled mise (CesiumJS, nový tab)
 
 **Help sekce (/help):**
-- Navigační kotvy: #foto / #film / #prenos
+- Navigační kotvy: #funkce / #foto / #film / #parametry / #terrain / #sdileni-baterie / #prenos
+- Přehled funkcí aplikace (9 karet s ikonami)
+- Parametry waypointu: výška, rychlost, čekání, kamera (tabulka)
 - Fotogrammetrie: výběr mise, překryv %, vzdálenost od fasády
+- Detail Orbit / Fasáda / Grid (jak fungují)
 - SVG diagramy: překryv záběrů, vzdálenost zboku, gimbal úhly
-- Filmařský modul: 6 karet záběrů, doporučené rychlosti
+- Filmařský modul: 9 karet záběrů, doporučené rychlosti
 - Hyperlapse výpočet: vzorec + příklad
 - Limit 200 waypointů: barevná legenda + tabulka řešení
+- Sdílení mise: popis funkce + typické použití
+- Odhad baterie: parametry výpočtu, upozornění na vítr
+- Přepínač vrstev mapy: OSM / Satelit / Terén
+- Severka (2D mapa) a rotující kompas (3D náhled), dblclick chování
+- 3D náhled: Google Photorealistic 3D Tiles, ovládání, kompas
+- Import KMZ: popis, omezení (filmové mise → waypointy)
 
 **3D náhled mise (CesiumJS):**
 - `app/preview-3d/page.tsx` — CesiumJS načítán z CDN script tagem (bez npm bundle), nový tab
 - Data přes `localStorage['preview3d-mission']` (JSON s waypoints + timestamp)
 - World Terrain (Cesium ion) — reálný 3D terén s vertex normály a vodními maskami
 - OSM Buildings (Cesium ion) — miliony 3D budov z OpenStreetMap, toggle tlačítkem
+- Google Photorealistic 3D Tiles (Google Maps API) — toggle 🌍, fallback na OSM Buildings
 - Trasa jako CesiumJS polyline s PolylineGlowMaterialProperty, `clampToGround: false`
 - Absolutní výšky: Open-Meteo MSL elevace + AGL výška waypointu (min. 80 m pro náhled)
 - Oranžové waypoint markery (pixelSize 16) s číslovanými labely ve výšce letu
 - Ovládání: orbit/pan/zoom (Cesium nativní), Ptačí pohled (pitch -90°), Boční (pitch -30°)
+- Rotující kompas (heading listener), dblclick → srovnání na sever
 - Info box: počet WP, čas mise, výška v náhledu AGL
 - Tlačítko `🔭 3D náhled` v Sidebar, zobrazí se pouze při `waypoints.length > 0`
+
+**Mapa (Leaflet):**
+- Přepínač vrstev: OSM / Satelit (Esri) / Terén (Esri) — `L.control.layers()` přes `useMap()` hook
+- Statická severka (bottomright), dblclick → fitBounds na waypointy nebo střed ČR
+
+**Sdílení mise:**
+- `lib/shareUrl.ts` — `btoa(encodeURIComponent(JSON.stringify()))`, dekódování při načtení URL
+- Tlačítko 🔗 v sidebaru, `navigator.clipboard.writeText()`, toast 3 s
+
+**Import KMZ:**
+- `lib/importKmz.ts` — JSZip rozbalení, DOMParser XML, `getByLocalName()` pro WPML namespace
+- Načtení mise zpět do editoru, flyTo centroid, reset terrain following
+
+**Odhad baterie:**
+- `lib/batteryEstimate.ts` — Haversine 3D vzdálenost, Mini 4 Pro 33.48 Wh / 7 W avg / 20% rezerva
+- Panel v sidebaru s progress barem (zelená/oranžová/červená), zobrazí se od 2 waypointů
+
+**OpenAIP integrace (příprava):**
+- Účet vytvořen, API klíč vygenerován: `NEXT_PUBLIC_OPENAIP_API_KEY` v `.env.local` a Vercel
 
 **Terrain Following:**
 - `lib/terrainFollowing.ts` — Open-Meteo Elevation API, batching po 100 bodech
@@ -218,7 +248,7 @@ Aplikace zobrazí krok za krokem:
 - Stale closure v useMapEvents (useRef pattern pro callbacky)
 
 ### 📋 Plánováno – budoucí rozvoj
-- Sdílení misí jako URL odkaz (hotovo)
+- CTR/TRA letové zóny – zobrazení na mapě (OpenAIP API klíč připraven)
 - Anglická jazyková mutace
 
 ---
@@ -247,4 +277,4 @@ Aplikace zobrazí krok za krokem:
 - [x] Terrain following – výška přizpůsobena terénu
 - [x] Import KMZ zpět do editoru
 - [ ] Anglická lokalizace
-- [ ] Google Photorealistic 3D Tiles v 3D náhledu
+- [x] Google Photorealistic 3D Tiles v 3D náhledu
