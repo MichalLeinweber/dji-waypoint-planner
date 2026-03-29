@@ -164,6 +164,12 @@ export default function HelpPage() {
         {/* ── Navigation anchors ── */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-10 scrollbar-none">
           <a
+            href="#funkce"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-gray-600 text-gray-400 hover:bg-gray-800 transition-colors"
+          >
+            🗂 Přehled funkcí
+          </a>
+          <a
             href="#foto"
             className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-blue-700 text-blue-400 hover:bg-blue-900/30 transition-colors"
           >
@@ -176,10 +182,22 @@ export default function HelpPage() {
             🎬 Filmařský modul
           </a>
           <a
+            href="#parametry"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-blue-700 text-blue-400 hover:bg-blue-900/30 transition-colors"
+          >
+            ⚙ Parametry WP
+          </a>
+          <a
             href="#terrain"
             className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-green-800 text-green-400 hover:bg-green-900/30 transition-colors"
           >
             🏔 Terrain Following
+          </a>
+          <a
+            href="#sdileni-baterie"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-gray-600 text-gray-400 hover:bg-gray-800 transition-colors"
+          >
+            🔗 Sdílení &amp; baterie
           </a>
           <a
             href="#prenos"
@@ -188,6 +206,35 @@ export default function HelpPage() {
             📡 Přenos do RC 2
           </a>
         </div>
+
+        {/* ── 0: Co aplikace umí ── */}
+        <section id="funkce" className={sectionClass}>
+          <h2 className={h2Class}>Co aplikace umí</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { icon: '📍', title: 'Plánování trasy', desc: 'Ruční body, spirála, grid, orbit, fasáda jedné strany i celé budovy 360°' },
+              { icon: '🎬', title: 'Filmařský modul', desc: '9 cinematic záběrů: Dronie, Reveal, Top-down, Crane Up, Hyperlapse, Arc Shot, Boomerang, Rocket, POI Sequence' },
+              { icon: '📤', title: 'Export KMZ', desc: 'Stažení souboru kompatibilního s DJI Fly (WPML formát, Mini 4 Pro)' },
+              { icon: '📂', title: 'Import KMZ', desc: 'Načtení existující mise zpět do editoru k úpravám' },
+              { icon: '🔗', title: 'Sdílení mise', desc: 'Zkopírování odkazu s celou misí zakódovanou v URL — otevře se přímo v prohlížeči' },
+              { icon: '🏔', title: 'Terrain Following', desc: 'Automatické přizpůsobení výšek waypointů skutečnému terénu (Open-Meteo)' },
+              { icon: '🔭', title: '3D náhled', desc: 'Interaktivní vizualizace trasy v reálném terénu s 3D budovami (CesiumJS)' },
+              { icon: '🔋', title: 'Odhad baterie', desc: 'Přibližná spotřeba a čas letu pro DJI Mini 4 Pro s barevným progress barem' },
+              { icon: '🗺', title: 'Přepínač map', desc: 'Tři podkladové mapy: klasická (OSM), satelitní snímky (Esri), topografická mapa' },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="bg-[#1a1d27] rounded-lg p-3 border border-gray-700 flex gap-3 items-start"
+              >
+                <span className="text-xl flex-shrink-0 mt-0.5">{item.icon}</span>
+                <div>
+                  <p className="text-sm font-semibold text-white mb-0.5">{item.title}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* ── A: Jak začít ── */}
         <section className={sectionClass}>
@@ -221,6 +268,57 @@ export default function HelpPage() {
           </p>
         </section>
 
+        {/* ── A2: Parametry waypointu ── */}
+        <section id="parametry" className={sectionClass}>
+          <h2 className={h2Class}>Parametry waypointu</h2>
+          <p className="text-gray-400 text-sm leading-relaxed mb-4">
+            Každý waypoint (bod trasy) má čtyři nastavitelné parametry. Zobrazují se v sidebaru
+            po kliknutí na waypoint nebo v seznamu bodů.
+          </p>
+          <table className={tableClass}>
+            <thead>
+              <tr>
+                <th className={thClass}>Parametr</th>
+                <th className={thClass}>Popis</th>
+                <th className={thClass}>Doporučená hodnota</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className={tdClass}><span className="text-white font-medium">Výška (m)</span></td>
+                <td className={tdClass}>
+                  Výška letu v metrech nad místem vzletu{' '}
+                  <span className="text-gray-500 text-xs">(AGL — Above Ground Level)</span>
+                </td>
+                <td className={tdClass}><span className="text-blue-300">30–120 m</span><span className="text-gray-500 text-xs"> (max DJI Mini 4 Pro: 120 m dle předpisů)</span></td>
+              </tr>
+              <tr>
+                <td className={tdClass}><span className="text-white font-medium">Rychlost (m/s)</span></td>
+                <td className={tdClass}>Rychlost letu mezi waypointy (1–15 m/s)</td>
+                <td className={tdClass}>
+                  <span className="text-blue-300">3–5 m/s</span>
+                  <span className="text-gray-500 text-xs"> foto, </span>
+                  <span className="text-purple-300">1–4 m/s</span>
+                  <span className="text-gray-500 text-xs"> film</span>
+                </td>
+              </tr>
+              <tr>
+                <td className={tdClass}><span className="text-white font-medium">Čekání (s)</span></td>
+                <td className={tdClass}>Doba stání na waypointu před pokračováním trasy</td>
+                <td className={tdClass}><span className="text-blue-300">0 s</span><span className="text-gray-500 text-xs"> (nebo 1–3 s pro focení / otočení)</span></td>
+              </tr>
+              <tr>
+                <td className={tdClass}><span className="text-white font-medium">Kamera</span></td>
+                <td className={tdClass}>
+                  Akce kamery při dosažení bodu:{' '}
+                  <span className="text-gray-300">Žádná · Foto · Začít video · Zastavit video</span>
+                </td>
+                <td className={tdClass}><span className="text-gray-500 text-xs">Záleží na typu mise — grid → Foto, film → automaticky</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
         {/* ── B: Výběr typu mise ── */}
         <section id="foto" className={sectionClass}>
           <h2 className={h2Class}>Výběr typu mise</h2>
@@ -248,6 +346,36 @@ export default function HelpPage() {
                 <p className="text-xs mt-auto pt-1" style={{ color: m.color }}>
                   → {m.tab}
                 </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Detail: Orbit / Fasáda / Grid */}
+          <div className="mt-5 flex flex-col gap-3">
+            <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Jak fungují vybrané typy misí</p>
+            {[
+              {
+                type: 'Orbit',
+                color: '#06b6d4',
+                body: 'Dron krouží kolem středového bodu (POI) v konstantní vzdálenosti a výšce. Gimbal je automaticky nasměrován na střed. Střed definuješ kliknutím na mapu, pak nastavíš poloměr, výšku, rychlost a počet otáček.',
+              },
+              {
+                type: 'Fasáda',
+                color: '#f97316',
+                body: 'Dron letí podél stěny budovy v lawn-mower vzoru (sem a tam v řadách) pro kompletní fotodokumentaci. Režim „Jedna strana" — 2 kliknutí na mapu definují linii fasády. Režim „360°" — 4 kliknutí definují rohy budovy, aplikace vygeneruje 4 strany v jedné misi.',
+              },
+              {
+                type: 'Grid',
+                color: '#22c55e',
+                body: 'Dron systematicky přelétá vybranou plochu v mřížkovém vzoru (lawn-mower) pro fotogrammetrii. 2 kliknutí definují roh oblasti. Nastavíš výšku, překryv (%) a směr řad (°). Ideální pro mapování polí, střech a stavenišť.',
+              },
+            ].map((item) => (
+              <div key={item.type} className="bg-[#1a1d27] rounded-lg px-4 py-3 border border-gray-700">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                  <span className="text-sm font-semibold text-white">{item.type}</span>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">{item.body}</p>
               </div>
             ))}
           </div>
@@ -657,6 +785,58 @@ export default function HelpPage() {
           </table>
         </section>
 
+        {/* ── E2: Sdílení mise + Odhad baterie ── */}
+        <section id="sdileni-baterie" className={sectionClass}>
+          <h2 className={h2Class}>Sdílení mise</h2>
+          <p className="text-gray-400 text-sm leading-relaxed mb-4">
+            Tlačítko <span className="text-white font-medium">🔗</span> vedle „Ulozit misi"
+            zkopíruje odkaz do schránky. Odkaz obsahuje celou misi zakódovanou přímo v URL —
+            příjemce ji otevře v prohlížeči bez nutnosti přenosu souborů.
+          </p>
+          <div className="bg-[#1a1d27] border border-gray-700 rounded-lg px-4 py-3 text-sm mb-2">
+            <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">Typické použití</p>
+            <ul className="flex flex-col gap-1.5 text-gray-300 text-sm list-none">
+              <li className="flex gap-2"><span className="text-blue-400">●</span> Sdílení plánu letu s klientem nebo kolegou pilotem</li>
+              <li className="flex gap-2"><span className="text-blue-400">●</span> Záloha mise jako URL (ulož odkaz do poznámek nebo e-mailu)</li>
+              <li className="flex gap-2"><span className="text-blue-400">●</span> Rychlé předání mise bez nutnosti exportu KMZ souboru</li>
+            </ul>
+          </div>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Odkaz funguje pro všechny typy misí. Filmové mise se sdílí jako waypointy — příjemce
+            vidí body na mapě, ale filmové parametry záběru nejsou přenášeny.
+          </p>
+
+          <h2 className={`${h2Class} mt-10`}>Odhad spotřeby baterie</h2>
+          <p className="text-gray-400 text-sm leading-relaxed mb-4">
+            Panel se zobrazí automaticky po přidání 2 a více waypointů. Počítá přibližnou spotřebu
+            baterie a dobu letu pro DJI Mini 4 Pro na základě délky trasy a nastavených rychlostí.
+          </p>
+          <div className="bg-[#1a1d27] border border-gray-700 rounded-lg px-4 py-3 text-sm mb-4">
+            <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">Parametry výpočtu (DJI Mini 4 Pro)</p>
+            <table className={tableClass}>
+              <tbody>
+                <tr>
+                  <td className={tdClass + ' text-gray-400'}>Kapacita baterie</td>
+                  <td className={tdClass}><span className="text-white font-medium">33.48 Wh</span></td>
+                </tr>
+                <tr>
+                  <td className={tdClass + ' text-gray-400'}>Průměrná spotřeba při letu</td>
+                  <td className={tdClass}><span className="text-white font-medium">~7 W</span></td>
+                </tr>
+                <tr>
+                  <td className={tdClass + ' text-gray-400'}>Bezpečnostní rezerva</td>
+                  <td className={tdClass}><span className="text-white font-medium">20 %</span> <span className="text-gray-500 text-xs">(doporučeno nikdy neklesat pod tuto hranici)</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="bg-yellow-900/20 border border-yellow-800/50 rounded-lg px-4 py-3 text-xs text-yellow-400 leading-relaxed">
+            ⚠ <span className="font-medium">Upozornění:</span> Odhad je přibližný a nezohledňuje
+            vítr, vzlet/přistání, hovering ani teplotu baterie. Ve větru spotřeba výrazně roste.
+            Vždy nechej alespoň 20–25 % rezervu a sleduj stav baterie v DJI Fly.
+          </div>
+        </section>
+
         {/* ── F: Terrain Following ── */}
         <section id="terrain" className={sectionClass}>
           <h2 className={h2Class}>Terrain Following</h2>
@@ -720,7 +900,7 @@ export default function HelpPage() {
             </ul>
           </div>
 
-          <div className="bg-[#1a1d27] border border-gray-700 rounded-lg px-4 py-4 text-sm">
+          <div className="bg-[#1a1d27] border border-gray-700 rounded-lg px-4 py-4 text-sm mb-4">
             <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">
               Ovládání 3D náhledu
             </p>
@@ -731,6 +911,57 @@ export default function HelpPage() {
               <li><span className="text-gray-500">Kompas:</span> rotuje spolu s kamerou — červená šipka = sever</li>
             </ul>
           </div>
+
+          <div className="bg-[#1a1d27] border border-gray-700 rounded-lg px-4 py-4 text-sm">
+            <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">
+              Severka a kompas
+            </p>
+            <ul className="flex flex-col gap-2 text-gray-300 text-sm list-none">
+              <li className="flex gap-2">
+                <span className="text-blue-400 mt-0.5 flex-shrink-0">●</span>
+                <span>
+                  <span className="text-white font-medium">V mapě (2D):</span>{' '}
+                  Severka vpravo dole vždy ukazuje sever.
+                  Dvojklik → mapa přiletí na aktuální misi (nebo střed ČR, pokud nejsou žádné waypointy).
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-400 mt-0.5 flex-shrink-0">●</span>
+                <span>
+                  <span className="text-white font-medium">V 3D náhledu:</span>{' '}
+                  Kompas vpravo dole se otáčí podle orientace kamery.
+                  Dvojklik → kamera se srovná na sever při zachování aktuálního pitche.
+                </span>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        {/* ── G2: Přepínač vrstev mapy ── */}
+        <section className={sectionClass}>
+          <h2 className={h2Class}>Přepínání podkladové mapy</h2>
+          <p className="text-gray-400 text-sm leading-relaxed mb-4">
+            Ikona vrstev vpravo nahoře na mapě umožňuje přepínat mezi třemi podkladovými mapami.
+          </p>
+          <div className="flex flex-col gap-3">
+            {[
+              { icon: '🗺', label: 'Mapa', color: 'text-blue-400', desc: 'Klasická OpenStreetMap s názvy ulic, obcí a bodů zájmu. Vhodná pro orientaci a plánování tras.' },
+              { icon: '🛰', label: 'Satelit', color: 'text-green-400', desc: 'Letecké ortofoto snímky (Esri World Imagery). Ideální pro kontrolu překážek — stromy, budovy, terén — před letem.' },
+              { icon: '🏔', label: 'Terén', color: 'text-yellow-400', desc: 'Topografická mapa s vrstevnicemi, výškami a názvy obcí (Esri World Topo Map). Užitečná při plánování misí v terénu.' },
+            ].map((item) => (
+              <div key={item.label} className="bg-[#1a1d27] border border-gray-700 rounded-lg px-4 py-3 flex gap-3 items-start">
+                <span className="text-xl flex-shrink-0 mt-0.5">{item.icon}</span>
+                <div>
+                  <p className={`text-sm font-semibold mb-0.5 ${item.color}`}>{item.label}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-gray-500 leading-relaxed">
+            Tip: Satelitní vrstva je nejvíce užitečná při finální kontrole trasy před exportem —
+            vidíš přesné polohy stromů a budov v záběru.
+          </p>
         </section>
 
         {/* ── H: Přenos do RC 2 ── */}
