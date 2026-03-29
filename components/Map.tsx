@@ -4,7 +4,7 @@
 // Leaflet uses browser-only APIs (window, document) so it cannot run on the server.
 import { useEffect, useRef } from 'react';
 import type { LatLngExpression } from 'leaflet';
-import { MapContainer, TileLayer, Polyline, Rectangle, Polygon, useMapEvents } from 'react-leaflet';
+import { MapContainer, Polyline, Rectangle, Polygon, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Waypoint } from '@/lib/types';
@@ -107,6 +107,55 @@ export default function MapView({
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
 
+  // One-time setup: tile layers control + static compass — runs after MapContainer mounts
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+
+    // ── Tile layers ────────────────────────────────────────────────────────────
+    const osmLayer = L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
+    );
+    const esriSatellite = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { attribution: '© Esri' },
+    );
+    const esriTopo = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      { attribution: '© Esri' },
+    );
+
+    osmLayer.addTo(map); // OSM is the default layer
+
+    L.control.layers(
+      { '🗺 Mapa': osmLayer, '🛰 Satelit': esriSatellite, '🏔 Terén': esriTopo },
+      {},
+      { position: 'topright' },
+    ).addTo(map);
+
+    // ── Static compass (Leaflet does not rotate — north is always up) ──────────
+    const compass = new L.Control({ position: 'bottomleft' });
+    compass.onAdd = () => {
+      const div = L.DomUtil.create('div');
+      div.title = 'Sever je vždy nahoře';
+      div.innerHTML = `
+        <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="22" cy="22" r="20" fill="#1a1a2e" stroke="#555" stroke-width="1.5"/>
+          <polygon points="22,4 26,22 22,18 18,22" fill="#ef4444"/>
+          <polygon points="22,40 26,22 22,26 18,22" fill="white" opacity="0.6"/>
+          <text x="22" y="12" text-anchor="middle" fill="white" font-size="8" font-weight="bold">N</text>
+          <text x="22" y="38" text-anchor="middle" fill="white" font-size="7" opacity="0.6">S</text>
+          <text x="9"  y="26" text-anchor="middle" fill="white" font-size="7" opacity="0.6">W</text>
+          <text x="35" y="26" text-anchor="middle" fill="white" font-size="7" opacity="0.6">E</text>
+        </svg>`;
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    };
+    compass.addTo(map);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Toggle crosshair cursor by swapping Leaflet CSS classes on the map container.
   // Leaflet adds 'leaflet-grab' by default which overrides any inline cursor style,
   // so we must remove it and add 'leaflet-crosshair' instead.
@@ -180,10 +229,7 @@ export default function MapView({
       }}
       ref={mapRef}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      {/* Tile layer is managed imperatively in the useEffect above via L.tileLayer */}
       <MapEventHandler onMapClick={onMapClick} onCenterChange={onCenterChange} />
 
       {/* Waypoint connection line */}

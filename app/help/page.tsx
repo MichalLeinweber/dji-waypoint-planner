@@ -690,7 +690,50 @@ export default function HelpPage() {
           </div>
         </section>
 
-        {/* ── G: Přenos do RC 2 ── */}
+        {/* ── G: 3D náhled mise ── */}
+        <section id="nahled-3d" className={sectionClass}>
+          <h2 className={h2Class}>3D náhled mise</h2>
+          <p className="text-gray-400 text-sm leading-relaxed mb-4">
+            Tlačítko <span className="text-white font-medium">🔭 3D náhled</span> otevře interaktivní
+            3D vizualizaci naplánované trasy v reálném terénu (CesiumJS). Trasa se zobrazí
+            v přesné výšce nad zemí díky datům z Open-Meteo.
+          </p>
+
+          {/* Google 3D info box */}
+          <div className="bg-[#1a1d27] border border-gray-700 rounded-lg px-4 py-4 text-sm mb-4">
+            <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-3">
+              Pokrytí Google Photorealistic 3D Tiles
+            </p>
+            <ul className="flex flex-col gap-2 text-gray-300 text-sm list-none">
+              <li className="flex gap-2">
+                <span className="text-blue-400 mt-0.5">●</span>
+                Google 3D modely jsou dostupné pouze ve větších městech a turisticky významných oblastech
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-400 mt-0.5">●</span>
+                V oblastech bez pokrytí se automaticky zobrazí OSM Buildings (šedé 3D bloky)
+              </li>
+              <li className="flex gap-2">
+                <span className="text-blue-400 mt-0.5">●</span>
+                Přepínání: tlačítko <span className="text-white font-medium">🌍 Google 3D</span> / <span className="text-white font-medium">🏢 Budovy</span> vpravo nahoře v 3D náhledu
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-[#1a1d27] border border-gray-700 rounded-lg px-4 py-4 text-sm">
+            <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">
+              Ovládání 3D náhledu
+            </p>
+            <ul className="flex flex-col gap-1.5 text-gray-300 text-sm">
+              <li><span className="text-gray-500">Orbit (otáčení):</span> levé tlačítko myši</li>
+              <li><span className="text-gray-500">Pan (posun):</span> prostřední tlačítko / Ctrl + levé</li>
+              <li><span className="text-gray-500">Zoom:</span> pravé tlačítko / kolečko myši</li>
+              <li><span className="text-gray-500">Kompas:</span> rotuje spolu s kamerou — červená šipka = sever</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* ── H: Přenos do RC 2 ── */}
         <section id="prenos" className={sectionClass}>
           <h2 className={h2Class}>Přenos mise do RC 2</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-3">

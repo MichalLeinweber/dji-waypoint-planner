@@ -73,6 +73,8 @@ export default function Preview3DPage() {
   const [googleTilesAvailable, setGoogleTilesAvailable] = useState(false);
   // googleTilesActive: Google tiles currently visible (button highlight)
   const [googleTilesActive, setGoogleTilesActive] = useState(false);
+  // heading: current camera heading in degrees (0 = north), drives the rotating compass
+  const [heading, setHeading] = useState(0);
   const [missionMeta, setMissionMeta] = useState<{
     count: number;
     timestamp: number;
@@ -277,6 +279,14 @@ export default function Preview3DPage() {
           },
         });
 
+        // Rotating compass: update heading state whenever camera orientation changes.
+        // heading = 0 means camera points north; rotating right increases heading.
+        // The SVG compass rotates by -heading so north always points up on screen.
+        viewer.camera.changed.addEventListener(() => {
+          const h = Cesium.Math.toDegrees(viewer.camera.heading);
+          setHeading(h);
+        });
+
         console.log('[preview-3d] Scene ready');
         setMapReady(true);
 
@@ -440,6 +450,11 @@ export default function Preview3DPage() {
                 Výška v náhledu: {missionMeta.avgDisplayHeight} m AGL
               </div>
             )}
+            {googleTilesActive && (
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
+                🌍 Google 3D: dostupné ve větších městech
+              </div>
+            )}
             <div className="text-gray-600 text-[10px] mt-1">
               {new Date(missionMeta.timestamp).toLocaleTimeString('cs-CZ', {
                 hour: '2-digit',
@@ -498,6 +513,39 @@ export default function Preview3DPage() {
           )}
         </div>
       </div>
+
+      {/* ── Rotating compass — mirrors camera heading, north always at top when heading=0 ── */}
+      {mapReady && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 70,
+            right: 16,
+            zIndex: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <div
+            style={{
+              transform: `rotate(${-heading}deg)`,
+              transition: 'transform 0.1s linear',
+            }}
+          >
+            <svg width="52" height="52" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="22" cy="22" r="20" fill="#1a1d27" fillOpacity="0.9" stroke="#4b5563" strokeWidth="1.5"/>
+              <polygon points="22,4 26,22 22,18 18,22" fill="#ef4444"/>
+              <polygon points="22,40 26,22 22,26 18,22" fill="white" opacity="0.6"/>
+              <text x="22" y="12" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">N</text>
+              <text x="22" y="38" textAnchor="middle" fill="white" fontSize="7" opacity="0.6">S</text>
+              <text x="9"  y="26" textAnchor="middle" fill="white" fontSize="7" opacity="0.6">W</text>
+              <text x="35" y="26" textAnchor="middle" fill="white" fontSize="7" opacity="0.6">E</text>
+            </svg>
+          </div>
+        </div>
+      )}
 
       {/* ── Bottom legend ── */}
       {mapReady && (
