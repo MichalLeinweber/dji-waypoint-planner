@@ -18,7 +18,9 @@
       přidat produkční doménu.
       Aktuálně: klíč bez omezení (OK pro vývoj a testování).
 - [ ] Komercionalizace – multi-user, přihlášení, Supabase
-- [ ] Help sekce – rozšíření o více tipů a diagramů
+- [ ] Help sekce – průběžně aktualizovat při každé
+      nové funkci. Pravidlo: každá nová funkcionalita
+      = nová nebo rozšířená sekce v /help.
 - [x] Odhad spotřeby baterie a doby letu (Mini 4 Pro, Haversine 3D, progress bar)
 - [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
 - [ ] Export do formátu Litchi CSV (pro starší drony)
