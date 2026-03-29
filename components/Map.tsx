@@ -108,7 +108,8 @@ function LayersControl() {
       options: { position: 'bottomleft' },
       onAdd() {
         const div = L.DomUtil.create('div');
-        div.style.cssText = 'background:transparent;cursor:pointer;';
+        div.style.cssText = 'background:transparent;';
+        div.style.cursor = 'pointer';
         div.title = 'Dvojklik pro reset pohledu na misi';
         div.innerHTML = `<svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
           <circle cx="22" cy="22" r="20" fill="#1a1a2e" stroke="#555" stroke-width="1.5"/>
@@ -120,7 +121,10 @@ function LayersControl() {
           <text x="35" y="26" text-anchor="middle" fill="white" font-size="7" opacity="0.6">E</text>
         </svg>
         <div style="text-align:center;color:#aaa;font-size:9px;margin-top:2px;">2× reset</div>`;
-        L.DomEvent.on(div, 'dblclick', () => {
+        // Prevent single click from propagating to map (would add a waypoint)
+        L.DomEvent.on(div, 'click', L.DomEvent.stopPropagation);
+        L.DomEvent.on(div, 'dblclick', (e) => {
+          L.DomEvent.stopPropagation(e);
           // Collect bounds from all markers currently on the map
           const bounds = L.latLngBounds([]);
           let markerCount = 0;
@@ -137,7 +141,6 @@ function LayersControl() {
             map.setView([49.8, 15.5], 8); // fallback: centre of Czech Republic
           }
         });
-        L.DomEvent.disableClickPropagation(div);
         return div;
       },
     });
