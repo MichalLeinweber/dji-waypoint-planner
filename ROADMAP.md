@@ -9,11 +9,16 @@
 ## 📋 Střední priorita
 - [ ] Sdílení misí jako URL odkaz (URL encode JSON mise)
 - [ ] Anglická jazyková mutace (i18n)
-- [ ] Google Photorealistic 3D Tiles integrace do 3D náhledu
-      (Google Cloud projekt "DJI Waypoint planner" vytvořen,
-       Map Tiles API aktivována, zbývá verifikace karty a API klíč)
+- [x] Google Photorealistic 3D Tiles integrace do 3D náhledu
+      (hotovo – toggle tlačítko 🌍 Google 3D, fallback na OSM Buildings)
 
 ## 💡 Nápady a budoucí rozvoj
+- [ ] BEZPEČNOST: Omezit Google Maps API klíč na konkrétní doménu
+      před komerčním nasazením.
+      Postup: Google Cloud Console → APIs & Services → Credentials →
+      vybrat klíč → Application restrictions → HTTP referrers →
+      přidat produkční doménu.
+      Aktuálně: klíč bez omezení (OK pro vývoj a testování).
 - [ ] Komercionalizace – multi-user, přihlášení, Supabase
 - [ ] Help sekce – rozšíření o více tipů a diagramů
 - [ ] Odhad spotřeby baterie a doby letu
