@@ -134,6 +134,9 @@ interface SidebarProps {
   // Protected areas (NP/CHKO) toggle
   showProtectedAreas: boolean;
   onToggleProtectedAreas: () => void;
+  // Small nature reserves (NPR/NPP/PR/PP) toggle
+  showSmallReserves: boolean;
+  onToggleSmallReserves: () => void;
   // Collision detection results
   collisions: Collision[];
   // Save / Export / Share
@@ -141,6 +144,7 @@ interface SidebarProps {
   onShareMission: () => void;
   onImportKmz: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExportKMZ: () => void;
+  onExportLitchi: () => void;
   isExporting: boolean;
   // Address search — flies the map to the selected location
   onFlyTo: (lat: number, lng: number) => void;
@@ -246,11 +250,14 @@ export default function Sidebar({
   onToggleAirspace,
   showProtectedAreas,
   onToggleProtectedAreas,
+  showSmallReserves,
+  onToggleSmallReserves,
   collisions,
   onSaveMission,
   onShareMission,
   onImportKmz,
   onExportKMZ,
+  onExportLitchi,
   isExporting,
   onFlyTo,
 }: SidebarProps) {
@@ -565,8 +572,8 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Airspace zones toggle — always visible, independent of waypoints */}
-      <div className="px-3 pb-2 flex-shrink-0">
+      {/* Layer toggles — always visible, independent of waypoints */}
+      <div className="px-3 pb-2 flex-shrink-0 flex flex-col gap-1">
         <button
           onClick={onToggleAirspace}
           className={`w-full py-1.5 text-xs rounded border transition-colors ${
@@ -586,6 +593,16 @@ export default function Sidebar({
           }`}
         >
           {showProtectedAreas ? '🌿 Skrýt NP a CHKO' : '🌿 Zobrazit NP a CHKO'}
+        </button>
+        <button
+          onClick={onToggleSmallReserves}
+          className={`w-full py-1.5 text-xs rounded border transition-colors ${
+            showSmallReserves
+              ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 hover:bg-emerald-600/30'
+              : 'bg-[#0f1117] border-gray-600 text-gray-300 hover:border-emerald-500 hover:text-white'
+          }`}
+        >
+          {showSmallReserves ? '🌱 Skrýt přírodní rezervace' : '🌱 Přírodní rezervace (NPR/PP)'}
         </button>
       </div>
 
@@ -614,6 +631,14 @@ export default function Sidebar({
           className="w-full py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isExporting ? 'Exportuji...' : 'Exportovat KMZ'}
+        </button>
+        <button
+          onClick={onExportLitchi}
+          disabled={waypoints.length === 0}
+          title="Export pro Litchi app (starší DJI drony)"
+          className="w-full py-1.5 bg-[#0f1117] text-gray-400 text-xs rounded-lg border border-gray-700 hover:border-blue-500 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Export Litchi CSV
         </button>
       </div>
 

@@ -78,6 +78,21 @@ function protectedAreaInstructions(type: string): string {
   return 'CHKO – ověřte zónu I–IV a podmínky na letejtezodpovedne.cz';
 }
 
+function smallReserveSeverity(type: string): Severity {
+  if (type === 'NPR' || type === 'NPP') return 'DANGER';
+  if (type === 'PR') return 'WARNING';
+  return 'CAUTION'; // PP
+}
+
+function smallReserveInstructions(type: string): string {
+  switch (type) {
+    case 'NPR': return 'Národní přírodní rezervace – přísný zákaz létání. Kontaktujte AOPK ČR: ochranaprirody.cz';
+    case 'NPP': return 'Národní přírodní památka – zákaz létání. Kontaktujte AOPK ČR: ochranaprirody.cz';
+    case 'PR':  return 'Přírodní rezervace – omezené létání. Ověřte podmínky na ochranaprirody.cz';
+    default:    return 'Přírodní památka – ověřte podmínky na ochranaprirody.cz';
+  }
+}
+
 // ── Ray-casting point-in-polygon ──────────────────────────────────────────
 
 /**
@@ -156,6 +171,31 @@ async function loadZones(): Promise<Zone[]> {
     }
   } catch {
     console.warn('[collisionDetection] Failed to load protected areas');
+  }
+
+  // Load small nature reserves (NPR/NPP/PR/PP)
+  try {
+    const res = await fetch('/data/small-reserves-cz.json');
+    if (res.ok) {
+      const data = await res.json() as GeoJSON.FeatureCollection;
+      for (const feature of data.features) {
+        if (feature.geometry.type !== 'Polygon') continue;
+        const geom = feature.geometry as GeoJSON.Polygon;
+        const ring = geom.coordinates[0] as [number, number][];
+        if (!ring || ring.length < 3) continue;
+        const props = feature.properties ?? {};
+        const areaType: string = props.type ?? '';
+        zones.push({
+          name: props.name ?? 'Přírodní rezervace',
+          type: areaType,
+          severity: smallReserveSeverity(areaType),
+          instructions: smallReserveInstructions(areaType),
+          ring,
+        });
+      }
+    }
+  } catch {
+    console.warn('[collisionDetection] Failed to load small reserves');
   }
 
   zonesCache = zones;

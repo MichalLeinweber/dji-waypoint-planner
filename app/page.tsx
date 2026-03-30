@@ -8,6 +8,7 @@ import Sidebar from '@/components/Sidebar';
 import SaveMissionDialog from '@/components/SaveMissionDialog';
 import { Waypoint, Mission, MissionType } from '@/lib/types';
 import { exportKMZ } from '@/lib/exportKMZ';
+import { exportLitchiCSV } from '@/lib/exportLitchi';
 import { saveMission } from '@/lib/missionStore';
 import { encodeMission, decodeMission } from '@/lib/shareUrl';
 import { importKmz } from '@/lib/importKmz';
@@ -47,11 +48,18 @@ export default function HomePage() {
   // ── Protected areas (NP/CHKO) state ──────────────────────────
   const [showProtectedAreas, setShowProtectedAreas] = useState(false);
 
+  // ── Small nature reserves (NPR/NPP/PR/PP) state ───────────────
+  const [showSmallReserves, setShowSmallReserves] = useState(false);
+
   // ── Collision detection state ─────────────────────────────────
   const [collisions, setCollisions] = useState<Collision[]>([]);
 
   const handleToggleProtectedAreas = useCallback(() => {
     setShowProtectedAreas((prev) => !prev);
+  }, []);
+
+  const handleToggleSmallReserves = useCallback(() => {
+    setShowSmallReserves((prev) => !prev);
   }, []);
 
   // Re-run collision check whenever waypoints change
@@ -454,6 +462,16 @@ export default function HomePage() {
     router.push('/missions');
   }, [waypoints, missionType, appMode, poi, router]);
 
+  const handleExportLitchi = useCallback(() => {
+    if (waypoints.length === 0) return;
+    try {
+      exportLitchiCSV(waypoints);
+    } catch (error) {
+      console.error('Litchi CSV export failed:', error);
+      showToast('❌ Export Litchi CSV selhal');
+    }
+  }, [waypoints, showToast]);
+
   const handleExportKMZ = useCallback(async () => {
     if (waypoints.length === 0) return;
     // Warn (but don't block) if any waypoint is in a DANGER zone
@@ -601,11 +619,14 @@ export default function HomePage() {
         onToggleAirspace={handleToggleAirspace}
         showProtectedAreas={showProtectedAreas}
         onToggleProtectedAreas={handleToggleProtectedAreas}
+        showSmallReserves={showSmallReserves}
+        onToggleSmallReserves={handleToggleSmallReserves}
         collisions={collisions}
         onSaveMission={handleSaveMission}
         onShareMission={handleShareMission}
         onImportKmz={handleImportKmz}
         onExportKMZ={handleExportKMZ}
+        onExportLitchi={handleExportLitchi}
         isExporting={isExporting}
       />
 
@@ -630,6 +651,7 @@ export default function HomePage() {
           flyToTarget={flyToTarget}
           showAirspace={showAirspace}
           showProtectedAreas={showProtectedAreas}
+          showSmallReserves={showSmallReserves}
         />
       </main>
     </div>

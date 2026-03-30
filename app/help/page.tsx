@@ -212,6 +212,12 @@ export default function HelpPage() {
             🌿 NP a CHKO
           </a>
           <a
+            href="#rezervace"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-emerald-700 text-emerald-400 hover:bg-emerald-900/30 transition-colors"
+          >
+            🌱 Rezervace
+          </a>
+          <a
             href="#legislativa"
             className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-yellow-700 text-yellow-400 hover:bg-yellow-900/30 transition-colors"
           >
@@ -1069,6 +1075,83 @@ export default function HelpPage() {
               >
                 letejtezodpovedne.cz
               </a>
+            </p>
+          </div>
+        </section>
+
+        {/* ── Malé přírodní rezervace ── */}
+        <section id="rezervace" className={sectionClass}>
+          <h2 className="text-white font-semibold text-base mb-4">🌱 Přírodní rezervace (NPR/NPP/PR/PP)</h2>
+
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Tlačítko <span className="text-emerald-400 font-medium">🌱 Přírodní rezervace</span> zobrazí
+            na mapě vrstvu malých přírodních rezervací ČR spravovaných AOPK ČR. Jsou přísněji chráněné
+            než CHKO, ale menší než národní parky.
+          </p>
+
+          {/* 4 type cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div className="bg-[#0f1117] border border-green-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#15803d' }} />
+                <span className="text-green-400 font-medium text-sm">NPR – Národní přírodní rezervace</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Nejpřísněji chráněná území mimo NP.{' '}
+                <strong className="text-red-400">Zákaz létání dronem</strong> — vyžaduje výjimku AOPK ČR.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-green-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#15803d' }} />
+                <span className="text-green-400 font-medium text-sm">NPP – Národní přírodní památka</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Geologické, paleontologické nebo biologicky cenné lokality.{' '}
+                <strong className="text-red-400">Zákaz létání dronem</strong> bez povolení AOPK ČR.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-emerald-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#86efac' }} />
+                <span className="text-emerald-400 font-medium text-sm">PR – Přírodní rezervace</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Regionálně cenná území. Létání dronem je{' '}
+                <strong className="text-yellow-400">omezeno</strong> — ověřte podmínky správy území.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-emerald-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#86efac' }} />
+                <span className="text-emerald-400 font-medium text-sm">PP – Přírodní památka</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Lokálně cenné přírodní útvary. Doporučujeme ověřit podmínky před letem.
+              </p>
+            </div>
+          </div>
+
+          <h3 className="text-white font-medium text-sm mb-2">🔔 Kolizní detekce</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Aplikace automaticky detekuje waypointy uvnitř rezervací (stejně jako u letových zón).
+            Barevné označení: <span className="text-red-400">⛔ DANGER</span> pro NPR/NPP,{' '}
+            <span className="text-orange-400">⚠️ WARNING</span> pro PR,{' '}
+            <span className="text-yellow-400">ℹ️ CAUTION</span> pro PP.
+          </p>
+
+          <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+            <p className="text-yellow-300 text-xs leading-relaxed">
+              <strong>⚠ Upozornění:</strong> Data rezervací jsou orientační (zdroj: OpenStreetMap / AOPK ČR).
+              Před letem vždy ověřte aktuální podmínky na{' '}
+              <a
+                href="https://www.ochranaprirody.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-200 underline hover:text-white"
+              >
+                ochranaprirody.cz
+              </a>.
             </p>
           </div>
         </section>

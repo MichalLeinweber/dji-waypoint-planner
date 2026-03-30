@@ -68,10 +68,10 @@
       = nová nebo rozšířená sekce v /help.
 - [x] Odhad spotřeby baterie a doby letu (Mini 4 Pro, Haversine 3D, progress bar)
 - [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
-- [ ] Export do formátu Litchi CSV (pro starší drony)
+- [x] Export do formátu Litchi CSV (pro starší drony)
 
 ## 🔮 Budoucí rozšíření leteckých omezení
-- [ ] NPR/NPP/PR/PP – menší přírodní rezervace
+- [x] NPR/NPP/PR/PP – menší přírodní rezervace
       z AOPK ČR (statický GeoJSON)
 - [ ] Vodní zdroje – ochranná pásma (LKR313)
 - [ ] Železnice – buffer 60 m od osy koleje (LKR311)
