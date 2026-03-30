@@ -152,13 +152,28 @@ export function loadActivePilot(): Pilot | null {
 
 // ── Drones ───────────────────────────────────────────────────────────────────
 
-/** Returns saved drones; seeds with all DEFAULT_DRONES on first run. */
+/** Returns saved drones.
+ * On first run (empty list): seeds with all DEFAULT_DRONES.
+ * On subsequent runs: appends any DEFAULT_DRONES missing by name,
+ * so existing users automatically receive newly added default drones.
+ */
 export function loadDrones(): Drone[] {
   const drones = safeRead<Drone[]>(KEYS.drones, []);
+
   if (drones.length === 0) {
     safeWrite(KEYS.drones, DEFAULT_DRONES);
     return DEFAULT_DRONES;
   }
+
+  // Add any DEFAULT_DRONES not yet present (matched by name)
+  const existingNames = new Set(drones.map((d) => d.name));
+  const missing = DEFAULT_DRONES.filter((d) => !existingNames.has(d.name));
+  if (missing.length > 0) {
+    const updated = [...drones, ...missing];
+    safeWrite(KEYS.drones, updated);
+    return updated;
+  }
+
   return drones;
 }
 
