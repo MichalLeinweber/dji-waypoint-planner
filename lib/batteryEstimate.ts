@@ -5,6 +5,8 @@
 //   Avg flight power : 7 W  (between hover ~4.5 W and fast flight ~9 W)
 //   Safety reserve   : 20 % of capacity (~6.7 Wh) — never drain below this
 
+import { haversineM } from './panelUtils';
+
 const BATTERY_WH = 33.48;      // total battery energy in watt-hours
 const AVG_POWER_W = 7;         // average power draw during normal flight (W)
 const RESERVE_PERCENT = 20;    // safety reserve (%)
@@ -15,22 +17,6 @@ export interface BatteryEstimate {
   flightTimeMin: number;    // estimated flight time in minutes
   batteryPercent: number;   // estimated consumption as % of total capacity
   isWarning: boolean;       // true when consumption exceeds usable capacity
-}
-
-/** Haversine distance between two lat/lng points in metres (ignores altitude). */
-function haversineM(
-  lat1: number, lng1: number,
-  lat2: number, lng2: number,
-): number {
-  const R = 6_371_000; // Earth radius in metres
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-    Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 /**

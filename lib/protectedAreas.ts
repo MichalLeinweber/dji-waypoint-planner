@@ -17,6 +17,6 @@ export function protectedAreaFillOpacity(type: string): number {
 
 export interface ProtectedArea {
   name: string;
-  type: 'NP' | 'CHKO' | string;
+  type: 'NP' | 'CHKO';
   restriction: string;
 }

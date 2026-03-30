@@ -151,7 +151,7 @@ export default function WaypointPanel({
 
       {/* Clear all button */}
       <button
-        onClick={onClearAll}
+        onClick={() => { if (confirm('Smazat všechny waypointy?')) onClearAll(); }}
         className="mt-2 w-full py-2 text-xs text-red-400 border border-red-900 rounded-lg hover:bg-red-900/30 transition-colors"
       >
         Smazat vse

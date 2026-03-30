@@ -18,7 +18,6 @@ export default function RootLayout({
         <meta name="theme-color" content="#0f1117" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="h-full bg-[#0f1117] text-white antialiased">
         {children}
