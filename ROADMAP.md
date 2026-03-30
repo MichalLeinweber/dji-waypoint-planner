@@ -11,23 +11,21 @@
       (hotovo – toggle tlačítko 🌍 Google 3D, fallback na OSM Buildings)
 
 ## 💡 Nápady a budoucí rozvoj
-- [ ] Správa pilotů – více uložených pilotů
+- [x] Správa pilotů – více uložených pilotů
       (jméno, email, číslo provozovatele ÚCL,
       číslo průkazu A1/A3/A2), výběr aktivního
-      pilota před misí, možnost zadat ručně
+      pilota před misí, možnost přidat/upravit/smazat
 
-- [ ] Správa dronů – více uložených dronů
+- [x] Správa dronů – více uložených dronů
       (název, výrobce, hmotnost, třída C0/C1/C2,
-      výrobní číslo, výdrž baterie Wh, max rychlost,
-      max výška), DJI Mini 4 Pro jako výchozí,
+      výrobní číslo, výdrž baterie Wh, průměrná spotřeba W,
+      max výška, max rychlost), DJI Mini 4 Pro jako výchozí,
       výběr dronu při plánování mise, odhad
-      baterie přepočítán dle vybraného dronu,
-      možnost přidat ručně
+      baterie přepočítán dle vybraného dronu
 
-- [ ] Kombinace pilot + dron – výběr aktivní
-      kombinace před misí (Pilot A + Air 3,
-      Pilot B + Mavic 3). Parametry mise a žádostí
-      se přizpůsobí vybrané kombinaci automaticky.
+- [x] Kombinace pilot + dron – aktivní pilot + dron
+      zobrazeny v hlavičce sidebaru (badge), výběr přes /settings,
+      odhad baterie přepočítán automaticky dle zvoleného dronu
 
 - [ ] Smart formulář žádosti o povolení letu –
       předvyplnění z mise (GPS souřadnice, výška,

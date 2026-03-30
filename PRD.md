@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-30 (Session 22–23 — Litchi CSV, NPR/NPP/PR/PP, vodní zdroje LKR313, železnice LKR311, el. vedení LKR312, silnice LKR310)*
+*Poslední aktualizace: 2026-03-30 (Session 24 — správa pilotů a dronů, /settings, ActiveProfileBadge, batteryEstimate dle dronu)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -177,6 +177,15 @@ Aplikace zobrazí krok za krokem:
 - `/guide` – detailní návod přenosu KMZ do DJI RC 2 (6 kroků)
 - `/help` – kompletní nápověda (fotogrammetrie + filmařský modul)
 - `/preview-3d` – 3D náhled mise (CesiumJS, nový tab)
+
+**Správa pilotů a dronů (/settings):**
+- `lib/types.ts` — `Pilot` a `Drone` interface (ÚCL číslo, průkaz, třída C0/C1/C2, batteryWh, avgPowerW)
+- `lib/profileStore.ts` — localStorage CRUD pro piloty a drony, DJI Mini 4 Pro jako výchozí dron
+- `app/settings/page.tsx` — stránka `/settings` (dva taaby: Piloti / Drony), add/edit/delete/aktivovat
+- `components/ActiveProfileBadge.tsx` — badge v hlavičce sidebaru (aktivní pilot + dron), re-sync při focus
+- `components/Sidebar.tsx` — ⚙️ ikona (odkaz na /settings), ActiveProfileBadge pod názvem aplikace
+- `lib/batteryEstimate.ts` — přijme volitelné `droneWh` a `dronePowerW`, fallback na Mini 4 Pro defaults
+- localStorage klíče: `dji-planner-pilots`, `dji-planner-drones`, `dji-planner-active-pilot`, `dji-planner-active-drone`
 
 **Help sekce (/help):**
 - Navigační kotvy: #funkce / #foto / #film / #parametry / #terrain / #sdileni-baterie / #prenos / #priroda / #rezervace
