@@ -125,6 +125,21 @@ function railwayInstructions(tier: string): string {
   return 'Ochranné pásmo tramvajové trati – 30 m od osy koleje. Ověřte podmínky u provozovatele.';
 }
 
+function roadSeverity(roadClass: string): Severity {
+  if (['MOTORWAY', 'TRUNK', 'EXPRESSWAY', 'PRIMARY'].includes(roadClass)) return 'WARNING';
+  return 'CAUTION'; // SECONDARY
+}
+
+function roadInstructions(roadClass: string): string {
+  if (roadClass === 'MOTORWAY' || roadClass === 'TRUNK' || roadClass === 'EXPRESSWAY') {
+    return 'Ochranné pásmo dálnice/rychlostní silnice – zákaz létání do 50 m od osy a do výšky 50 m (LKR310). Kontaktujte ŘSD: rsd.cz';
+  }
+  if (roadClass === 'PRIMARY') {
+    return 'Ochranné pásmo silnice I. třídy – zákaz létání do 50 m od osy, výška do 50 m (LKR310). Kontaktujte ŘSD: rsd.cz';
+  }
+  return 'Ochranné pásmo silnice II. třídy – zákaz létání do 15 m od osy (LKR310). Kontaktujte správu silnic kraje.';
+}
+
 function powerlineSeverity(voltageClass: string): Severity {
   if (voltageClass === 'EHV' || voltageClass === 'HV400') return 'WARNING';
   return 'CAUTION'; // HV220, HV110, SUBSTATION
@@ -390,6 +405,34 @@ async function loadLineZones(): Promise<LineZone[]> {
     }
   } catch {
     console.warn('[collisionDetection] Failed to load railways');
+  }
+
+  // Load road LineString features (motorway/expressway/primary/secondary)
+  try {
+    const res = await fetch('/data/roads-cz.json');
+    if (res.ok) {
+      const data = await res.json() as GeoJSON.FeatureCollection;
+      for (const feature of data.features) {
+        if (feature.geometry.type !== 'LineString') continue;
+        const props   = feature.properties ?? {};
+        const geom    = feature.geometry as GeoJSON.LineString;
+        const coords  = geom.coordinates as [number, number][];
+        if (coords.length < 2) continue;
+        const roadClass: string = (props.roadClass as string) ?? 'PRIMARY';
+        const bufferM:   number = (props.bufferM   as number) ?? 50;
+        const ref:       string = (props.ref       as string) ?? '';
+        zones.push({
+          name:         ref ? `${roadClass === 'SECONDARY' ? 'Silnice II/III' : 'Silnice'} ${ref}` : 'Silnice',
+          type:         `ROAD_${roadClass}`,
+          severity:     roadSeverity(roadClass),
+          instructions: roadInstructions(roadClass),
+          coords,
+          bufferDeg: bufferM / 111320,
+        });
+      }
+    }
+  } catch {
+    console.warn('[collisionDetection] Failed to load roads');
   }
 
   // Load power line LineString features (featureType='line' in powerlines GeoJSON)

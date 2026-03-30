@@ -57,6 +57,9 @@ export default function HomePage() {
   // ── Railway buffer zones state ────────────────────────────────
   const [showRailways, setShowRailways] = useState(false);
 
+  // ── Road and highway protection zones state ───────────────────
+  const [showRoads, setShowRoads] = useState(false);
+
   // ── Power line protection zones state ────────────────────────
   const [showPowerlines, setShowPowerlines] = useState(false);
 
@@ -77,6 +80,10 @@ export default function HomePage() {
 
   const handleToggleRailways = useCallback(() => {
     setShowRailways((prev) => !prev);
+  }, []);
+
+  const handleToggleRoads = useCallback(() => {
+    setShowRoads((prev) => !prev);
   }, []);
 
   const handleTogglePowerlines = useCallback(() => {
@@ -646,6 +653,8 @@ export default function HomePage() {
         onToggleWaterSources={handleToggleWaterSources}
         showRailways={showRailways}
         onToggleRailways={handleToggleRailways}
+        showRoads={showRoads}
+        onToggleRoads={handleToggleRoads}
         showPowerlines={showPowerlines}
         onTogglePowerlines={handleTogglePowerlines}
         collisions={collisions}
@@ -681,6 +690,7 @@ export default function HomePage() {
           showSmallReserves={showSmallReserves}
           showWaterSources={showWaterSources}
           showRailways={showRailways}
+          showRoads={showRoads}
           showPowerlines={showPowerlines}
         />
       </main>

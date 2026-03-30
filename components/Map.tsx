@@ -13,6 +13,7 @@ import ProtectedAreasLayer from './ProtectedAreasLayer';
 import SmallReservesLayer from './SmallReservesLayer';
 import WaterSourcesLayer from './WaterSourcesLayer';
 import RailwayLayer from './RailwayLayer';
+import RoadLayer from './RoadLayer';
 import PowerlineLayer from './PowerlineLayer';
 
 // Fix Leaflet's default icon URLs broken by webpack
@@ -198,6 +199,8 @@ interface MapProps {
   showWaterSources: boolean;
   /** Whether to show railway buffer zones on the map */
   showRailways: boolean;
+  /** Whether to show road and highway protection zones on the map */
+  showRoads: boolean;
   /** Whether to show power line and substation protection zones on the map */
   showPowerlines: boolean;
 }
@@ -218,6 +221,7 @@ export default function MapView({
   showSmallReserves,
   showWaterSources,
   showRailways,
+  showRoads,
   showPowerlines,
 }: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
@@ -319,6 +323,9 @@ export default function MapView({
 
       {/* Railway buffer overlay — main rail (red 60 m), tram (orange 30 m) */}
       <RailwayLayer active={showRailways} />
+
+      {/* Road overlay — motorway/primary amber 50 m, secondary light amber 15 m */}
+      <RoadLayer active={showRoads} />
 
       {/* Power line overlay — voltage-based colors, substations as yellow polygons */}
       <PowerlineLayer active={showPowerlines} />

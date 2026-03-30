@@ -230,6 +230,12 @@ export default function HelpPage() {
             🚂 Železnice
           </a>
           <a
+            href="#silnice"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-amber-700 text-amber-400 hover:bg-amber-900/30 transition-colors"
+          >
+            🛣️ Silnice
+          </a>
+          <a
             href="#elektro"
             className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-yellow-700 text-yellow-400 hover:bg-yellow-900/30 transition-colors"
           >
@@ -1321,6 +1327,88 @@ export default function HelpPage() {
                 Správy železnic
               </a>{' '}
               nebo provozovatele tramvajové sítě.
+            </p>
+          </div>
+        </section>
+
+        {/* ── Silnice a dálnice — ochranná pásma ── */}
+        <section id="silnice" className={sectionClass}>
+          <h2 className="text-white font-semibold text-base mb-4">🛣️ Silnice a dálnice — ochranná pásma (LKR310)</h2>
+
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Tlačítko <span className="text-amber-400 font-medium">🛣️ Silnice</span> zobrazí
+            na mapě barevné koridory ochranných pásem kolem dálnic, rychlostních silnic a
+            silnic I. a II. třídy ČR. Letecký předpis LKR310 zakazuje provoz
+            dronů v těchto pásmech bez povolení správce komunikace.
+          </p>
+
+          {/* 3 road class cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+            <div className="bg-[#0f1117] border border-amber-700 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-10 h-2 rounded flex-shrink-0" style={{ background: '#f59e0b' }} />
+                <span className="text-amber-400 font-medium text-sm">🛣️ Dálnice / R-silnice</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Dálnice D* a rychlostní silnice R*/S*.{' '}
+                <strong className="text-amber-400">Ochranné pásmo 50 m</strong> od osy krajního pruhu,{' '}
+                výška do <strong className="text-amber-400">50 m</strong>.
+                Správce: ŘSD ČR.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-amber-700/60 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-10 h-2 rounded flex-shrink-0" style={{ background: '#fbbf24' }} />
+                <span className="text-amber-300 font-medium text-sm">Silnice I. třídy</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Státní silnice I/*.{' '}
+                <strong className="text-amber-300">Ochranné pásmo 50 m</strong> od osy, výška do{' '}
+                <strong className="text-amber-300">50 m</strong>.
+                Správce: ŘSD ČR.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-amber-700/40 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-10 h-2 rounded flex-shrink-0" style={{ background: '#fde68a' }} />
+                <span className="text-amber-200 font-medium text-sm">Silnice II. třídy</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Krajské silnice II/*.{' '}
+                <strong className="text-amber-200">Ochranné pásmo 15 m</strong> od osy.
+                Správce: příslušná správa a údržba silnic kraje.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-[#0f1117] border border-gray-700 rounded-lg p-3 mb-4">
+            <p className="text-gray-300 text-xs leading-relaxed">
+              <strong className="text-white">ℹ Místní komunikace III. a IV. třídy</strong>{' '}
+              (ulice, polní cesty) nejsou zobrazeny — pro drony kategorie C0 bez omezení.
+            </p>
+          </div>
+
+          <h3 className="text-white font-medium text-sm mb-2">🔔 Kolizní detekce</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Pokud waypoint leží v ochranném pásmu silnice, aplikace zobrazí:{' '}
+            <span className="text-orange-400">⚠️ WARNING</span> pro dálnice, rychlostní silnice a silnice I. třídy (50 m),{' '}
+            <span className="text-yellow-400">ℹ️ CAUTION</span> pro silnice II. třídy (15 m).
+          </p>
+
+          <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+            <p className="text-yellow-300 text-xs leading-relaxed">
+              <strong>⚠ Upozornění:</strong> Zobrazeny jsou pouze číslované státní a krajské silnice
+              (zdroj: OpenStreetMap). Místní komunikace nejsou zahrnuty.
+              Přesná ochranná pásma ověřte u{' '}
+              <a
+                href="https://www.rsd.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-200 underline hover:text-white"
+              >
+                ŘSD ČR
+              </a>
+              {' '}nebo správy silnic příslušného kraje.
             </p>
           </div>
         </section>
