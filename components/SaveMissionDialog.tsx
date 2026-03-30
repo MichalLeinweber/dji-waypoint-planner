@@ -12,13 +12,19 @@ interface SaveMissionDialogProps {
 export default function SaveMissionDialog({ open, onSave, onClose }: SaveMissionDialogProps) {
   const [name, setName] = useState('Nova mise');
   const inputRef = useRef<HTMLInputElement>(null);
+  const focusTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Cancel the focus timer on unmount to prevent setting state on unmounted component
+  useEffect(() => {
+    return () => clearTimeout(focusTimerRef.current);
+  }, []);
 
   // Focus the input and reset name whenever the dialog opens
   useEffect(() => {
     if (open) {
       setName('Nova mise');
       // Small timeout so the element is rendered before focusing
-      setTimeout(() => inputRef.current?.select(), 50);
+      focusTimerRef.current = setTimeout(() => inputRef.current?.select(), 50);
     }
   }, [open]);
 

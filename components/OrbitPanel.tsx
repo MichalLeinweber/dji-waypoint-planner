@@ -3,14 +3,10 @@
 // Orbit (circular flight around a POI) mission generator panel
 import { useState } from 'react';
 import { Waypoint } from '@/lib/types';
+import { METERS_PER_DEG_LAT, generateId } from '@/lib/panelUtils';
 
-const METERS_PER_DEG_LAT = 111320;
 // Points per full circle — more points = smoother circle
 const POINTS_PER_CIRCLE = 16;
-
-function generateId(i: number): string {
-  return `orbit-${Date.now()}-${i}`;
-}
 
 interface OrbitParams {
   radius: number;
@@ -57,7 +53,7 @@ export default function OrbitPanel({ poi, isSelectingPoi, onSelectPoi, onGenerat
       const lngOffset = (radius * Math.sin(angle)) / mPerDegLng;
 
       waypoints.push({
-        id: generateId(i),
+        id: generateId('orbit', i),
         lat: poi.lat + latOffset,
         lng: poi.lng + lngOffset,
         height,

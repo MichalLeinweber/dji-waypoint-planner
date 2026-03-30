@@ -21,6 +21,8 @@ export default function SearchBar({ onFlyTo }: SearchBarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   // Ref to hold the debounce timer
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref to hold the AbortController for the in-flight geocoding request
+  const abortRef = useRef<AbortController | null>(null);
 
   /** Run the search against the geocoding provider */
   const runSearch = useCallback(async (value: string) => {
@@ -31,14 +33,20 @@ export default function SearchBar({ onFlyTo }: SearchBarProps) {
       return;
     }
 
+    // Cancel any in-flight request before starting a new one
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const found = await searchAddress(trimmed);
+      const found = await searchAddress(trimmed, abortRef.current.signal);
       setResults(found);
       setIsOpen(true);
-    } catch {
+    } catch (err) {
+      // AbortError = request was superseded by a newer search — ignore silently
+      if (err instanceof Error && err.name === 'AbortError') return;
       setError('Chyba při načítání výsledků');
       setResults([]);
       setIsOpen(true);
@@ -85,10 +93,11 @@ export default function SearchBar({ onFlyTo }: SearchBarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Clean up debounce timer on unmount
+  // Clean up debounce timer and any in-flight request on unmount
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
     };
   }, []);
 
@@ -159,7 +168,7 @@ export default function SearchBar({ onFlyTo }: SearchBarProps) {
           {/* Results list */}
           {!isLoading && !error && results.map((result, index) => (
             <button
-              key={index}
+              key={result.placeId ?? index}
               onClick={() => handleSelect(result)}
               className="w-full text-left px-3 py-2 hover:bg-[#252836] transition-colors border-b border-gray-800 last:border-0"
             >

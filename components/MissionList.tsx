@@ -52,7 +52,10 @@ export default function MissionList({ missions, onLoad, onDelete }: MissionListP
               Nacist
             </button>
             <button
-              onClick={() => onDelete(mission.id)}
+              onClick={() => {
+                if (!confirm(`Smazat misi "${mission.name}"?`)) return;
+                onDelete(mission.id);
+              }}
               className="px-3 py-1.5 bg-[#0f1117] text-red-400 text-xs rounded border border-red-900 hover:bg-red-900/30 transition-colors"
             >
               Smazat

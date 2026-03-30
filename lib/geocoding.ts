@@ -12,10 +12,13 @@ export interface GeocodingResult {
   displayName: string;
   lat: number;
   lng: number;
+  /** Nominatim place_id — used as a stable React list key */
+  placeId?: number;
 }
 
 /** Raw shape of a single Nominatim JSON result */
 interface NominatimResult {
+  place_id?: number;
   display_name: string;
   lat: string;
   lon: string;
@@ -39,7 +42,7 @@ interface NominatimResult {
  * @param query - Address or place name to search for
  * @returns Up to 5 matching results, filtered to Czech Republic
  */
-export async function searchAddress(query: string): Promise<GeocodingResult[]> {
+export async function searchAddress(query: string, signal?: AbortSignal): Promise<GeocodingResult[]> {
   if (!query.trim()) return [];
 
   const params = new URLSearchParams({
@@ -55,13 +58,16 @@ export async function searchAddress(query: string): Promise<GeocodingResult[]> {
     response = await fetch(
       `https://nominatim.openstreetmap.org/search?${params.toString()}`,
       {
+        signal,
         headers: {
           // Nominatim requires a valid User-Agent identifying the application
           'User-Agent': 'DJI-Waypoint-Planner/1.0',
         },
       }
     );
-  } catch {
+  } catch (err) {
+    // AbortError is expected when a newer search cancels this one — rethrow as-is
+    if (err instanceof Error && err.name === 'AbortError') throw err;
     throw new Error('Nepodařilo se připojit k geocoding API. Zkontroluj internetové připojení.');
   }
 
@@ -97,6 +103,7 @@ export async function searchAddress(query: string): Promise<GeocodingResult[]> {
       displayName: item.display_name,
       lat: parseFloat(item.lat),
       lng: parseFloat(item.lon),
+      placeId: item.place_id,
     };
   });
 }

@@ -4,12 +4,7 @@
 // User draws a rectangular area on the map, then generates a survey flight path.
 import { useState } from 'react';
 import { Waypoint } from '@/lib/types';
-
-const METERS_PER_DEG_LAT = 111320;
-
-function generateId(i: number): string {
-  return `grid-${Date.now()}-${i}`;
-}
+import { METERS_PER_DEG_LAT, generateId } from '@/lib/panelUtils';
 
 /** Convert lat/lng to local N/E meters relative to a center point */
 function toMeters(lat: number, lng: number, cLat: number, cLng: number, mPerDegLng: number) {
@@ -135,8 +130,8 @@ export default function GridPanel({ gridCorners, drawStep, onStartDraw, onGenera
       const startPos = fromMeters(startRot.n, startRot.e, cLat, cLng, mPerDegLng);
       const endPos = fromMeters(endRot.n, endRot.e, cLat, cLng, mPerDegLng);
 
-      waypoints.push({ id: generateId(wpCount++), lat: startPos.lat, lng: startPos.lng, height: params.height, speed: params.speed, waitTime: 0, cameraAction: 'photo' });
-      waypoints.push({ id: generateId(wpCount++), lat: endPos.lat, lng: endPos.lng, height: params.height, speed: params.speed, waitTime: 0, cameraAction: 'photo' });
+      waypoints.push({ id: generateId('grid', wpCount++), lat: startPos.lat, lng: startPos.lng, height: params.height, speed: params.speed, waitTime: 0, cameraAction: 'photo' });
+      waypoints.push({ id: generateId('grid', wpCount++), lat: endPos.lat, lng: endPos.lng, height: params.height, speed: params.speed, waitTime: 0, cameraAction: 'photo' });
 
       rowIdx++;
     }

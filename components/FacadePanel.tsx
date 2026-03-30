@@ -4,13 +4,9 @@
 // Modes:
 //   "Jedna strana"      — drone flies lawn-mower passes along one facade (A→B)
 //   "Celá budova 360°"  — user places 4 corners via normal map clicks; drone scans all 4 sides
+import { useState } from 'react';
 import { Waypoint } from '@/lib/types';
-
-const METERS_PER_DEG_LAT = 111320;
-
-function generateId(i: number): string {
-  return `facade-${Date.now()}-${i}`;
-}
+import { METERS_PER_DEG_LAT, generateId } from '@/lib/panelUtils';
 
 interface FacadeParams {
   distance: number;    // distance from facade in meters
@@ -84,8 +80,6 @@ function computeSideVectors(
   return { mPerDegLng, facadeLen, ux, uy, offsetLat, offsetLng, headingAngle };
 }
 
-import { useState } from 'react';
-
 export default function FacadePanel({
   facadePoints,
   drawStep,
@@ -155,7 +149,7 @@ export default function FacadePanel({
         const lng = a.lng + (ux * alongM) / mPerDegLng + offsetLng;
 
         result.push({
-          id: generateId(wpIdx++),
+          id: generateId('facade', wpIdx++),
           lat, lng, height, speed,
           waitTime: 0, cameraAction: 'photo', gimbalPitch,
         });
@@ -235,7 +229,7 @@ export default function FacadePanel({
           const lng = p1.lng + (ux * alongM) / mPerDegLng + offsetLng;
 
           result.push({
-            id: generateId(wpIdx++),
+            id: generateId('facade', wpIdx++),
             lat, lng, height, speed,
             waitTime: 0, cameraAction: 'photo',
             gimbalPitch, headingAngle,
@@ -252,7 +246,7 @@ export default function FacadePanel({
 
         // WP1: diagonal point outside corner — cornerEnd + offsetCurrent + offsetNext
         result.push({
-          id: generateId(wpIdx++),
+          id: generateId('facade', wpIdx++),
           lat: cornerEnd.lat + offsetLat + nextSide.offsetLat,
           lng: cornerEnd.lng + offsetLng + nextSide.offsetLng,
           height: transitionHeight,
@@ -264,7 +258,7 @@ export default function FacadePanel({
 
         // WP2: entry point for next side — cornerEnd + offsetNext only
         result.push({
-          id: generateId(wpIdx++),
+          id: generateId('facade', wpIdx++),
           lat: cornerEnd.lat + nextSide.offsetLat,
           lng: cornerEnd.lng + nextSide.offsetLng,
           height: transitionHeight,

@@ -3,14 +3,9 @@
 // Spiral mission generator panel
 import { useState } from 'react';
 import { Waypoint } from '@/lib/types';
+import { METERS_PER_DEG_LAT, generateId } from '@/lib/panelUtils';
 
-// Degrees of latitude/longitude per meter (approximate, enough for drone missions)
-const METERS_PER_DEG_LAT = 111320;
 const POINTS_PER_TURN = 8;
-
-function generateId(i: number): string {
-  return `spiral-${Date.now()}-${i}`;
-}
 
 interface SpiralParams {
   startRadius: number;
@@ -62,7 +57,7 @@ export default function SpiralPanel({ mapCenter, onGenerate }: SpiralPanelProps)
       const lngOffset = (radius * Math.sin(angle)) / metersPerDegLng;
 
       waypoints.push({
-        id: generateId(i),
+        id: generateId('spiral', i),
         lat: mapCenter.lat + latOffset,
         lng: mapCenter.lng + lngOffset,
         height,

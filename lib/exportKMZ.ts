@@ -3,11 +3,15 @@
 import JSZip from 'jszip';
 import { Mission, Waypoint, CameraAction } from './types';
 
+/** Calculate the average waypoint speed for a mission (fallback: 5 m/s) */
+function calcAvgSpeed(mission: Mission): number {
+  if (mission.waypoints.length === 0) return 5;
+  return mission.waypoints.reduce((sum, wp) => sum + wp.speed, 0) / mission.waypoints.length;
+}
+
 /** Generate the template.kml content for a mission */
 function generateTemplateKML(mission: Mission): string {
-  const avgSpeed = mission.waypoints.length > 0
-    ? mission.waypoints.reduce((sum, wp) => sum + wp.speed, 0) / mission.waypoints.length
-    : 5;
+  const avgSpeed = calcAvgSpeed(mission);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:wpml="http://www.dji.com/wpmz/1.0.2">
@@ -114,9 +118,7 @@ function generateActionXML(wp: Waypoint, index: number): string {
 
 /** Generate the waylines.wpml content for a mission */
 function generateWaylinesWPML(mission: Mission): string {
-  const avgSpeed = mission.waypoints.length > 0
-    ? mission.waypoints.reduce((sum, wp) => sum + wp.speed, 0) / mission.waypoints.length
-    : 5;
+  const avgSpeed = calcAvgSpeed(mission);
 
   // Orbit missions aim the gimbal at the POI on every waypoint
   const isOrbit = mission.type === 'orbit' && mission.poi != null;

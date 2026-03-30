@@ -8,7 +8,13 @@ export function loadMissions(): Mission[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as Mission[];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Filter out any entries that are missing required fields
+    // (guards against data corruption or schema changes between versions)
+    return parsed.filter(
+      (m) => m && typeof m.id === 'string' && typeof m.name === 'string' && Array.isArray(m.waypoints),
+    );
   } catch {
     console.error('Failed to load missions from localStorage');
     return [];
