@@ -92,8 +92,10 @@ interface LineZone {
 
 // ── Module-level cache ─────────────────────────────────────────────────────
 
-let zonesCache:     Zone[]     | null = null;
-let lineZonesCache: LineZone[] | null = null;
+let zonesCache:          Zone[]                      | null = null;
+let lineZonesCache:      LineZone[]                  | null = null;
+/** Raw powerlines GeoJSON — fetched once, shared by loadZones() and loadLineZones() */
+let powerlinesCache:     GeoJSON.FeatureCollection   | null = null;
 
 // ── Severity + instructions mapping ───────────────────────────────────────
 
@@ -281,6 +283,18 @@ function pointToSegmentDistSq(
 
 // ── GeoJSON loading ────────────────────────────────────────────────────────
 
+/** Fetches powerlines-cz.json once; subsequent calls return the cached result. */
+async function loadPowerlinesData(): Promise<GeoJSON.FeatureCollection | null> {
+  if (powerlinesCache !== null) return powerlinesCache;
+  try {
+    const res = await fetch('/data/powerlines-cz.json');
+    if (res.ok) powerlinesCache = await res.json() as GeoJSON.FeatureCollection;
+  } catch {
+    console.warn('[collisionDetection] Failed to load powerlines data');
+  }
+  return powerlinesCache;
+}
+
 async function loadZones(): Promise<Zone[]> {
   if (zonesCache !== null) return zonesCache;
 
@@ -384,29 +398,25 @@ async function loadZones(): Promise<Zone[]> {
   }
 
   // Load power substation polygons (featureType='substation' in powerlines GeoJSON)
-  try {
-    const res = await fetch('/data/powerlines-cz.json');
-    if (res.ok) {
-      const data = await res.json() as GeoJSON.FeatureCollection;
-      for (const feature of data.features) {
-        if (feature.geometry.type !== 'Polygon') continue;
-        const props = feature.properties ?? {};
-        if ((props.featureType as string) !== 'substation') continue;
-        const geom = feature.geometry as GeoJSON.Polygon;
-        const ring = geom.coordinates[0] as [number, number][];
-        if (!ring || ring.length < 3) continue;
-        const voltClass: string = props.voltageClass ?? 'SUBSTATION';
-        zones.push({
-          name:         props.name ?? 'Trafostanice',
-          type:         'POWERLINE_SUBSTATION',
-          severity:     powerlineSeverity(voltClass),
-          instructions: powerlineInstructions(voltClass),
-          ring,
-        });
-      }
+  // Uses shared cache — powerlines-cz.json is fetched only once per session.
+  const powerlinesData = await loadPowerlinesData();
+  if (powerlinesData) {
+    for (const feature of powerlinesData.features) {
+      if (feature.geometry.type !== 'Polygon') continue;
+      const props = feature.properties ?? {};
+      if ((props.featureType as string) !== 'substation') continue;
+      const geom = feature.geometry as GeoJSON.Polygon;
+      const ring = geom.coordinates[0] as [number, number][];
+      if (!ring || ring.length < 3) continue;
+      const voltClass: string = props.voltageClass ?? 'SUBSTATION';
+      zones.push({
+        name:         props.name ?? 'Trafostanice',
+        type:         'POWERLINE_SUBSTATION',
+        severity:     powerlineSeverity(voltClass),
+        instructions: powerlineInstructions(voltClass),
+        ring,
+      });
     }
-  } catch {
-    console.warn('[collisionDetection] Failed to load power substations');
   }
 
   zonesCache = zones;
@@ -479,31 +489,27 @@ async function loadLineZones(): Promise<LineZone[]> {
   }
 
   // Load power line LineString features (featureType='line' in powerlines GeoJSON)
-  try {
-    const res = await fetch('/data/powerlines-cz.json');
-    if (res.ok) {
-      const data = await res.json() as GeoJSON.FeatureCollection;
-      for (const feature of data.features) {
-        if (feature.geometry.type !== 'LineString') continue;
-        const props = feature.properties ?? {};
-        if ((props.featureType as string) !== 'line') continue;
-        const geom   = feature.geometry as GeoJSON.LineString;
-        const coords = geom.coordinates as [number, number][];
-        if (coords.length < 2) continue;
-        const voltClass: string = (props.voltageClass as string) ?? 'HV110';
-        const bufferM:   number = (props.bufferM      as number) ?? 12;
-        zones.push({
-          name:         `Elektrické vedení (${voltClass})`,
-          type:         `POWERLINE_${voltClass}`,
-          severity:     powerlineSeverity(voltClass),
-          instructions: powerlineInstructions(voltClass),
-          coords,
-          bufferDeg: bufferM / 111320,
-        });
-      }
+  // Uses shared cache — powerlines-cz.json is fetched only once per session.
+  const powerlinesData = await loadPowerlinesData();
+  if (powerlinesData) {
+    for (const feature of powerlinesData.features) {
+      if (feature.geometry.type !== 'LineString') continue;
+      const props = feature.properties ?? {};
+      if ((props.featureType as string) !== 'line') continue;
+      const geom   = feature.geometry as GeoJSON.LineString;
+      const coords = geom.coordinates as [number, number][];
+      if (coords.length < 2) continue;
+      const voltClass: string = (props.voltageClass as string) ?? 'HV110';
+      const bufferM:   number = (props.bufferM      as number) ?? 12;
+      zones.push({
+        name:         `Elektrické vedení (${voltClass})`,
+        type:         `POWERLINE_${voltClass}`,
+        severity:     powerlineSeverity(voltClass),
+        instructions: powerlineInstructions(voltClass),
+        coords,
+        bufferDeg: bufferM / 111320,
+      });
     }
-  } catch {
-    console.warn('[collisionDetection] Failed to load power lines');
   }
 
   lineZonesCache = zones;

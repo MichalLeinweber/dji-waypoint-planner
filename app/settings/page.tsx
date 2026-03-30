@@ -108,9 +108,11 @@ function DroneForm({
 }) {
   const [form, setForm] = useState(initial);
   const set = (key: keyof typeof form) => (v: string) =>
-    setForm((prev) => ({ ...prev, [key]: key === 'weightG' || key === 'batteryWh' || key === 'avgPowerW' || key === 'maxAltitudeM' || key === 'maxSpeedMs'
-      ? { ...prev, [key]: parseFloat(v) || 0 }
-      : { ...prev, [key]: v }
+    setForm((prev) => ({
+      ...prev,
+      [key]: ['weightG', 'batteryWh', 'avgPowerW', 'maxAltitudeM', 'maxSpeedMs'].includes(key as string)
+        ? parseFloat(v) || 0
+        : v,
     }));
 
   return (

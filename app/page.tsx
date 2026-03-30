@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import SaveMissionDialog from '@/components/SaveMissionDialog';
-import { Waypoint, Mission, MissionType } from '@/lib/types';
+import { Waypoint, Mission, MissionType, Drone } from '@/lib/types';
 import { exportKMZ } from '@/lib/exportKMZ';
 import { exportLitchiCSV } from '@/lib/exportLitchi';
 import { saveMission } from '@/lib/missionStore';
@@ -14,7 +14,7 @@ import { encodeMission, decodeMission } from '@/lib/shareUrl';
 import { importKmz } from '@/lib/importKmz';
 import { checkWaypointCollisions, Collision } from '@/lib/collisionDetection';
 import { loadActiveDrone } from '@/lib/profileStore';
-import { Drone } from '@/lib/types';
+
 
 // Leaflet map must be loaded client-side only (it uses browser APIs)
 const MapView = dynamic(() => import('@/components/Map'), { ssr: false });

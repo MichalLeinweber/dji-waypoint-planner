@@ -4,7 +4,7 @@
 // Reads from localStorage on mount and re-syncs when the window gains focus
 // (so changes made on /settings are reflected without a full reload).
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { loadActivePilot, loadActiveDrone } from '@/lib/profileStore';
 import { Pilot, Drone } from '@/lib/types';
 
@@ -12,17 +12,17 @@ export default function ActiveProfileBadge() {
   const [pilot, setPilot] = useState<Pilot | null>(null);
   const [drone, setDrone] = useState<Drone | null>(null);
 
-  function refresh() {
+  const refresh = useCallback(() => {
     setPilot(loadActivePilot());
     setDrone(loadActiveDrone());
-  }
+  }, []);
 
   useEffect(() => {
     refresh();
     // Re-sync when user returns from /settings tab
     window.addEventListener('focus', refresh);
     return () => window.removeEventListener('focus', refresh);
-  }, []);
+  }, [refresh]);
 
   // No output if nothing is configured yet
   if (!pilot && !drone) return null;
