@@ -224,6 +224,12 @@ export default function HelpPage() {
             💧 Vodní zdroje
           </a>
           <a
+            href="#zeleznice"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-red-700 text-red-400 hover:bg-red-900/30 transition-colors"
+          >
+            🚂 Železnice
+          </a>
+          <a
             href="#legislativa"
             className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-yellow-700 text-yellow-400 hover:bg-yellow-900/30 transition-colors"
           >
@@ -1241,6 +1247,74 @@ export default function HelpPage() {
                 vuv.cz
               </a>{' '}
               (Výzkumný ústav vodohospodářský T. G. Masaryka).
+            </p>
+          </div>
+        </section>
+
+        {/* ── Železnice a ochranná pásma ── */}
+        <section id="zeleznice" className={sectionClass}>
+          <h2 className="text-white font-semibold text-base mb-4">🚂 Železnice a ochranná pásma (LKR311)</h2>
+
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Tlačítko <span className="text-red-400 font-medium">🚂 Železnice</span> zobrazí
+            na mapě barevné koridory reprezentující ochranná pásma kolem železničních tratí ČR.
+            Letecký předpis LKR311 zakazuje létání dronem v těchto pásmech bez souhlasu
+            správce infrastruktury.
+          </p>
+
+          {/* 2 type cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div className="bg-[#0f1117] border border-red-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-10 h-2 rounded flex-shrink-0" style={{ background: '#dc2626' }} />
+                <span className="text-red-400 font-medium text-sm">🚂 Železniční tratě</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Celostátní a regionální tratě, rychlodráhy, úzkorozchodné tratě.{' '}
+                <strong className="text-red-400">Ochranné pásmo 60 m</strong> od osy koleje.
+                Správce: Správa železnic.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-orange-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-10 h-2 rounded flex-shrink-0" style={{ background: '#f97316' }} />
+                <span className="text-orange-400 font-medium text-sm">🚋 Tramvajové tratě</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Tramvajové tratě v městských oblastech.{' '}
+                <strong className="text-yellow-400">Ochranné pásmo 30 m</strong> od osy koleje.
+                Ověřte podmínky u provozovatele MHD.
+              </p>
+            </div>
+          </div>
+
+          <h3 className="text-white font-medium text-sm mb-2">📐 Co je zobrazeno na mapě</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Barevné koridory jsou předpočítané buffer polygony — červená plocha = 60 m od osy koleje
+            na obě strany, oranžová = 30 m. Vrstvy nezahrnují depa, seřadiště a vlečky (ty nejsou
+            pro veřejný provoz relevantní).
+          </p>
+
+          <h3 className="text-white font-medium text-sm mb-2">🔔 Kolizní detekce</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Pokud waypoint leží uvnitř bufferu železnice, aplikace zobrazí:{' '}
+            <span className="text-orange-400">⚠️ WARNING</span> pro hlavní tratě (60 m),{' '}
+            <span className="text-yellow-400">ℹ️ CAUTION</span> pro tramvaje (30 m).
+          </p>
+
+          <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+            <p className="text-yellow-300 text-xs leading-relaxed">
+              <strong>⚠ Upozornění:</strong> Zobrazené koridory jsou orientační (zdroj: OpenStreetMap).
+              Přesná ochranná pásma ověřte u{' '}
+              <a
+                href="https://www.spravazeleznic.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-200 underline hover:text-white"
+              >
+                Správy železnic
+              </a>{' '}
+              nebo provozovatele tramvajové sítě.
             </p>
           </div>
         </section>

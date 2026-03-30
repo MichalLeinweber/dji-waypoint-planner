@@ -140,6 +140,9 @@ interface SidebarProps {
   // Water sources and protection zones toggle
   showWaterSources: boolean;
   onToggleWaterSources: () => void;
+  // Railway buffer zones toggle
+  showRailways: boolean;
+  onToggleRailways: () => void;
   // Collision detection results
   collisions: Collision[];
   // Save / Export / Share
@@ -257,6 +260,8 @@ export default function Sidebar({
   onToggleSmallReserves,
   showWaterSources,
   onToggleWaterSources,
+  showRailways,
+  onToggleRailways,
   collisions,
   onSaveMission,
   onShareMission,
@@ -618,6 +623,16 @@ export default function Sidebar({
           }`}
         >
           {showWaterSources ? '💧 Skrýt vodní zdroje' : '💧 Vodní zdroje (nádrže)'}
+        </button>
+        <button
+          onClick={onToggleRailways}
+          className={`w-full py-1.5 text-xs rounded border transition-colors ${
+            showRailways
+              ? 'bg-red-600/20 border-red-500 text-red-300 hover:bg-red-600/30'
+              : 'bg-[#0f1117] border-gray-600 text-gray-300 hover:border-red-500 hover:text-white'
+          }`}
+        >
+          {showRailways ? '🚂 Skrýt železnice' : '🚂 Železnice (ochran. pásma)'}
         </button>
       </div>
 

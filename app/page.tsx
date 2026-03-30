@@ -54,6 +54,9 @@ export default function HomePage() {
   // ── Water sources and protection zones state ──────────────────
   const [showWaterSources, setShowWaterSources] = useState(false);
 
+  // ── Railway buffer zones state ────────────────────────────────
+  const [showRailways, setShowRailways] = useState(false);
+
   // ── Collision detection state ─────────────────────────────────
   const [collisions, setCollisions] = useState<Collision[]>([]);
 
@@ -67,6 +70,10 @@ export default function HomePage() {
 
   const handleToggleWaterSources = useCallback(() => {
     setShowWaterSources((prev) => !prev);
+  }, []);
+
+  const handleToggleRailways = useCallback(() => {
+    setShowRailways((prev) => !prev);
   }, []);
 
   // Re-run collision check whenever waypoints change
@@ -630,6 +637,8 @@ export default function HomePage() {
         onToggleSmallReserves={handleToggleSmallReserves}
         showWaterSources={showWaterSources}
         onToggleWaterSources={handleToggleWaterSources}
+        showRailways={showRailways}
+        onToggleRailways={handleToggleRailways}
         collisions={collisions}
         onSaveMission={handleSaveMission}
         onShareMission={handleShareMission}
@@ -662,6 +671,7 @@ export default function HomePage() {
           showProtectedAreas={showProtectedAreas}
           showSmallReserves={showSmallReserves}
           showWaterSources={showWaterSources}
+          showRailways={showRailways}
         />
       </main>
     </div>

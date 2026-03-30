@@ -1,6 +1,13 @@
-// Collision detection — checks waypoints against airspace zones and NP/CHKO areas.
-// Uses ray-casting point-in-polygon (no external deps).
-// GeoJSON data is fetched once and cached in module-level variables.
+// Collision detection — checks waypoints against airspace zones, NP/CHKO areas,
+// small nature reserves, water sources, and railway buffer zones.
+//
+// Two check types:
+//   1. Polygon zones (airspaces, protected areas, reserves, water sources):
+//      ray-casting point-in-polygon, O(n) per check.
+//   2. Line zones (railways): point-to-segment distance check.
+//      Railway GeoJSON is LineString — distance < bufferDeg triggers collision.
+//
+// All GeoJSON data is fetched once and cached in module-level variables.
 
 import { Waypoint } from '@/lib/types';
 import { AIRSPACE_TYPE_NAMES } from './airspaceTypes';
@@ -18,7 +25,7 @@ export interface Collision {
   instructions: string;
 }
 
-// Internal zone record used during checking
+// Internal record for polygon-based zones
 interface Zone {
   name: string;
   type: string;
@@ -28,9 +35,22 @@ interface Zone {
   ring: [number, number][];
 }
 
+// Internal record for line-based zones (railways)
+interface LineZone {
+  name: string;
+  type: string;
+  severity: Severity;
+  instructions: string;
+  /** Consecutive coordinate pairs extracted from LineString coordinates */
+  coords: [number, number][];
+  /** Protection buffer in approximate degrees of latitude (60 m ≈ 0.000539°) */
+  bufferDeg: number;
+}
+
 // ── Module-level cache ─────────────────────────────────────────────────────
 
-let zonesCache: Zone[] | null = null;
+let zonesCache:     Zone[]     | null = null;
+let lineZonesCache: LineZone[] | null = null;
 
 // ── Severity + instructions mapping ───────────────────────────────────────
 
@@ -93,6 +113,18 @@ function smallReserveInstructions(type: string): string {
   }
 }
 
+function railwaySeverity(tier: string): Severity {
+  if (tier === 'main') return 'WARNING';
+  return 'CAUTION'; // tram
+}
+
+function railwayInstructions(tier: string): string {
+  if (tier === 'main') {
+    return 'Ochranné pásmo železnice – zákaz létání do 60 m od osy koleje (LKR311). Kontaktujte Správu železnic: spravazeleznic.cz';
+  }
+  return 'Ochranné pásmo tramvajové trati – 30 m od osy koleje. Ověřte podmínky u provozovatele.';
+}
+
 function waterSourceSeverity(): Severity {
   return 'CAUTION';
 }
@@ -101,7 +133,7 @@ function waterSourceInstructions(tier: string): string {
   if (tier === 'drinking') {
     return 'Ochranné pásmo vodního zdroje pitné vody – ověřte podmínky u správce soustavy. Viz vuv.cz';
   }
-  return 'Vodní nádrž – ověřte zda jde o zdroj pitné vody před letem. Viz vuv.cz';
+  return 'Vodní nádrž – ověřte zda jde o zdroj pitné vody. Viz vuv.cz';
 }
 
 // ── Ray-casting point-in-polygon ──────────────────────────────────────────
@@ -128,6 +160,43 @@ function pointInPolygon(
     if (intersects) inside = !inside;
   }
   return inside;
+}
+
+// ── Point-to-segment distance (for railway line zones) ─────────────────────
+
+// cos(50°) — longitude scale factor for Czech Republic latitude
+const COS_50 = Math.cos(50 * Math.PI / 180);
+
+/**
+ * Returns the squared distance (in degrees²) from point P to segment AB.
+ * Longitude differences are scaled by COS_50 to approximate metric distance.
+ * Used for railway buffer zone collision detection.
+ */
+function pointToSegmentDistSq(
+  px: number, py: number,
+  ax: number, ay: number,
+  bx: number, by: number,
+): number {
+  const dx = (bx - ax) * COS_50;
+  const dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+
+  if (len2 < 1e-12) {
+    // Degenerate segment — just check distance to point A
+    const ex = (px - ax) * COS_50;
+    const ey = py - ay;
+    return ex * ex + ey * ey;
+  }
+
+  // Project P onto line AB, clamped to [0, 1]
+  const t = Math.max(0, Math.min(1,
+    ((px - ax) * COS_50 * dx + (py - ay) * dy) / len2,
+  ));
+  const projX = ax + t * (bx - ax);
+  const projY = ay + t * (by - ay);
+  const rx = (px - projX) * COS_50;
+  const ry = py - projY;
+  return rx * rx + ry * ry;
 }
 
 // ── GeoJSON loading ────────────────────────────────────────────────────────
@@ -238,31 +307,99 @@ async function loadZones(): Promise<Zone[]> {
   return zones;
 }
 
+/**
+ * Loads railway LineString features into LineZone records.
+ * Cached separately from polygon zones because railways use distance-based checks.
+ */
+async function loadLineZones(): Promise<LineZone[]> {
+  if (lineZonesCache !== null) return lineZonesCache;
+
+  const zones: LineZone[] = [];
+
+  try {
+    const res = await fetch('/data/railways-cz.json');
+    if (res.ok) {
+      const data = await res.json() as GeoJSON.FeatureCollection;
+      for (const feature of data.features) {
+        if (feature.geometry.type !== 'LineString') continue;
+        const geom   = feature.geometry as GeoJSON.LineString;
+        const coords = geom.coordinates as [number, number][];
+        if (coords.length < 2) continue;
+        const props   = feature.properties ?? {};
+        const tier    = (props.tier as string) ?? 'main';
+        const bufferM = (props.bufferM as number) ?? 60;
+        // Convert metres to approximate degrees of latitude
+        const bufferDeg = bufferM / 111320;
+        zones.push({
+          name:        props.name ?? 'Železniční trať',
+          type:        tier === 'main' ? 'RAILWAY_MAIN' : 'RAILWAY_TRAM',
+          severity:    railwaySeverity(tier),
+          instructions: railwayInstructions(tier),
+          coords,
+          bufferDeg,
+        });
+      }
+    }
+  } catch {
+    console.warn('[collisionDetection] Failed to load railways');
+  }
+
+  lineZonesCache = zones;
+  return zones;
+}
+
 // ── Public API ─────────────────────────────────────────────────────────────
 
 /**
- * Checks all waypoints against airspace zones and NP/CHKO areas.
+ * Checks all waypoints against:
+ *   - Polygon zones: airspaces, NP/CHKO, small reserves, water sources (point-in-polygon)
+ *   - Line zones: railway routes (point-to-segment distance < bufferDeg)
  * Returns one Collision per (waypoint × zone) combination.
  * GeoJSON data is fetched once and cached for the session.
  */
 export async function checkWaypointCollisions(
   waypoints: Waypoint[],
 ): Promise<Collision[]> {
-  const zones = await loadZones();
+  const [zones, lineZones] = await Promise.all([loadZones(), loadLineZones()]);
   const collisions: Collision[] = [];
 
   for (let i = 0; i < waypoints.length; i++) {
     const wp = waypoints[i];
+
+    // ── Polygon zone check ──────────────────────────────────────────────
     for (const zone of zones) {
-      // GeoJSON uses [lng, lat] order; Waypoint uses { lat, lng }
       if (pointInPolygon(wp.lng, wp.lat, zone.ring)) {
         collisions.push({
-          waypointId: wp.id,
+          waypointId:   wp.id,
           waypointIndex: i,
-          zoneName: zone.name,
-          zoneType: zone.type,
-          severity: zone.severity,
+          zoneName:     zone.name,
+          zoneType:     zone.type,
+          severity:     zone.severity,
           instructions: zone.instructions,
+        });
+      }
+    }
+
+    // ── Railway line zone check (distance-based) ────────────────────────
+    for (const lz of lineZones) {
+      const bufSq = lz.bufferDeg * lz.bufferDeg;
+      let hit = false;
+      for (let s = 0; s < lz.coords.length - 1; s++) {
+        const [ax, ay] = lz.coords[s];
+        const [bx, by] = lz.coords[s + 1];
+        if (pointToSegmentDistSq(wp.lng, wp.lat, ax, ay, bx, by) <= bufSq) {
+          hit = true;
+          break;
+        }
+      }
+      if (hit) {
+        collisions.push({
+          waypointId:   wp.id,
+          waypointIndex: i,
+          zoneName:     lz.name,
+          zoneType:     lz.type,
+          severity:     lz.severity,
+          instructions: lz.instructions,
         });
       }
     }

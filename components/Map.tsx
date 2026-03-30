@@ -12,6 +12,7 @@ import AirspaceLayer from './AirspaceLayer';
 import ProtectedAreasLayer from './ProtectedAreasLayer';
 import SmallReservesLayer from './SmallReservesLayer';
 import WaterSourcesLayer from './WaterSourcesLayer';
+import RailwayLayer from './RailwayLayer';
 
 // Fix Leaflet's default icon URLs broken by webpack
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -194,6 +195,8 @@ interface MapProps {
   showSmallReserves: boolean;
   /** Whether to show water reservoirs and protection zones on the map */
   showWaterSources: boolean;
+  /** Whether to show railway buffer zones on the map */
+  showRailways: boolean;
 }
 
 export default function MapView({
@@ -211,6 +214,7 @@ export default function MapView({
   showProtectedAreas,
   showSmallReserves,
   showWaterSources,
+  showRailways,
 }: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
@@ -308,6 +312,9 @@ export default function MapView({
 
       {/* Water sources overlay — drinking (dark blue), general reservoir (light blue) */}
       <WaterSourcesLayer active={showWaterSources} />
+
+      {/* Railway buffer overlay — main rail (red 60 m), tram (orange 30 m) */}
+      <RailwayLayer active={showRailways} />
 
       {/* Waypoint connection line */}
       {polylinePositions.length > 1 && (
