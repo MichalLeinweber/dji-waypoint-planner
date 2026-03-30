@@ -61,6 +61,9 @@
       přidat produkční doménu.
       Aktuálně: klíč bez omezení (OK pro vývoj a testování).
 - [ ] Komercionalizace – multi-user, přihlášení, Supabase
+- [x] Help sekce – sekce #letzone (letové zóny, barevná legenda CTR/TRA,
+      postup při kolizi, odkaz na dronemap.gov.cz) a #kolize (kolizní detekce,
+      severity ⛔/⚠️/ℹ️, sidebar banner, KMZ warning) přidány do navigace i obsahu
 - [ ] Help sekce – průběžně aktualizovat při každé
       nové funkci. Pravidlo: každá nová funkcionalita
       = nová nebo rozšířená sekce v /help.
@@ -89,6 +92,16 @@
 *Poznámka: Design se dělá až po dokončení všech funkcionalit.*
 
 ## ✅ Dokončeno (přesunuto z plánů)
+- [x] Správa pilotů + dronů + kombinace pilot/dron
+      (/settings, lib/profileStore.ts, Pilot + Drone typy,
+       ActiveProfileBadge v sidebaru, batteryEstimate dle dronu,
+       DJI Mini 4 Pro jako výchozí dron, localStorage)
+- [x] Fix kolizního panelu – seskupení dle zóny
+      (groupCollisionsByZone(), jedna karta = jedna zóna,
+       badge "WP 1, 2, 3", banner "X zón v omezené oblasti")
+- [x] Help sekce – #letzone a #kolize sekce přidány
+      (kotvy v navigačním pásu, barevná legenda letových zón,
+       severity karty ⛔/⚠️/ℹ️, postup při kolizi)
 - [x] Silnice/dálnice – 50 m výška + šířka (LKR310)
       (6226 features: 3811 motorway + 2265 trunk + 150 national I. třída,
        chain-building algoritmus, toggle 🛣️, kolizní detekce WARNING, help #silnice;

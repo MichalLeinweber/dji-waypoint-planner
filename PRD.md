@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-30 (Session 24 — správa pilotů a dronů, /settings, ActiveProfileBadge, batteryEstimate dle dronu)*
+*Poslední aktualizace: 2026-03-30 (Session 23 — správa pilotů/dronů, fix kolizního panelu, help #letzone + #kolize)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -232,8 +232,14 @@ Aplikace zobrazí krok za krokem:
 - Načtení mise zpět do editoru, flyTo centroid, reset terrain following
 
 **Odhad baterie:**
-- `lib/batteryEstimate.ts` — Haversine 3D vzdálenost, Mini 4 Pro 33.48 Wh / 7 W avg / 20% rezerva
+- `lib/batteryEstimate.ts` — Haversine 3D vzdálenost, volitelné `droneWh` / `dronePowerW`, fallback Mini 4 Pro (33.48 Wh / 7 W / 20% rezerva)
 - Panel v sidebaru s progress barem (zelená/oranžová/červená), zobrazí se od 2 waypointů
+- Přepočítá se automaticky dle aktivního dronu z `/settings`
+
+**Fix kolizního panelu:**
+- `lib/collisionDetection.ts` — nový export `CollisionGroup` + `groupCollisionsByZone()`: seskupí flat `Collision[]` dle `zoneType|zoneName`, severity skupiny = nejvyšší ze všech WP
+- `components/CollisionPanel.tsx` — jedna karta = jedna unikátní zóna; badge `WP 1, 2, 3` zobrazí všechny zasažené body; sekce DANGER/WARNING/CAUTION zachovány
+- `components/Sidebar.tsx` — banner: `X zón v omezené oblasti` (počet unikátních zón, ne waypointů)
 
 **Letové, přírodní a technické zóny na mapě:**
 - CTR/TRA letové zóny – `components/AirspaceLayer.tsx`, statický GeoJSON `/data/airspaces-cz.json`
