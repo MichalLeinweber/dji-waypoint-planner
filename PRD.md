@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-30 (Session 21 — Code Review)*
+*Poslední aktualizace: 2026-03-30 (Session 22 — Litchi CSV, NPR/NPP/PR/PP rezervace)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -179,7 +179,7 @@ Aplikace zobrazí krok za krokem:
 - `/preview-3d` – 3D náhled mise (CesiumJS, nový tab)
 
 **Help sekce (/help):**
-- Navigační kotvy: #funkce / #foto / #film / #parametry / #terrain / #sdileni-baterie / #prenos / #priroda
+- Navigační kotvy: #funkce / #foto / #film / #parametry / #terrain / #sdileni-baterie / #prenos / #priroda / #rezervace
 - Přehled funkcí aplikace (9 karet s ikonami)
 - Parametry waypointu: výška, rychlost, čekání, kamera (tabulka)
 - Fotogrammetrie: výběr mise, překryv %, vzdálenost od fasády
@@ -233,8 +233,18 @@ Aplikace zobrazí krok za krokem:
 - NP/CHKO přírodní ochranná území – `components/ProtectedAreasLayer.tsx`, statický GeoJSON `/data/protected-areas-cz.json`
   (4 NP zelená + 26 CHKO modrá = 30 features; OSM Overpass; tooltip s omezením pro drony)
   Script: `scripts/fetch-protected-areas.js` (Overpass API, OSM way-stitching, coord simplification)
-- Toggle tlačítka v sidebaru: 🚧 Letové zóny (oranžová), 🌿 NP a CHKO (zelená)
-- Help sekce: kotva `#priroda` s pravidly pro drony v NP/CHKO
+- NPR/NPP/PR/PP přírodní rezervace – `components/SmallReservesLayer.tsx`, statický GeoJSON `/data/small-reserves-cz.json`
+  (2290 lokalit: NPR=109, NPP=116, PR=810, PP=1255; tmavě zelená NPR/NPP, světle zelená PR/PP)
+  Script: `scripts/fetch-small-reserves.js` (Overpass bbox quadrant split, local classifyTitle(), 3 mirrors, 180s timeout)
+  Kolizní detekce: DANGER pro NPR/NPP, WARNING pro PR, CAUTION pro PP (lib/collisionDetection.ts)
+- Toggle tlačítka v sidebaru: 🚧 Letové zóny (oranžová), 🌿 NP a CHKO (zelená), 🌱 Přírodní rezervace (emerald)
+- Help sekce: kotva `#priroda` s pravidly pro drony v NP/CHKO; kotva `#rezervace` s kartami NPR/NPP/PR/PP
+
+**Export Litchi CSV:**
+- `lib/exportLitchi.ts` – generuje CSV pro starší drony DJI (Phantom, Mavic 2, Air 2S)
+- 35 sloupců, 10 action slotů, altitudemode=1 (AGL), gimbalmode=1 (interpolated) při nastaveném gimbalPitch
+- Akce: photo=1, startVideo=5, stopVideo=6, none=-1
+- Download přes Blob + URL.createObjectURL, tlačítko v Sidebaru pod KMZ exportem
 
 **OpenAIP integrace (příprava):**
 - Účet vytvořen, API klíč vygenerován: `NEXT_PUBLIC_OPENAIP_API_KEY` v `.env.local` a Vercel
@@ -308,5 +318,7 @@ Aplikace zobrazí krok za krokem:
 ### Budoucí kritéria
 - [x] Terrain following – výška přizpůsobena terénu
 - [x] Import KMZ zpět do editoru
+- [x] Export Litchi CSV pro starší drony
+- [x] NPR/NPP/PR/PP přírodní rezervace na mapě s kolizní detekcí
 - [ ] Anglická lokalizace
 - [x] Google Photorealistic 3D Tiles v 3D náhledu

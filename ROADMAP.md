@@ -68,11 +68,8 @@
       = nová nebo rozšířená sekce v /help.
 - [x] Odhad spotřeby baterie a doby letu (Mini 4 Pro, Haversine 3D, progress bar)
 - [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
-- [x] Export do formátu Litchi CSV (pro starší drony)
 
 ## 🔮 Budoucí rozšíření leteckých omezení
-- [x] NPR/NPP/PR/PP – menší přírodní rezervace
-      z AOPK ČR (statický GeoJSON)
 - [ ] Vodní zdroje – ochranná pásma (LKR313)
 - [ ] Železnice – buffer 60 m od osy koleje (LKR311)
 - [ ] Elektrické vedení – 7–30 m dle napětí (LKR312)
@@ -98,6 +95,9 @@
 *Poznámka: Design se dělá až po dokončení všech funkcionalit.*
 
 ## ✅ Dokončeno (přesunuto z plánů)
+- [x] Export do formátu Litchi CSV (lib/exportLitchi.ts, 35 sloupců, 10 action slotů, tlačítko v Sidebaru)
+- [x] NPR/NPP/PR/PP – menší přírodní rezervace (2290 lokalit, scripts/fetch-small-reserves.js,
+      public/data/small-reserves-cz.json, toggle 🌱, kolizní detekce, help sekce #rezervace)
 - [x] Kompletní code review celé codebase (Opus 4.6, všechny soubory lib/ + components/ + film/ + scripts/ + konfigurace)
 - [x] Systém průběžného code review — šablona a postup uloženy v globálním ~/.claude/CLAUDE.md (sekce Code Review System)
 - [x] CTR/TRA letové zóny na mapě
