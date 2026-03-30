@@ -149,8 +149,12 @@ function LayersControl() {
     const compass = new CompassClass();
     compass.addTo(map);
 
-    // Cleanup: remove controls and layers when component unmounts
+    // Cleanup: remove explicit DomEvent listener, then controls and layers
     return () => {
+      const container = compass.getContainer();
+      if (container) {
+        L.DomEvent.off(container, 'click', L.DomEvent.stopPropagation);
+      }
       layersControl.remove();
       compass.remove();
       osm.remove();
@@ -202,6 +206,10 @@ export default function MapView({
 }: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
+  // Ref to the latest onUpdateWaypoint — prevents stale closures in marker dragend handlers.
+  // Markers are created once; without this ref they would capture the initial callback version.
+  const onUpdateWaypointRef = useRef(onUpdateWaypoint);
+  useEffect(() => { onUpdateWaypointRef.current = onUpdateWaypoint; }, [onUpdateWaypoint]);
 
   // Toggle crosshair cursor by swapping Leaflet CSS classes on the map container.
   // Leaflet adds 'leaflet-grab' by default which overrides any inline cursor style,
@@ -257,7 +265,7 @@ export default function MapView({
         marker.addTo(map);
         marker.on('dragend', () => {
           const pos = marker.getLatLng();
-          onUpdateWaypoint(wp.id, pos.lat, pos.lng);
+          onUpdateWaypointRef.current(wp.id, pos.lat, pos.lng);
         });
         markersRef.current[wp.id] = marker;
       }

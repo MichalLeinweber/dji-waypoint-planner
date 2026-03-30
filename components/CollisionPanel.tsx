@@ -5,6 +5,7 @@
 // Shown when user clicks "Zobrazit detail" in the collision banner.
 
 import { Collision, Severity, highestSeverity } from '@/lib/collisionDetection';
+import { severityClasses } from '@/lib/severityColor';
 
 interface CollisionPanelProps {
   collisions: Collision[];
@@ -21,6 +22,7 @@ const SEVERITY_ORDER: Severity[] = ['DANGER', 'WARNING', 'CAUTION'];
 
 export default function CollisionPanel({ collisions, onClose }: CollisionPanelProps) {
   const top = highestSeverity(collisions);
+  const sc = severityClasses(top);
 
   // Group collisions by severity
   const grouped = SEVERITY_ORDER
@@ -39,11 +41,7 @@ export default function CollisionPanel({ collisions, onClose }: CollisionPanelPr
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`flex items-center justify-between px-4 py-3 border-b border-gray-700 rounded-t-xl ${
-          top === 'DANGER'  ? 'bg-red-900/20' :
-          top === 'WARNING' ? 'bg-orange-900/20' :
-          'bg-yellow-900/20'
-        }`}>
+        <div className={`flex items-center justify-between px-4 py-3 border-b border-gray-700 rounded-t-xl ${sc.bg20}`}>
           <div>
             <h2 className="text-sm font-semibold text-white">
               Varování kolizí ({collisions.length})

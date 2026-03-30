@@ -23,6 +23,7 @@ import { Waypoint, MissionType } from '@/lib/types';
 import { FilmType } from '@/app/page';
 import { estimateBattery } from '@/lib/batteryEstimate';
 import { Collision, highestSeverity } from '@/lib/collisionDetection';
+import { severityClasses } from '@/lib/severityColor';
 import CollisionPanel from './CollisionPanel';
 
 const PHOTO_TABS: { type: MissionType; label: string }[] = [
@@ -145,6 +146,37 @@ interface SidebarProps {
   onFlyTo: (lat: number, lng: number) => void;
 }
 
+/** Reusable tab strip — renders a row of toggle buttons with a shared active color. */
+function TabGroup<T extends string>({
+  tabs,
+  activeTab,
+  onSelect,
+  activeColor,
+}: {
+  tabs: { type: T; label: string }[];
+  activeTab: T;
+  onSelect: (type: T) => void;
+  activeColor: string;
+}) {
+  return (
+    <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
+      {tabs.map((tab) => (
+        <button
+          key={tab.type}
+          onClick={() => onSelect(tab.type)}
+          className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            activeTab === tab.type
+              ? `${activeColor} text-white`
+              : 'bg-[#0f1117] text-gray-400 hover:text-white'
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function Sidebar({
   waypoints,
   missionType,
@@ -227,6 +259,7 @@ export default function Sidebar({
 
   // Derive banner color from highest severity in current collisions
   const topSeverity = highestSeverity(collisions);
+  const sc = severityClasses(topSeverity);
 
   const content = (
     <div className="flex flex-col h-full">
@@ -276,35 +309,21 @@ export default function Sidebar({
 
       {/* Mission type tabs — switches based on app mode */}
       <div className="px-2 pt-2 flex-shrink-0">
-        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
-          {appMode === 'photo'
-            ? PHOTO_TABS.map((tab) => (
-                <button
-                  key={tab.type}
-                  onClick={() => onMissionTypeChange(tab.type)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                    missionType === tab.type
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-[#0f1117] text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))
-            : FILM_TABS.map((tab) => (
-                <button
-                  key={tab.type}
-                  onClick={() => onFilmTypeChange(tab.type)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                    filmType === tab.type
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-[#0f1117] text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-        </div>
+        {appMode === 'photo' ? (
+          <TabGroup
+            tabs={PHOTO_TABS}
+            activeTab={missionType}
+            onSelect={onMissionTypeChange}
+            activeColor="bg-blue-600"
+          />
+        ) : (
+          <TabGroup
+            tabs={FILM_TABS}
+            activeTab={filmType}
+            onSelect={onFilmTypeChange}
+            activeColor="bg-purple-600"
+          />
+        )}
       </div>
 
       {/* Panel content — scrollable */}
@@ -530,27 +549,15 @@ export default function Sidebar({
 
       {/* Collision warning banner — shown when any waypoint is inside a restricted zone */}
       {collisions.length > 0 && (
-        <div className={`mx-3 mb-2 rounded-lg border px-3 py-2 flex-shrink-0 ${
-          topSeverity === 'DANGER'  ? 'bg-red-900/30 border-red-700' :
-          topSeverity === 'WARNING' ? 'bg-orange-900/30 border-orange-700' :
-          'bg-yellow-900/30 border-yellow-700'
-        }`}>
+        <div className={`mx-3 mb-2 rounded-lg border px-3 py-2 flex-shrink-0 ${sc.bg30} ${sc.border}`}>
           <div className="flex items-center justify-between gap-2">
-            <span className={`text-xs font-medium ${
-              topSeverity === 'DANGER'  ? 'text-red-300' :
-              topSeverity === 'WARNING' ? 'text-orange-300' :
-              'text-yellow-300'
-            }`}>
+            <span className={`text-xs font-medium ${sc.text}`}>
               {topSeverity === 'DANGER' ? '⛔' : topSeverity === 'WARNING' ? '⚠️' : 'ℹ️'}{' '}
               {collisions.length} waypoint{collisions.length > 1 ? 'y' : ''} v omezené zóně
             </span>
             <button
               onClick={() => setShowCollisionPanel(true)}
-              className={`text-xs underline flex-shrink-0 ${
-                topSeverity === 'DANGER'  ? 'text-red-400 hover:text-red-200' :
-                topSeverity === 'WARNING' ? 'text-orange-400 hover:text-orange-200' :
-                'text-yellow-400 hover:text-yellow-200'
-              }`}
+              className={`text-xs underline flex-shrink-0 ${sc.textMuted} ${sc.textHover}`}
             >
               Detail
             </button>
