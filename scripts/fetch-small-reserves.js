@@ -4,24 +4,32 @@
 // Usage:  node scripts/fetch-small-reserves.js
 // Output: public/data/small-reserves-cz.json
 //
-// Categories fetched:
-//   NPR — Národní přírodní rezervace (National Nature Reserve)
-//   NPP — Národní přírodní památka   (National Nature Monument)
-//   PR  — Přírodní rezervace          (Nature Reserve)
-//   PP  — Přírodní památka            (Nature Monument)
+// Categories:
+//   NPR — Národní přírodní rezervace (~115 in CZ)
+//   NPP — Národní přírodní památka   (~120 in CZ)
+//   PR  — Přírodní rezervace          (~800 in CZ)
+//   PP  — Přírodní památka            (~1200 in CZ)
 //
-// All have boundary=protected_area in OSM and a protection_title tag.
-// NPR/NPP are strict (DANGER for drone flights), PR/PP are moderate (WARNING/CAUTION).
+// NOTE: PR and PP have many features so queries are split into 4 bbox quadrants
+//       to avoid Overpass server timeouts.
 
 const https = require('https');
 const fs    = require('fs');
 const path  = require('path');
 
-// CZ bounding box: [south, west, north, east]
-const CZ_BBOX = '48.55,12.09,51.06,18.86';
+// CZ split into 4 quadrants to reduce query load
+const CZ_BBOXES = [
+  '49.8,12.09,51.06,15.5',   // NW
+  '49.8,15.5,51.06,18.86',   // NE
+  '48.55,12.09,49.8,15.5',   // SW
+  '48.55,15.5,49.8,18.86',   // SE
+];
+
+// Overpass mirrors to try in order
+const MIRRORS = ['overpass-api.de', 'overpass.kumi.systems', 'lz4.overpass-api.de'];
 
 // ── HTTP POST helper ──────────────────────────────────────────────────────────
-function overpassPost(query, hostname = 'overpass-api.de') {
+function overpassPost(query, hostname) {
   return new Promise((resolve, reject) => {
     const body = 'data=' + encodeURIComponent(query);
     const opts = {
@@ -39,16 +47,15 @@ function overpassPost(query, hostname = 'overpass-api.de') {
       res.on('data', (c) => { raw += c; });
       res.on('end', () => resolve({ status: res.statusCode, body: raw }));
     });
-    req.setTimeout(120000, () => { req.destroy(); reject(new Error('Overpass timeout')); });
+    req.setTimeout(180000, () => { req.destroy(); reject(new Error('Overpass timeout')); });
     req.on('error', reject);
     req.write(body);
     req.end();
   });
 }
 
-// Try primary server, fall back to mirror on error or rate-limit
 async function overpassPostWithFallback(query) {
-  for (const host of ['overpass-api.de', 'overpass.kumi.systems']) {
+  for (const host of MIRRORS) {
     try {
       const r = await overpassPost(query, host);
       if (r.status === 200 && r.body.trimStart().startsWith('{')) {
@@ -58,12 +65,12 @@ async function overpassPostWithFallback(query) {
     } catch (e) {
       console.log(`  [${host}] error: ${e.message} — trying next mirror...`);
     }
-    await new Promise((r) => setTimeout(r, 3000));
+    await new Promise((r) => setTimeout(r, 2000));
   }
   throw new Error('All Overpass mirrors failed');
 }
 
-// ── Polygon stitching from OSM member ways ────────────────────────────────────
+// ── Polygon stitching ─────────────────────────────────────────────────────────
 function pointsEqual(a, b, eps = 1e-5) {
   return Math.abs(a[0] - b[0]) < eps && Math.abs(a[1] - b[1]) < eps;
 }
@@ -95,20 +102,15 @@ function stitchWays(ways) {
       }
     }
     if (!connected) {
-      console.warn(`  [stitchWays] ${remaining.length} segment(s) could not be connected — dropped`);
+      console.warn(`    [stitchWays] ${remaining.length} segment(s) could not be connected — dropped`);
       break;
     }
   }
 
-  // Ensure closed ring
-  if (!pointsEqual(result[0], result[result.length - 1])) {
-    result.push(result[0]);
-  }
+  if (!pointsEqual(result[0], result[result.length - 1])) result.push(result[0]);
   return result.length >= 4 ? result : null;
 }
 
-// ── Coordinate simplification ─────────────────────────────────────────────────
-// Skips points closer than ~100m (0.001°) — enough for a visual overlay.
 function simplifyRing(ring, tolerance = 0.001) {
   if (ring.length < 4) return ring;
   const out = [ring[0]];
@@ -122,19 +124,33 @@ function simplifyRing(ring, tolerance = 0.001) {
   return out;
 }
 
-// ── restriction text per category ────────────────────────────────────────────
+// ── Protection title classification ──────────────────────────────────────────
+// Returns one of 'NPR'|'NPP'|'PR'|'PP'|null based on protection_title tag.
+// Uses JS regex because OSM data has inconsistent casing and parenthetical suffixes.
+function classifyTitle(title) {
+  if (!title) return null;
+  const t = title.toLowerCase();
+  if (t.includes('národní přírodní rezervace')) return 'NPR';
+  if (t.includes('národní přírodní památka'))   return 'NPP';
+  if (t.includes('přírodní rezervace'))         return 'PR';
+  if (t.includes('přírodní památka'))           return 'PP';
+  return null;
+}
+
 function restrictionText(type) {
   switch (type) {
     case 'NPR': return 'Národní přírodní rezervace – přísný zákaz létání. Kontaktujte AOPK ČR: ochranaprirody.cz';
     case 'NPP': return 'Národní přírodní památka – zákaz létání. Kontaktujte AOPK ČR: ochranaprirody.cz';
     case 'PR':  return 'Přírodní rezervace – omezené létání. Ověřte podmínky na ochranaprirody.cz';
-    case 'PP':  return 'Přírodní památka – ověřte podmínky na ochranaprirody.cz';
-    default:    return 'Chráněné území – ověřte podmínky před letem.';
+    default:    return 'Přírodní památka – ověřte podmínky na ochranaprirody.cz';
   }
 }
 
-// ── Convert an OSM relation to GeoJSON Feature ────────────────────────────────
-function osmRelationToFeature(rel, areaType) {
+function osmRelationToFeature(rel) {
+  const title   = rel.tags?.protection_title ?? rel.tags?.['protection_title:cs'] ?? '';
+  const areaType = classifyTitle(title);
+  if (!areaType) return null; // skip unrecognized types (e.g. "Městská památková rezervace")
+
   const outerMembers = (rel.members || []).filter(
     (m) => m.type === 'way' && (m.role === 'outer' || m.role === ''),
   );
@@ -153,12 +169,11 @@ function osmRelationToFeature(rel, areaType) {
   };
 }
 
-// ── Fetch one category via Overpass ──────────────────────────────────────────
-async function fetchCategory(protectionTitle, areaType, seen, features) {
-  console.log(`\nFetching ${areaType} (${protectionTitle})...`);
-  // Query relations with boundary=protected_area and matching protection_title
-  const query = `[out:json][timeout:120][bbox:${CZ_BBOX}];
-relation["boundary"="protected_area"]["protection_title"="${protectionTitle}"];
+// ── Fetch one bbox quadrant ───────────────────────────────────────────────────
+async function fetchBbox(bbox, seen, features, quadrantLabel) {
+  // Fetch all protected_area relations with a protection_title tag in this bbox
+  const query = `[out:json][timeout:180][bbox:${bbox}];
+relation["boundary"="protected_area"]["protection_title"];
 out body geom;`;
 
   try {
@@ -166,21 +181,21 @@ out body geom;`;
     if (r.status !== 200) throw new Error(`HTTP ${r.status}`);
     const data = JSON.parse(r.body);
     const relations = (data.elements || []).filter((e) => e.type === 'relation');
-    console.log(`  Found ${relations.length} relations for ${areaType}`);
+    console.log(`  ${quadrantLabel}: ${relations.length} relations`);
 
+    let added = 0;
     for (const rel of relations) {
       if (seen.has(rel.id)) continue;
       seen.add(rel.id);
-      const feat = osmRelationToFeature(rel, areaType);
+      const feat = osmRelationToFeature(rel);
       if (feat) {
         features.push(feat);
-        console.log(`  ✓ ${areaType}: ${feat.properties.name}`);
-      } else {
-        console.log(`  ✗ Could not build polygon for: ${rel.tags?.name ?? rel.id}`);
+        added++;
       }
     }
+    console.log(`  ${quadrantLabel}: +${added} features added`);
   } catch (e) {
-    console.error(`  ${areaType} query failed: ${e.message}`);
+    console.error(`  ${quadrantLabel} failed: ${e.message}`);
   }
 }
 
@@ -188,32 +203,28 @@ out body geom;`;
 (async () => {
   const features = [];
   const seen = new Set();
+  const labels = ['NW', 'NE', 'SW', 'SE'];
 
-  // Fetch all 4 categories — pause 15 s between each to respect Overpass rate limits
-  const categories = [
-    { title: 'Národní přírodní rezervace', type: 'NPR' },
-    { title: 'Národní přírodní památka',   type: 'NPP' },
-    { title: 'Přírodní rezervace',          type: 'PR'  },
-    { title: 'Přírodní památka',            type: 'PP'  },
-  ];
+  console.log('Fetching Czech small nature reserves (NPR/NPP/PR/PP) in 4 quadrants...');
+  console.log('Each quadrant covers 1/4 of CZ to avoid Overpass timeout.\n');
 
-  for (let i = 0; i < categories.length; i++) {
+  for (let i = 0; i < CZ_BBOXES.length; i++) {
     if (i > 0) {
-      console.log('\nWaiting 15 s before next query (Overpass rate limit)...');
-      await new Promise((r) => setTimeout(r, 15000));
+      console.log('\nWaiting 20 s before next quadrant (Overpass rate limit)...');
+      await new Promise((r) => setTimeout(r, 20000));
     }
-    await fetchCategory(categories[i].title, categories[i].type, seen, features);
+    console.log(`\nQuadrant ${labels[i]}:`);
+    await fetchBbox(CZ_BBOXES[i], seen, features, labels[i]);
   }
 
   // ── Summary ─────────────────────────────────────────────────────────────────
-  const counts = {};
-  for (const f of features) {
-    counts[f.properties.type] = (counts[f.properties.type] ?? 0) + 1;
-  }
-  console.log('\nSummary:', counts, `— total ${features.length} features`);
+  const counts = { NPR: 0, NPP: 0, PR: 0, PP: 0 };
+  for (const f of features) counts[f.properties.type]++;
+
+  console.log(`\nSummary: NPR=${counts.NPR}, NPP=${counts.NPP}, PR=${counts.PR}, PP=${counts.PP} — total ${features.length}`);
 
   if (features.length === 0) {
-    console.error('No features collected. Check Overpass API or bounding box.');
+    console.error('No features collected. The Overpass servers may be down. Try again later.');
     process.exit(1);
   }
 
