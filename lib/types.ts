@@ -28,6 +28,42 @@ export interface Waypoint {
   headingAngle?: number;
 }
 
+/** A registered drone pilot */
+export interface Pilot {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  /** 12-digit ÚCL operator registration number */
+  uclOperatorId: string;
+  /** Pilot licence number (A1/A3 or A2 category) */
+  licenseNumber: string;
+  isDefault: boolean;
+}
+
+/** A drone stored in the pilot's fleet */
+export interface Drone {
+  id: string;
+  name: string;
+  manufacturer: string;
+  model: string;
+  /** Total weight in grams */
+  weightG: number;
+  /** EU drone class */
+  droneClass: 'C0' | 'C1' | 'C2';
+  serialNumber: string;
+  /** Battery capacity in watt-hours (used for flight time estimate) */
+  batteryWh: number;
+  /** Average power draw in watts during normal flight */
+  avgPowerW: number;
+  /** Maximum legal altitude in metres */
+  maxAltitudeM: number;
+  /** Maximum speed in m/s */
+  maxSpeedMs: number;
+  isDefault: boolean;
+}
+
 /** A saved mission */
 export interface Mission {
   /** Unique identifier for this mission */

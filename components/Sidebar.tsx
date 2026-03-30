@@ -19,7 +19,8 @@ import ArcShotPanel from './film/ArcShotPanel';
 import BoomerangPanel from './film/BoomerangPanel';
 import RocketPanel from './film/RocketPanel';
 import PoiSequencePanel from './film/PoiSequencePanel';
-import { Waypoint, MissionType } from '@/lib/types';
+import { Waypoint, MissionType, Drone } from '@/lib/types';
+import ActiveProfileBadge from './ActiveProfileBadge';
 import { FilmType } from '@/app/page';
 import { estimateBattery } from '@/lib/batteryEstimate';
 import { Collision, highestSeverity } from '@/lib/collisionDetection';
@@ -160,6 +161,8 @@ interface SidebarProps {
   isExporting: boolean;
   // Address search — flies the map to the selected location
   onFlyTo: (lat: number, lng: number) => void;
+  // Active drone — used for battery estimate (undefined = fall back to Mini 4 Pro defaults)
+  activeDrone?: Drone;
 }
 
 /** Reusable tab strip — renders a row of toggle buttons with a shared active color. */
@@ -280,6 +283,7 @@ export default function Sidebar({
   onExportLitchi,
   isExporting,
   onFlyTo,
+  activeDrone,
 }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showCollisionPanel, setShowCollisionPanel] = useState(false);
@@ -297,15 +301,25 @@ export default function Sidebar({
 
       {/* App logo/title */}
       <div className="px-4 py-3 border-b border-gray-700 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <h1 className="text-white font-bold text-sm tracking-wide">DJI Waypoint Planner</h1>
-          {terrainActive && (
-            <span className="text-xs text-green-400 bg-green-400/10 border border-green-700 rounded px-1.5 py-0.5">
-              🏔 Terrain
-            </span>
-          )}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-white font-bold text-sm tracking-wide">DJI Waypoint Planner</h1>
+            {terrainActive && (
+              <span className="text-xs text-green-400 bg-green-400/10 border border-green-700 rounded px-1.5 py-0.5">
+                🏔 Terrain
+              </span>
+            )}
+          </div>
+          <Link
+            href="/settings"
+            title="Nastavení pilotů a dronů"
+            className="text-gray-500 hover:text-gray-300 transition-colors text-base leading-none"
+          >
+            ⚙️
+          </Link>
         </div>
         <p className="text-gray-500 text-xs">Mini 4 Pro</p>
+        <ActiveProfileBadge />
       </div>
 
       {/* Mode switcher: Fotogrammetrie / Film */}
@@ -530,7 +544,7 @@ export default function Sidebar({
 
       {/* Battery estimate panel — shown when mission has at least 2 waypoints */}
       {waypoints.length >= 2 && (() => {
-        const est = estimateBattery(waypoints);
+        const est = estimateBattery(waypoints, 5, activeDrone?.batteryWh, activeDrone?.avgPowerW);
         const barColor =
           est.batteryPercent > 80 ? '#ef4444' :
           est.batteryPercent > 60 ? '#f97316' :

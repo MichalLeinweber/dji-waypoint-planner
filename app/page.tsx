@@ -13,6 +13,8 @@ import { saveMission } from '@/lib/missionStore';
 import { encodeMission, decodeMission } from '@/lib/shareUrl';
 import { importKmz } from '@/lib/importKmz';
 import { checkWaypointCollisions, Collision } from '@/lib/collisionDetection';
+import { loadActiveDrone } from '@/lib/profileStore';
+import { Drone } from '@/lib/types';
 
 // Leaflet map must be loaded client-side only (it uses browser APIs)
 const MapView = dynamic(() => import('@/components/Map'), { ssr: false });
@@ -26,6 +28,18 @@ function generateId(): string {
 
 export default function HomePage() {
   const router = useRouter();
+
+  // ── Active drone — loaded from localStorage, re-synced on window focus ───────
+  const [activeDrone, setActiveDrone] = useState<Drone | undefined>(undefined);
+
+  useEffect(() => {
+    function syncDrone() {
+      setActiveDrone(loadActiveDrone());
+    }
+    syncDrone();
+    window.addEventListener('focus', syncDrone);
+    return () => window.removeEventListener('focus', syncDrone);
+  }, []);
 
   // ── Core state ──────────────────────────────────────────────
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
@@ -664,6 +678,7 @@ export default function HomePage() {
         onExportKMZ={handleExportKMZ}
         onExportLitchi={handleExportLitchi}
         isExporting={isExporting}
+        activeDrone={activeDrone}
       />
 
       {/* Toast notification — appears bottom-right, auto-dismisses after 3 s */}
