@@ -70,8 +70,6 @@
 - [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
 
 ## 🔮 Budoucí rozšíření leteckých omezení
-- [ ] Železnice – buffer 60 m od osy koleje (LKR311)
-- [ ] Elektrické vedení – 7–30 m dle napětí (LKR312)
 - [ ] Silnice/dálnice – 50 m výška + šířka (LKR310)
 - [ ] NOTAMy – dočasná omezení v reálném čase
 - [ ] Check-in do DroneMap (vyžaduje partnerství
@@ -94,6 +92,12 @@
 *Poznámka: Design se dělá až po dokončení všech funkcionalit.*
 
 ## ✅ Dokončeno (přesunuto z plánů)
+- [x] Železnice – buffer 60 m od osy koleje (LKR311)
+      (889 tras, LineString GeoJSON, OSM route relations, toggle 🚂,
+       kolizní detekce WARNING/CAUTION, help #zeleznice)
+- [x] Elektrické vedení – 7–30 m dle napětí (LKR312)
+      (5310 linií + 1567 trafostanic, 5 napěťových tříd EHV/HV400/HV220/HV110/SUBSTATION,
+       way merging algoritmus, toggle ⚡, kolizní detekce WARNING/CAUTION, help #elektro)
 - [x] Export do formátu Litchi CSV (lib/exportLitchi.ts, 35 sloupců, 10 action slotů, tlačítko v Sidebaru)
 - [x] Vodní zdroje – ochranná pásma (LKR313) (1877 nádrží, scripts/fetch-water-sources.js,
       public/data/water-sources-cz.json, toggle 💧, kolizní detekce CAUTION, help #voda)

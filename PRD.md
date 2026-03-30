@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-30 (Session 22 — Litchi CSV, NPR/NPP/PR/PP rezervace, vodní zdroje LKR313)*
+*Poslední aktualizace: 2026-03-30 (Session 22–23 — Litchi CSV, NPR/NPP/PR/PP, vodní zdroje LKR313, železnice LKR311, el. vedení LKR312)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -226,7 +226,7 @@ Aplikace zobrazí krok za krokem:
 - `lib/batteryEstimate.ts` — Haversine 3D vzdálenost, Mini 4 Pro 33.48 Wh / 7 W avg / 20% rezerva
 - Panel v sidebaru s progress barem (zelená/oranžová/červená), zobrazí se od 2 waypointů
 
-**Letové a přírodní zóny na mapě:**
+**Letové, přírodní a technické zóny na mapě:**
 - CTR/TRA letové zóny – `components/AirspaceLayer.tsx`, statický GeoJSON `/data/airspaces-cz.json`
   (352 zón: CTR, TRA, PROHIBITED, RESTRICTED, DANGER, ATZ, TMA, TSA; barevné polygony, tooltip)
   Script: `scripts/fetch-airspaces.js` (OpenAIP Core API, node-only, cache soubor v public/data)
@@ -241,8 +241,18 @@ Aplikace zobrazí krok za krokem:
   (1877 pojmenovaných nádrží; tmavě modrá `drinking`, světle modrá `general`)
   Script: `scripts/fetch-water-sources.js` (Overpass, filtr `["name"]` vyloučí anonymní rybníky, 4 quadranty)
   Kolizní detekce: CAUTION pro oba typy (lib/collisionDetection.ts)
-- Toggle tlačítka v sidebaru: 🚧 Letové zóny (oranžová), 🌿 NP a CHKO (zelená), 🌱 Přírodní rezervace (emerald), 💧 Vodní zdroje (sky)
-- Help sekce: kotva `#priroda` s pravidly pro drony v NP/CHKO; kotva `#rezervace` s kartami NPR/NPP/PR/PP; kotva `#voda` s ochranná pásma I./II. stupně
+- Železnice – `components/RailwayLayer.tsx`, statický GeoJSON `/data/railways-cz.json`
+  (889 tras: 620 hlavní + 269 tramvajové; OSM route relations `type=route`; LineString GeoJSON)
+  Script: `scripts/fetch-railways.js` (stitchWaysToLine, 2 halves N/S, bufferM per ROUTE_CONFIG)
+  Kolizní detekce: WARNING pro hlavní tratě 60 m, CAUTION pro tramvaje 30 m
+  (pointToSegmentDistSq s COS_50 = cos(50°) korekce délky longtitudy)
+- Elektrické vedení – `components/PowerlineLayer.tsx`, statický GeoJSON `/data/powerlines-cz.json`
+  (5310 linií + 1567 trafostanic; napěťové třídy EHV/>400 kV, HV400/220–400 kV, HV220/110–220 kV, HV110/35–110 kV)
+  Script: `scripts/fetch-powerlines.js` (4 quadranty, way merging per napěťová třída, filtr voltage≥35 kV)
+  Kolizní detekce: WARNING pro EHV/HV400, CAUTION pro HV220/HV110/SUBSTATION
+  Trafostanice: Polygon features v témže GeoJSON (featureType=substation), point-in-polygon check
+- Toggle tlačítka v sidebaru: 🚧 Letové zóny (oranžová), 🌿 NP a CHKO (zelená), 🌱 Přírodní rezervace (emerald), 💧 Vodní zdroje (sky), 🚂 Železnice (červená), ⚡ El. vedení (žlutá)
+- Help sekce: kotva `#priroda` s pravidly pro drony v NP/CHKO; kotva `#rezervace` s kartami NPR/NPP/PR/PP; kotva `#voda` s ochranná pásma I./II. stupně; kotva `#zeleznice` s LKR311; kotva `#elektro` s kartami napěťových tříd + trafostanic
 
 **Export Litchi CSV:**
 - `lib/exportLitchi.ts` – generuje CSV pro starší drony DJI (Phantom, Mavic 2, Air 2S)
