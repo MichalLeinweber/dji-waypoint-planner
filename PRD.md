@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-30 (Session 22 — Litchi CSV, NPR/NPP/PR/PP rezervace)*
+*Poslední aktualizace: 2026-03-30 (Session 22 — Litchi CSV, NPR/NPP/PR/PP rezervace, vodní zdroje LKR313)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -237,8 +237,12 @@ Aplikace zobrazí krok za krokem:
   (2290 lokalit: NPR=109, NPP=116, PR=810, PP=1255; tmavě zelená NPR/NPP, světle zelená PR/PP)
   Script: `scripts/fetch-small-reserves.js` (Overpass bbox quadrant split, local classifyTitle(), 3 mirrors, 180s timeout)
   Kolizní detekce: DANGER pro NPR/NPP, WARNING pro PR, CAUTION pro PP (lib/collisionDetection.ts)
-- Toggle tlačítka v sidebaru: 🚧 Letové zóny (oranžová), 🌿 NP a CHKO (zelená), 🌱 Přírodní rezervace (emerald)
-- Help sekce: kotva `#priroda` s pravidly pro drony v NP/CHKO; kotva `#rezervace` s kartami NPR/NPP/PR/PP
+- Vodní zdroje – `components/WaterSourcesLayer.tsx`, statický GeoJSON `/data/water-sources-cz.json`
+  (1877 pojmenovaných nádrží; tmavě modrá `drinking`, světle modrá `general`)
+  Script: `scripts/fetch-water-sources.js` (Overpass, filtr `["name"]` vyloučí anonymní rybníky, 4 quadranty)
+  Kolizní detekce: CAUTION pro oba typy (lib/collisionDetection.ts)
+- Toggle tlačítka v sidebaru: 🚧 Letové zóny (oranžová), 🌿 NP a CHKO (zelená), 🌱 Přírodní rezervace (emerald), 💧 Vodní zdroje (sky)
+- Help sekce: kotva `#priroda` s pravidly pro drony v NP/CHKO; kotva `#rezervace` s kartami NPR/NPP/PR/PP; kotva `#voda` s ochranná pásma I./II. stupně
 
 **Export Litchi CSV:**
 - `lib/exportLitchi.ts` – generuje CSV pro starší drony DJI (Phantom, Mavic 2, Air 2S)

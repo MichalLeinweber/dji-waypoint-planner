@@ -70,7 +70,6 @@
 - [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
 
 ## 🔮 Budoucí rozšíření leteckých omezení
-- [ ] Vodní zdroje – ochranná pásma (LKR313)
 - [ ] Železnice – buffer 60 m od osy koleje (LKR311)
 - [ ] Elektrické vedení – 7–30 m dle napětí (LKR312)
 - [ ] Silnice/dálnice – 50 m výška + šířka (LKR310)
@@ -96,6 +95,8 @@
 
 ## ✅ Dokončeno (přesunuto z plánů)
 - [x] Export do formátu Litchi CSV (lib/exportLitchi.ts, 35 sloupců, 10 action slotů, tlačítko v Sidebaru)
+- [x] Vodní zdroje – ochranná pásma (LKR313) (1877 nádrží, scripts/fetch-water-sources.js,
+      public/data/water-sources-cz.json, toggle 💧, kolizní detekce CAUTION, help #voda)
 - [x] NPR/NPP/PR/PP – menší přírodní rezervace (2290 lokalit, scripts/fetch-small-reserves.js,
       public/data/small-reserves-cz.json, toggle 🌱, kolizní detekce, help sekce #rezervace)
 - [x] Kompletní code review celé codebase (Opus 4.6, všechny soubory lib/ + components/ + film/ + scripts/ + konfigurace)
