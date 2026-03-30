@@ -70,7 +70,6 @@
 - [ ] Mobilní notifikace při přiblížení se k CTR/TRA zónám
 
 ## 🔮 Budoucí rozšíření leteckých omezení
-- [ ] Silnice/dálnice – 50 m výška + šířka (LKR310)
 - [ ] NOTAMy – dočasná omezení v reálném čase
 - [ ] Check-in do DroneMap (vyžaduje partnerství
       s ŘLP ČR)
@@ -92,6 +91,10 @@
 *Poznámka: Design se dělá až po dokončení všech funkcionalit.*
 
 ## ✅ Dokončeno (přesunuto z plánů)
+- [x] Silnice/dálnice – 50 m výška + šířka (LKR310)
+      (6226 features: 3811 motorway + 2265 trunk + 150 national I. třída,
+       chain-building algoritmus, toggle 🛣️, kolizní detekce WARNING, help #silnice;
+       II. třída vynechána – 15 MB → dokumentována jako ruční kontrola)
 - [x] Železnice – buffer 60 m od osy koleje (LKR311)
       (889 tras, LineString GeoJSON, OSM route relations, toggle 🚂,
        kolizní detekce WARNING/CAUTION, help #zeleznice)

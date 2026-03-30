@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-30 (Session 22–23 — Litchi CSV, NPR/NPP/PR/PP, vodní zdroje LKR313, železnice LKR311, el. vedení LKR312)*
+*Poslední aktualizace: 2026-03-30 (Session 22–23 — Litchi CSV, NPR/NPP/PR/PP, vodní zdroje LKR313, železnice LKR311, el. vedení LKR312, silnice LKR310)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -251,8 +251,15 @@ Aplikace zobrazí krok za krokem:
   Script: `scripts/fetch-powerlines.js` (4 quadranty, way merging per napěťová třída, filtr voltage≥35 kV)
   Kolizní detekce: WARNING pro EHV/HV400, CAUTION pro HV220/HV110/SUBSTATION
   Trafostanice: Polygon features v témže GeoJSON (featureType=substation), point-in-polygon check
-- Toggle tlačítka v sidebaru: 🚧 Letové zóny (oranžová), 🌿 NP a CHKO (zelená), 🌱 Přírodní rezervace (emerald), 💧 Vodní zdroje (sky), 🚂 Železnice (červená), ⚡ El. vedení (žlutá)
-- Help sekce: kotva `#priroda` s pravidly pro drony v NP/CHKO; kotva `#rezervace` s kartami NPR/NPP/PR/PP; kotva `#voda` s ochranná pásma I./II. stupně; kotva `#zeleznice` s LKR311; kotva `#elektro` s kartami napěťových tříd + trafostanic
+- Silnice a dálnice – `components/RoadLayer.tsx`, statický GeoJSON `/data/roads-cz.json`
+  (6226 features: 3811 motorway + 2265 trunk + 150 national I. třída; amber barva; 50 m buffer)
+  Script: `scripts/fetch-roads.js` (Track A: individual ways motorway+trunk s chain-building algoritmem;
+  Track B: cz:national route relations pro I. třídu; simplifikace tol=0.0004° < buffer 50 m)
+  Kolizní detekce: WARNING pro MOTORWAY/TRUNK/PRIMARY (lib/collisionDetection.ts)
+  Pozn.: silnice II. třídy (15 m buffer) vynechány z dat — soubor by byl 15 MB;
+  dokumentovány v help #silnice jako ruční kontrola per LKR310.
+- Toggle tlačítka v sidebaru: 🚧 Letové zóny (oranžová), 🌿 NP a CHKO (zelená), 🌱 Přírodní rezervace (emerald), 💧 Vodní zdroje (sky), 🚂 Železnice (červená), 🛣️ Silnice (amber), ⚡ El. vedení (žlutá)
+- Help sekce: kotva `#priroda`; kotva `#rezervace`; kotva `#voda`; kotva `#zeleznice` (LKR311); kotva `#silnice` s kartami dálnice/I.třída/II.třída + limit II. třídy; kotva `#elektro` (LKR312)
 
 **Export Litchi CSV:**
 - `lib/exportLitchi.ts` – generuje CSV pro starší drony DJI (Phantom, Mavic 2, Air 2S)
