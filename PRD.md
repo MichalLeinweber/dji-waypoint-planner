@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-30 (Session 23 finální — code review #2: 4 opravy)*
+*Poslední aktualizace: 2026-03-30 (Session 23 finální — multi-drone podpora, code review #2)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -300,6 +300,11 @@ Aplikace zobrazí krok za krokem:
 - Kliknutí na výsledek → `map.flyTo([lat,lng], zoom 17)` přes `flyToTarget` prop
 - Omezeno na ČR (`countrycodes=cz`), User-Agent: `DJI-Waypoint-Planner/1.0`
 - Help stránka: přidán krok 1 „Najdi lokaci pomocí vyhledávacího pole..."
+
+**Multi-drone podpora (Session 23):**
+- `lib/profileStore.ts` — `DEFAULT_DRONES` pole: Mini 4 Pro (C0, 249g, 33.48 Wh), Air 3 (C1, 720g, 46.2 Wh), Mavic 3 Pro (C2, 895g, 77.6 Wh), Mini 3 Pro (C0, 249g, 33.9 Wh)
+- `loadDrones()` při každém volání doplní chybějící DEFAULT_DRONES (porovnání dle `name`) → stávající uživatelé dostanou nové drony automaticky
+- KMZ `droneEnumValue`: Mini 4 Pro=67 (ověřeno), Mavic 3 Pro=68 (ověřeno), Air 3 a Mini 3 Pro=TBD (exportKMZ.ts zatím nezměněn)
 
 **Code Quality (Session 23 — code review #2):**
 - `app/settings/page.tsx` — DroneForm.set() ternary bug: číselná pole ukládala celý state objekt místo skalárního čísla → fix správnou strukturou ternárního výrazu

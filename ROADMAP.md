@@ -35,12 +35,10 @@
       letiště, Správa železnic, AOPK).
       Šablony žádostí a kontakty pro každý typ zóny.
 
-- [ ] Rozšíření na další drony DJI – podpora
-      pro DJI Air 3 (C1, 720g), DJI Mavic 3 Pro
-      (C2, 895g), DJI Avata 2, DJI Mini 3 Pro
-      a další. Každý dron s vlastními parametry:
-      výdrž baterie, max výška, max rychlost,
-      kategorie C0/C1/C2, specifická omezení.
+- [x] Rozšíření na další drony DJI – Air 3 (C1, 720g), Mavic 3 Pro (C2, 895g),
+      Mini 3 Pro (C0, 249g) přidány do DEFAULT_DRONES v profileStore.ts;
+      automatické přidání stávajícím uživatelům při načtení (merge dle name).
+      KMZ droneEnumValue: Mini 4 Pro=67, Mavic 3 Pro=68, Air 3+Mini 3 Pro=TBD.
 
 - [ ] Standalone režim identifikátoru letových zón –
       aplikace použitelná bez plánování mise pouze
