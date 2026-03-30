@@ -143,6 +143,9 @@ interface SidebarProps {
   // Railway buffer zones toggle
   showRailways: boolean;
   onToggleRailways: () => void;
+  // Power line and substation protection zones toggle
+  showPowerlines: boolean;
+  onTogglePowerlines: () => void;
   // Collision detection results
   collisions: Collision[];
   // Save / Export / Share
@@ -262,6 +265,8 @@ export default function Sidebar({
   onToggleWaterSources,
   showRailways,
   onToggleRailways,
+  showPowerlines,
+  onTogglePowerlines,
   collisions,
   onSaveMission,
   onShareMission,
@@ -633,6 +638,16 @@ export default function Sidebar({
           }`}
         >
           {showRailways ? '🚂 Skrýt železnice' : '🚂 Železnice (ochran. pásma)'}
+        </button>
+        <button
+          onClick={onTogglePowerlines}
+          className={`w-full py-1.5 text-xs rounded border transition-colors ${
+            showPowerlines
+              ? 'bg-yellow-600/20 border-yellow-500 text-yellow-300 hover:bg-yellow-600/30'
+              : 'bg-[#0f1117] border-gray-600 text-gray-300 hover:border-yellow-500 hover:text-white'
+          }`}
+        >
+          {showPowerlines ? '⚡ Skrýt el. vedení' : '⚡ El. vedení (ochran. pásma)'}
         </button>
       </div>
 

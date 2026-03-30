@@ -230,6 +230,12 @@ export default function HelpPage() {
             🚂 Železnice
           </a>
           <a
+            href="#elektro"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-yellow-700 text-yellow-400 hover:bg-yellow-900/30 transition-colors"
+          >
+            ⚡ El. vedení
+          </a>
+          <a
             href="#legislativa"
             className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-yellow-700 text-yellow-400 hover:bg-yellow-900/30 transition-colors"
           >
@@ -1315,6 +1321,118 @@ export default function HelpPage() {
                 Správy železnic
               </a>{' '}
               nebo provozovatele tramvajové sítě.
+            </p>
+          </div>
+        </section>
+
+        {/* ── Elektrické vedení a ochranná pásma ── */}
+        <section id="elektro" className={sectionClass}>
+          <h2 className="text-white font-semibold text-base mb-4">⚡ Elektrické vedení a ochranná pásma (LKR312)</h2>
+
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Tlačítko <span className="text-yellow-400 font-medium">⚡ El. vedení</span> zobrazí
+            na mapě barevné koridory a plochy ochranných pásem kolem vysokonapěťových vedení a
+            trafostanic v ČR. Zákon č. 458/2000 Sb. (energetický zákon) zakazuje provoz
+            dronů v těchto pásmech bez souhlasu provozovatele.
+          </p>
+
+          {/* Voltage class cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div className="bg-[#0f1117] border border-violet-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-10 h-2 rounded flex-shrink-0" style={{ background: '#7c3aed' }} />
+                <span className="text-violet-400 font-medium text-sm">EHV &gt; 400 kV</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Velmi vysoké napětí — přenosová soustava ČEPS.{' '}
+                <strong className="text-violet-400">Ochranné pásmo 30 m</strong> od osy vedení.
+                Nebezpečí elektromagnetické indukce.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-purple-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-10 h-2 rounded flex-shrink-0" style={{ background: '#a855f7' }} />
+                <span className="text-purple-400 font-medium text-sm">HV 220–400 kV</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Vysoké napětí — přenosová a distribuční soustava.{' '}
+                <strong className="text-purple-400">Ochranné pásmo 20 m</strong> od osy vedení.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-pink-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-10 h-2 rounded flex-shrink-0" style={{ background: '#ec4899' }} />
+                <span className="text-pink-400 font-medium text-sm">HV 110–220 kV</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Regionální přenosové vedení.{' '}
+                <strong className="text-pink-400">Ochranné pásmo 15 m</strong> od osy vedení.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-orange-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-10 h-2 rounded flex-shrink-0" style={{ background: '#f97316' }} />
+                <span className="text-orange-400 font-medium text-sm">HV 35–110 kV</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Distribuční vedení vysokého napětí.{' '}
+                <strong className="text-orange-400">Ochranné pásmo 12 m</strong> od osy vedení.
+              </p>
+            </div>
+          </div>
+
+          {/* Substation card */}
+          <div className="bg-[#0f1117] border border-yellow-800 rounded-lg p-3 mb-5">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded flex-shrink-0" style={{ background: '#eab308', opacity: 0.5 }} />
+              <span className="text-yellow-400 font-medium text-sm">⚡ Trafostanice a rozvodny</span>
+            </div>
+            <p className="text-gray-400 text-xs leading-relaxed">
+              Elektrické stanice zobrazeny jako žluté polygony.{' '}
+              <strong className="text-yellow-400">Ochranné pásmo 20 m</strong> od oplocení.
+              Silné elektromagnetické pole — dodržte bezpečnou vzdálenost.
+            </p>
+          </div>
+
+          <h3 className="text-white font-medium text-sm mb-2">🔔 Kolizní detekce</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Pokud waypoint leží v ochranném pásmu vedení nebo trafostanice, aplikace zobrazí:{' '}
+            <span className="text-orange-400">⚠️ WARNING</span> pro vedení EHV a 220–400 kV,{' '}
+            <span className="text-yellow-400">ℹ️ CAUTION</span> pro ostatní třídy.
+          </p>
+
+          <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+            <p className="text-yellow-300 text-xs leading-relaxed">
+              <strong>⚠ Upozornění:</strong> Zobrazena jsou vedení s napětím ≥ 35 kV (zdroj: OpenStreetMap).
+              Distribuční vedení nízkého napětí nejsou zahrnuta. Přesná ochranná pásma
+              ověřte u provozovatele distribuční soustavy —{' '}
+              <a
+                href="https://www.ceps.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-200 underline hover:text-white"
+              >
+                ČEPS
+              </a>
+              ,{' '}
+              <a
+                href="https://www.eon.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-200 underline hover:text-white"
+              >
+                E.ON
+              </a>
+              ,{' '}
+              <a
+                href="https://www.cezdistribuce.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-200 underline hover:text-white"
+              >
+                ČEZ Distribuce
+              </a>
+              .
             </p>
           </div>
         </section>

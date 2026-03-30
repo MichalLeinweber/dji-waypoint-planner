@@ -125,6 +125,28 @@ function railwayInstructions(tier: string): string {
   return 'Ochranné pásmo tramvajové trati – 30 m od osy koleje. Ověřte podmínky u provozovatele.';
 }
 
+function powerlineSeverity(voltageClass: string): Severity {
+  if (voltageClass === 'EHV' || voltageClass === 'HV400') return 'WARNING';
+  return 'CAUTION'; // HV220, HV110, SUBSTATION
+}
+
+function powerlineInstructions(voltageClass: string): string {
+  switch (voltageClass) {
+    case 'EHV':
+      return 'Elektrické vedení >400 kV – ochranné pásmo 30 m (zákon 458/2000 Sb.). Nebezpečí indukce! Kontaktujte ČEPS: ceps.cz';
+    case 'HV400':
+      return 'Elektrické vedení 220–400 kV – ochranné pásmo 20 m (zákon 458/2000 Sb.). Kontaktujte ČEPS: ceps.cz';
+    case 'HV220':
+      return 'Elektrické vedení 110–220 kV – ochranné pásmo 15 m (zákon 458/2000 Sb.). Kontaktujte provozovatele distribuce.';
+    case 'HV110':
+      return 'Elektrické vedení 35–110 kV – ochranné pásmo 12 m (zákon 458/2000 Sb.). Kontaktujte provozovatele distribuce.';
+    case 'SUBSTATION':
+      return 'Elektrická trafostanice – ochranné pásmo 20 m. Elektromagnetické záření. Kontaktujte provozovatele.';
+    default:
+      return 'Elektrické vedení – dodržte bezpečnou vzdálenost (zákon 458/2000 Sb.).';
+  }
+}
+
 function waterSourceSeverity(): Severity {
   return 'CAUTION';
 }
@@ -303,6 +325,32 @@ async function loadZones(): Promise<Zone[]> {
     console.warn('[collisionDetection] Failed to load water sources');
   }
 
+  // Load power substation polygons (featureType='substation' in powerlines GeoJSON)
+  try {
+    const res = await fetch('/data/powerlines-cz.json');
+    if (res.ok) {
+      const data = await res.json() as GeoJSON.FeatureCollection;
+      for (const feature of data.features) {
+        if (feature.geometry.type !== 'Polygon') continue;
+        const props = feature.properties ?? {};
+        if ((props.featureType as string) !== 'substation') continue;
+        const geom = feature.geometry as GeoJSON.Polygon;
+        const ring = geom.coordinates[0] as [number, number][];
+        if (!ring || ring.length < 3) continue;
+        const voltClass: string = props.voltageClass ?? 'SUBSTATION';
+        zones.push({
+          name:         props.name ?? 'Trafostanice',
+          type:         'POWERLINE_SUBSTATION',
+          severity:     powerlineSeverity(voltClass),
+          instructions: powerlineInstructions(voltClass),
+          ring,
+        });
+      }
+    }
+  } catch {
+    console.warn('[collisionDetection] Failed to load power substations');
+  }
+
   zonesCache = zones;
   return zones;
 }
@@ -342,6 +390,34 @@ async function loadLineZones(): Promise<LineZone[]> {
     }
   } catch {
     console.warn('[collisionDetection] Failed to load railways');
+  }
+
+  // Load power line LineString features (featureType='line' in powerlines GeoJSON)
+  try {
+    const res = await fetch('/data/powerlines-cz.json');
+    if (res.ok) {
+      const data = await res.json() as GeoJSON.FeatureCollection;
+      for (const feature of data.features) {
+        if (feature.geometry.type !== 'LineString') continue;
+        const props = feature.properties ?? {};
+        if ((props.featureType as string) !== 'line') continue;
+        const geom   = feature.geometry as GeoJSON.LineString;
+        const coords = geom.coordinates as [number, number][];
+        if (coords.length < 2) continue;
+        const voltClass: string = (props.voltageClass as string) ?? 'HV110';
+        const bufferM:   number = (props.bufferM      as number) ?? 12;
+        zones.push({
+          name:         `Elektrické vedení (${voltClass})`,
+          type:         `POWERLINE_${voltClass}`,
+          severity:     powerlineSeverity(voltClass),
+          instructions: powerlineInstructions(voltClass),
+          coords,
+          bufferDeg: bufferM / 111320,
+        });
+      }
+    }
+  } catch {
+    console.warn('[collisionDetection] Failed to load power lines');
   }
 
   lineZonesCache = zones;
