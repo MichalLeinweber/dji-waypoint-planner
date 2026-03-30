@@ -11,6 +11,51 @@
       (hotovo – toggle tlačítko 🌍 Google 3D, fallback na OSM Buildings)
 
 ## 💡 Nápady a budoucí rozvoj
+- [ ] Správa pilotů – více uložených pilotů
+      (jméno, email, číslo provozovatele ÚCL,
+      číslo průkazu A1/A3/A2), výběr aktivního
+      pilota před misí, možnost zadat ručně
+
+- [ ] Správa dronů – více uložených dronů
+      (název, výrobce, hmotnost, třída C0/C1/C2,
+      výrobní číslo, výdrž baterie Wh, max rychlost,
+      max výška), DJI Mini 4 Pro jako výchozí,
+      výběr dronu při plánování mise, odhad
+      baterie přepočítán dle vybraného dronu,
+      možnost přidat ručně
+
+- [ ] Kombinace pilot + dron – výběr aktivní
+      kombinace před misí (Pilot A + Air 3,
+      Pilot B + Mavic 3). Parametry mise a žádostí
+      se přizpůsobí vybrané kombinaci automaticky.
+
+- [ ] Smart formulář žádosti o povolení letu –
+      předvyplnění z mise (GPS souřadnice, výška,
+      typ zóny), profilu pilota a vybraného dronu.
+      Odesílání přes mailto: na správný orgán dle
+      typu zóny (ÚCL, správa NP/CHKO, provozovatel
+      letiště, Správa železnic, AOPK).
+      Šablony žádostí a kontakty pro každý typ zóny.
+
+- [ ] Rozšíření na další drony DJI – podpora
+      pro DJI Air 3 (C1, 720g), DJI Mavic 3 Pro
+      (C2, 895g), DJI Avata 2, DJI Mini 3 Pro
+      a další. Každý dron s vlastními parametry:
+      výdrž baterie, max výška, max rychlost,
+      kategorie C0/C1/C2, specifická omezení.
+
+- [ ] Standalone režim identifikátoru letových zón –
+      aplikace použitelná bez plánování mise pouze
+      jako nástroj pro:
+      a) Identifikaci letových omezení na mapě
+         (zobrazení zón v okolí aktuální polohy)
+      b) Odeslání žádosti o povolení letu
+         přes smart formulář
+      c) Přímý kontakt dotčeného úřadu nebo správce
+      Vhodné pro piloty kteří plánují mimo aplikaci
+      ale potřebují rychle zkontrolovat zóny
+      a vyřídit povolení.
+
 - [ ] BEZPEČNOST: Omezit Google Maps API klíč na konkrétní doménu
       před komerčním nasazením.
       Postup: Google Cloud Console → APIs & Services → Credentials →
