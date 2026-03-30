@@ -9,14 +9,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { Waypoint } from '@/lib/types';
 
+// Declare window.Cesium loaded from CDN — avoids repeated casts throughout the file.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare global { interface Window { Cesium: any } }
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 // Tokens read from environment variables — never hardcode here.
 const CESIUM_TOKEN = process.env.NEXT_PUBLIC_CESIUM_TOKEN ?? '';
 const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 
+// Bump this string when upgrading CesiumJS.
+const CESIUM_VERSION = '1.115';
 const CESIUM_CDN =
-  'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium';
+  `https://cesium.com/downloads/cesiumjs/releases/${CESIUM_VERSION}/Build/Cesium`;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -33,8 +39,7 @@ function centroid(waypoints: Waypoint[]): { lng: number; lat: number } {
  */
 function loadCesiumScript(): Promise<void> {
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((window as any).Cesium) {
+    if (window.Cesium) {
       resolve();
       return;
     }
@@ -94,15 +99,12 @@ export default function Preview3DPage() {
         // 1. Load Cesium from CDN via script tag
         setLoading('Načítám Cesium...');
         await loadCesiumScript();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const Cesium = (window as any).Cesium;
-        console.log('[preview-3d] Cesium loaded from CDN:', !!Cesium);
+        const Cesium = window.Cesium;
 
         Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
 
         // 2. Read mission from localStorage
         const raw = localStorage.getItem('preview3d-mission');
-        console.log('[preview-3d] localStorage key exists:', !!raw);
         if (!raw) {
           setLoadError('Žádná mise k zobrazení. Otevři 3D náhled z plánovacího panelu.');
           return;
@@ -122,7 +124,6 @@ export default function Preview3DPage() {
           }
           wps = parsed.waypoints;
           timestamp = parsed.timestamp;
-          console.log('[preview-3d] Waypoints loaded:', wps.length);
         } catch {
           setLoadError('Nepodařilo se načíst data mise.');
           return;
@@ -145,7 +146,6 @@ export default function Preview3DPage() {
           if (elevRes.ok) {
             const elevData = await elevRes.json() as { elevation: number[] };
             groundElevs = elevData.elevation ?? groundElevs;
-            console.log('[preview-3d] Elevations fetched, first value:', groundElevs[0]);
           }
         } catch {
           console.warn('[preview-3d] Elevation fetch failed, using 0');
@@ -171,7 +171,6 @@ export default function Preview3DPage() {
         });
 
         viewerRef.current = viewer;
-        console.log('[preview-3d] Viewer created');
 
         // Hide Cesium commercial-use watermark via CSS
         const creditContainer = viewer.cesiumWidget.creditContainer as HTMLElement;
@@ -182,7 +181,6 @@ export default function Preview3DPage() {
           const tileset = await Cesium.createOsmBuildingsAsync();
           viewer.scene.primitives.add(tileset);
           tilesetRef.current = tileset;
-          console.log('[preview-3d] OSM Buildings loaded');
         } catch {
           console.warn('[preview-3d] OSM Buildings failed to load');
         }
@@ -202,7 +200,6 @@ export default function Preview3DPage() {
             setBuildingsVisible(false);
             setGoogleTilesAvailable(true);
             setGoogleTilesActive(true);
-            console.log('[preview-3d] Google Photorealistic 3D Tiles loaded');
           } catch (err) {
             // Google 3D failed (billing, quota, API key) — OSM Buildings stay visible
             console.warn('[preview-3d] Google 3D Tiles failed, using OSM Buildings:', err);
@@ -287,7 +284,6 @@ export default function Preview3DPage() {
           setHeading(h);
         });
 
-        console.log('[preview-3d] Scene ready');
         setMapReady(true);
 
       } catch (err) {
@@ -336,8 +332,7 @@ export default function Preview3DPage() {
   // ── Camera helpers — window.Cesium is available after CDN script loads ────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function getCesium(): any {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (window as any).Cesium;
+    return window.Cesium;
   }
 
   function handleResetView() {

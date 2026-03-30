@@ -2,7 +2,7 @@
 
 // Main application page — full-screen map with sidebar
 import dynamic from 'next/dynamic';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import SaveMissionDialog from '@/components/SaveMissionDialog';
@@ -60,7 +60,9 @@ export default function HomePage() {
       setCollisions([]);
       return;
     }
-    checkWaypointCollisions(waypoints).then(setCollisions);
+    checkWaypointCollisions(waypoints)
+      .then(setCollisions)
+      .catch((err) => console.warn('[collisionDetection] Check failed:', err));
   }, [waypoints]);
 
   // ── App mode: photo workflow vs. cinematic film shots ─────────
@@ -69,6 +71,20 @@ export default function HomePage() {
 
   // ── Toast notification (used for share URL feedback) ──────────
   const [toast, setToast] = useState<string | null>(null);
+  // Ref for the auto-dismiss timer — allows cleanup on unmount and prevents stacking
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Show a toast and auto-dismiss it after `ms` ms. Cancels any pending timer first.
+  const showToast = useCallback((msg: string, ms = 3000) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(msg);
+    toastTimerRef.current = setTimeout(() => setToast(null), ms);
+  }, []);
+
+  // Cleanup: cancel pending toast timer on unmount
+  useEffect(() => {
+    return () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); };
+  }, []);
 
   // ── Map state ────────────────────────────────────────────────
   const [mapCenter, setMapCenter] = useState({ lat: 50.08, lng: 14.42 });
@@ -105,13 +121,11 @@ export default function HomePage() {
     const encoded = encodeMission({ waypoints, missionType: effectiveMissionType });
     const url = `${window.location.origin}?mission=${encoded}`;
     navigator.clipboard.writeText(url).then(() => {
-      setToast('🔗 Odkaz zkopírován!');
-      setTimeout(() => setToast(null), 3000);
+      showToast('🔗 Odkaz zkopírován!');
     }).catch(() => {
-      setToast('❌ Kopírování selhalo');
-      setTimeout(() => setToast(null), 3000);
+      showToast('❌ Kopírování selhalo');
     });
-  }, [waypoints, missionType, appMode]);
+  }, [waypoints, missionType, appMode, showToast]);
 
   // ── KMZ import ───────────────────────────────────────────────
 
@@ -134,16 +148,14 @@ export default function HomePage() {
       const avgLng = imported.reduce((sum, wp) => sum + wp.lng, 0) / imported.length;
       setFlyToTarget({ lat: avgLat, lng: avgLng, zoom: 15 });
 
-      setToast(`✅ Mise načtena – ${imported.length} waypointů`);
-      setTimeout(() => setToast(null), 3000);
+      showToast(`✅ Mise načtena – ${imported.length} waypointů`);
     } catch (err) {
-      setToast(`❌ ${String(err).replace('Error: ', '')}`);
-      setTimeout(() => setToast(null), 4000);
+      showToast(`❌ ${String(err).replace('Error: ', '')}`, 4000);
     }
 
     // Reset file input so the same file can be re-imported if needed
     e.target.value = '';
-  }, []);
+  }, [showToast]);
 
   // ── Grid state ───────────────────────────────────────────────
   const [gridCorners, setGridCorners] = useState<{ sw: [number, number]; ne: [number, number] } | null>(null);
@@ -470,7 +482,7 @@ export default function HomePage() {
     } finally {
       setIsExporting(false);
     }
-  }, [waypoints, missionType, appMode, poi]);
+  }, [waypoints, missionType, appMode, poi, collisions]);
 
   // ── Derived map props ────────────────────────────────────────
 
