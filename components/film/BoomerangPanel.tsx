@@ -3,29 +3,7 @@
 // Boomerang: drone flies from start to end and returns along the exact same path
 import { useState, useMemo } from 'react';
 import { Waypoint } from '@/lib/types';
-
-function generateId(i: number): string {
-  return `boom-${Date.now()}-${i}`;
-}
-
-/** Haversine distance between two GPS points in meters */
-function distanceM(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
-): number {
-  const R = 6371000;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const sinDLat = Math.sin(dLat / 2);
-  const sinDLng = Math.sin(dLng / 2);
-  const aVal =
-    sinDLat * sinDLat +
-    Math.cos((a.lat * Math.PI) / 180) *
-      Math.cos((b.lat * Math.PI) / 180) *
-      sinDLng *
-      sinDLng;
-  return 2 * R * Math.asin(Math.sqrt(aVal));
-}
+import { generateId, haversineM } from '@/lib/panelUtils';
 
 interface BoomerangPanelProps {
   start: { lat: number; lng: number } | null;
@@ -52,7 +30,7 @@ export default function BoomerangPanel({
   // Live info calculations
   const info = useMemo(() => {
     if (!start || !end) return null;
-    const oneWayDist = distanceM(start, end);
+    const oneWayDist = haversineM(start.lat, start.lng, end.lat, end.lng);
     const totalDist = oneWayDist * 2;
     const flightTimeSec = totalDist / speed + pauseAtEnd;
     return { oneWayDist, totalDist, flightTimeSec };
@@ -70,7 +48,7 @@ export default function BoomerangPanel({
     // 6 waypoints: start → mid → end(wait) → end → mid → start
     const positions = [start, mid, end, end, mid, start];
     const waypoints: Waypoint[] = positions.map((pos, i) => ({
-      id: generateId(i),
+      id: generateId('boom', i),
       lat: pos.lat,
       lng: pos.lng,
       height,

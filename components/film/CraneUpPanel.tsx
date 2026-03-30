@@ -3,16 +3,13 @@
 // Crane Up shot: drone rises vertically from low to high, gimbal tilts from down to horizon
 import { useState } from 'react';
 import { Waypoint } from '@/lib/types';
+import { generateId } from '@/lib/panelUtils';
 
 interface CraneUpPanelProps {
   pos: { lat: number; lng: number } | null;
   isSelectingPos: boolean;
   onSelectPos: () => void;
   onGenerate: (waypoints: Waypoint[]) => void;
-}
-
-function generateId(): string {
-  return `wp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 /**
@@ -37,7 +34,7 @@ export default function CraneUpPanel({
     const gimbalAngles = [-60, -40, -20, 0]; // tilt from near-down to horizon
 
     const waypoints: Waypoint[] = steps.map((t, i) => ({
-      id: generateId(),
+      id: generateId('wp', i),
       lat: pos.lat,
       lng: pos.lng,
       height: startHeight + (endHeight - startHeight) * t,

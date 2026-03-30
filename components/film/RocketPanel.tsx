@@ -4,10 +4,7 @@
 // Unlike Crane Up (slow, gimbal tilts from down to horizon), Rocket is fast with a fixed steep angle
 import { useState, useMemo } from 'react';
 import { Waypoint } from '@/lib/types';
-
-function generateId(i: number): string {
-  return `rocket-${Date.now()}-${i}`;
-}
+import { generateId } from '@/lib/panelUtils';
 
 interface RocketPanelProps {
   pos: { lat: number; lng: number } | null;
@@ -40,7 +37,7 @@ export default function RocketPanel({
     // 4 waypoints at the same GPS position, linearly spaced in altitude
     const steps = [0, 1 / 3, 2 / 3, 1];
     const waypoints: Waypoint[] = steps.map((t, i) => ({
-      id: generateId(i),
+      id: generateId('rocket', i),
       lat: pos.lat,
       lng: pos.lng,
       height: startHeight + (endHeight - startHeight) * t,

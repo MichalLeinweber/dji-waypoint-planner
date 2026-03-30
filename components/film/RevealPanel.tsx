@@ -3,6 +3,7 @@
 // Reveal shot: drone flies toward a POI while rising, revealing the subject
 import { useState } from 'react';
 import { Waypoint } from '@/lib/types';
+import { generateId, bearingDeg } from '@/lib/panelUtils';
 
 interface RevealPanelProps {
   /** Point of interest (subject being revealed) */
@@ -16,12 +17,6 @@ interface RevealPanelProps {
   onSelectPoi: () => void;
   onSelectStart: () => void;
   onGenerate: (waypoints: Waypoint[]) => void;
-}
-
-const METERS_PER_DEG_LAT = 111320;
-
-function generateId(): string {
-  return `wp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 /**
@@ -43,14 +38,6 @@ export default function RevealPanel({
   const [travelPct, setTravelPct] = useState(60);        // % of POI distance to travel (0–100)
   const [speed, setSpeed] = useState(3);
 
-  function calcHeadingToPoi(lat: number, lng: number, poiLat: number, poiLng: number): number {
-    // Bearing from (lat,lng) toward POI in degrees (0=N, 90=E, clockwise)
-    const mPerDegLng = METERS_PER_DEG_LAT * Math.cos((lat * Math.PI) / 180);
-    const dy = (poiLat - lat) * METERS_PER_DEG_LAT; // meters north
-    const dx = (poiLng - lng) * mPerDegLng;          // meters east
-    return ((Math.atan2(dx, dy) * 180) / Math.PI + 360) % 360;
-  }
-
   function handleGenerate() {
     if (!startPos || !poi) return;
 
@@ -62,14 +49,14 @@ export default function RevealPanel({
       const lat = startPos.lat + (poi.lat - startPos.lat) * ratio * t;
       const lng = startPos.lng + (poi.lng - startPos.lng) * ratio * t;
       return {
-        id: generateId(),
+        id: generateId('reveal', i),
         lat,
         lng,
         height: startHeight + (endHeight - startHeight) * t,
         speed,
         waitTime: 0,
         cameraAction: i === 0 ? 'startVideo' : i === steps.length - 1 ? 'stopVideo' : 'none',
-        headingAngle: calcHeadingToPoi(lat, lng, poi.lat, poi.lng),
+        headingAngle: bearingDeg(lat, lng, poi.lat, poi.lng),
       };
     });
 

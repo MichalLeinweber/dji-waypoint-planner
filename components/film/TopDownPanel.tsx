@@ -3,6 +3,7 @@
 // Top-down shot: drone flies over a subject at constant height, camera straight down
 import { useState } from 'react';
 import { Waypoint } from '@/lib/types';
+import { generateId } from '@/lib/panelUtils';
 
 interface TopDownPanelProps {
   startPos: { lat: number; lng: number } | null;
@@ -12,10 +13,6 @@ interface TopDownPanelProps {
   onSelectStart: () => void;
   onSelectEnd: () => void;
   onGenerate: (waypoints: Waypoint[]) => void;
-}
-
-function generateId(): string {
-  return `wp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 /**
@@ -40,7 +37,7 @@ export default function TopDownPanel({
     // 3 waypoints: start, midpoint, end — all at same height, gimbal -90°
     const steps = [0, 0.5, 1];
     const waypoints: Waypoint[] = steps.map((t, i) => ({
-      id: generateId(),
+      id: generateId('wp', i),
       lat: startPos.lat + (endPos.lat - startPos.lat) * t,
       lng: startPos.lng + (endPos.lng - startPos.lng) * t,
       height,

@@ -4,44 +4,7 @@
 // The drone nose always points at the POI (headingAngle = bearing from stop to POI)
 import { useState, useMemo } from 'react';
 import { Waypoint } from '@/lib/types';
-
-function generateId(i: number): string {
-  return `poiseq-${Date.now()}-${i}`;
-}
-
-/** Bearing from point A to point B in degrees (0 = North, 90 = East, clockwise) */
-function bearingDeg(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
-): number {
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const lat1 = (a.lat * Math.PI) / 180;
-  const lat2 = (b.lat * Math.PI) / 180;
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x =
-    Math.cos(lat1) * Math.sin(lat2) -
-    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-}
-
-/** Haversine distance between two GPS points in meters */
-function distanceM(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
-): number {
-  const R = 6371000;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const sinDLat = Math.sin(dLat / 2);
-  const sinDLng = Math.sin(dLng / 2);
-  const aVal =
-    sinDLat * sinDLat +
-    Math.cos((a.lat * Math.PI) / 180) *
-      Math.cos((b.lat * Math.PI) / 180) *
-      sinDLng *
-      sinDLng;
-  return 2 * R * Math.asin(Math.sqrt(aVal));
-}
+import { METERS_PER_DEG_LAT, generateId, bearingDeg, haversineM } from '@/lib/panelUtils';
 
 interface Stop {
   distance: number; // distance from POI in meters
@@ -103,7 +66,6 @@ export default function PoiSequencePanel({
     let totalDist = 0;
 
     if (poi) {
-      const METERS_PER_DEG_LAT = 111320;
       const mPerDegLng = METERS_PER_DEG_LAT * Math.cos((poi.lat * Math.PI) / 180);
 
       // Compute GPS positions for each stop
@@ -118,7 +80,10 @@ export default function PoiSequencePanel({
 
       // Sum of straight-line distances between consecutive stops
       for (let i = 1; i < positions.length; i++) {
-        totalDist += distanceM(positions[i - 1], positions[i]);
+        totalDist += haversineM(
+          positions[i - 1].lat, positions[i - 1].lng,
+          positions[i].lat, positions[i].lng,
+        );
       }
     }
 
@@ -129,7 +94,6 @@ export default function PoiSequencePanel({
   function handleGenerate() {
     if (!poi) return;
 
-    const METERS_PER_DEG_LAT = 111320;
     const mPerDegLng = METERS_PER_DEG_LAT * Math.cos((poi.lat * Math.PI) / 180);
     const activeStops = stops.slice(0, stopCount);
 
@@ -142,10 +106,10 @@ export default function PoiSequencePanel({
       const lng = poi.lng + (stop.distance * Math.sin(angleRad)) / mPerDegLng;
 
       // Drone nose always points at the POI
-      const heading = bearingDeg({ lat, lng }, poi);
+      const heading = bearingDeg(lat, lng, poi.lat, poi.lng);
 
       return {
-        id: generateId(i),
+        id: generateId('poiseq', i),
         lat,
         lng,
         height: stop.height,

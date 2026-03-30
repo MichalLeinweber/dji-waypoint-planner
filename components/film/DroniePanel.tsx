@@ -3,6 +3,7 @@
 // Dronie shot: drone flies backward and upward away from a start point
 import { useState } from 'react';
 import { Waypoint } from '@/lib/types';
+import { METERS_PER_DEG_LAT, generateId } from '@/lib/panelUtils';
 
 interface DroniePanelProps {
   /** Starting position clicked on the map */
@@ -13,12 +14,6 @@ interface DroniePanelProps {
   onSelectStart: () => void;
   /** Called with the generated waypoints */
   onGenerate: (waypoints: Waypoint[]) => void;
-}
-
-const METERS_PER_DEG_LAT = 111320;
-
-function generateId(): string {
-  return `wp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 /**
@@ -54,7 +49,7 @@ export default function DroniePanel({
     const gimbalAngles = [0, -15, -30]; // degrees, starts horizontal, tilts slightly up as it climbs
 
     const waypoints: Waypoint[] = steps.map((t, i) => ({
-      id: generateId(),
+      id: generateId('wp', i),
       lat: startPos.lat + dLatPerMeter * distance * t,
       lng: startPos.lng + dLngPerMeter * distance * t,
       height: startHeight + (endHeight - startHeight) * t,

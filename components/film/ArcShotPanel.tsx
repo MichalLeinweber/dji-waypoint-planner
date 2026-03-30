@@ -3,25 +3,9 @@
 // Arc Shot: drone orbits a POI while linearly changing altitude — a dynamic cinematic move
 import { useState, useMemo } from 'react';
 import { Waypoint } from '@/lib/types';
+import { METERS_PER_DEG_LAT, generateId, bearingDeg } from '@/lib/panelUtils';
 
 const POINTS_PER_CIRCLE = 16; // same resolution as OrbitPanel
-
-function generateId(i: number): string {
-  return `arc-${Date.now()}-${i}`;
-}
-
-/** Bearing from point A to point B in degrees (0 = North, 90 = East, clockwise) */
-function bearingDeg(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
-): number {
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const lat1 = (a.lat * Math.PI) / 180;
-  const lat2 = (b.lat * Math.PI) / 180;
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-}
 
 const LAPS_OPTIONS = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0];
 
@@ -58,7 +42,6 @@ export default function ArcShotPanel({
     if (!poi) return;
 
     const { totalPoints } = info;
-    const METERS_PER_DEG_LAT = 111320;
     const mPerDegLng = METERS_PER_DEG_LAT * Math.cos((poi.lat * Math.PI) / 180);
     const waypoints: Waypoint[] = [];
 
@@ -73,10 +56,10 @@ export default function ArcShotPanel({
       const height = startHeight + (endHeight - startHeight) * t;
 
       // Heading: nose always points at POI
-      const headingAngle = bearingDeg({ lat, lng }, poi);
+      const headingAngle = bearingDeg(lat, lng, poi.lat, poi.lng);
 
       waypoints.push({
-        id: generateId(i),
+        id: generateId('arc', i),
         lat,
         lng,
         height,

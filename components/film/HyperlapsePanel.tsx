@@ -3,34 +3,9 @@
 // Hyperlapse shot: drone flies along a route taking photos at regular intervals
 import { useState, useMemo } from 'react';
 import { Waypoint } from '@/lib/types';
+import { generateId, bearingDeg, haversineM } from '@/lib/panelUtils';
 
-const METERS_PER_DEG_LAT = 111320;
 const MAX_WAYPOINTS = 200;
-
-function generateId(i: number): string {
-  return `hlapse-${Date.now()}-${i}`;
-}
-
-/** Haversine distance between two lat/lng points in meters */
-function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
-  const R = 6371000;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const sinDLat = Math.sin(dLat / 2);
-  const sinDLng = Math.sin(dLng / 2);
-  const aa = sinDLat * sinDLat + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * sinDLng * sinDLng;
-  return R * 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
-}
-
-/** Bearing from point A to point B in degrees (0 = North, 90 = East, clockwise) */
-function bearingDeg(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const lat1 = (a.lat * Math.PI) / 180;
-  const lat2 = (b.lat * Math.PI) / 180;
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-}
 
 /** Linear interpolation between two lat/lng points at fraction t (0–1) */
 function lerpLatLng(
@@ -70,7 +45,7 @@ export default function HyperlapsePanel({
   // Live calculations shown in info box
   const info = useMemo(() => {
     if (!startPos || !endPos) return null;
-    const distM = distanceMeters(startPos, endPos);
+    const distM = haversineM(startPos.lat, startPos.lng, endPos.lat, endPos.lng);
     const step = speed * interval; // meters between photos
     if (step <= 0) return null;
     const numPhotos = Math.floor(distM / step) + 1;
@@ -84,7 +59,7 @@ export default function HyperlapsePanel({
     if (numPhotos > MAX_WAYPOINTS) return;
 
     const step = speed * interval;
-    const fwdBearing = bearingDeg(startPos, endPos);
+    const fwdBearing = bearingDeg(startPos.lat, startPos.lng, endPos.lat, endPos.lng);
     const midpoint = lerpLatLng(startPos, endPos, 0.5);
 
     const waypoints: Waypoint[] = [];
@@ -102,7 +77,7 @@ export default function HyperlapsePanel({
         headingAngle = fwdBearing;
         wpGimbalPitch = gimbalPitch;
       } else if (gimbalMode === 'center') {
-        headingAngle = bearingDeg(pos, midpoint);
+        headingAngle = bearingDeg(pos.lat, pos.lng, midpoint.lat, midpoint.lng);
         wpGimbalPitch = gimbalPitch;
       } else {
         // down — no heading lock, gimbal straight down
@@ -110,7 +85,7 @@ export default function HyperlapsePanel({
       }
 
       waypoints.push({
-        id: generateId(i),
+        id: generateId('hlapse', i),
         lat: pos.lat,
         lng: pos.lng,
         height,
