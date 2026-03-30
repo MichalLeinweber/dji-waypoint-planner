@@ -1,10 +1,9 @@
 'use client';
 
 // CollisionPanel — modal showing detailed collision warnings for waypoints.
-// Grouped by severity: DANGER → WARNING → CAUTION.
-// Shown when user clicks "Zobrazit detail" in the collision banner.
+// Each unique zone appears once; lists all affected waypoint numbers.
 
-import { Collision, Severity, highestSeverity } from '@/lib/collisionDetection';
+import { Collision, CollisionGroup, Severity, groupCollisionsByZone, highestSeverity } from '@/lib/collisionDetection';
 import { severityClasses } from '@/lib/severityColor';
 
 interface CollisionPanelProps {
@@ -13,20 +12,30 @@ interface CollisionPanelProps {
 }
 
 const SEVERITY_CONFIG: Record<Severity, { label: string; icon: string; bg: string; border: string; text: string }> = {
-  DANGER:  { label: 'Zakázaná zóna',    icon: '⛔', bg: 'bg-red-900/30',    border: 'border-red-700',    text: 'text-red-300' },
-  WARNING: { label: 'Omezená zóna',     icon: '⚠️', bg: 'bg-orange-900/30', border: 'border-orange-700', text: 'text-orange-300' },
+  DANGER:  { label: 'Zakázaná zóna',     icon: '⛔', bg: 'bg-red-900/30',    border: 'border-red-700',    text: 'text-red-300' },
+  WARNING: { label: 'Omezená zóna',      icon: '⚠️', bg: 'bg-orange-900/30', border: 'border-orange-700', text: 'text-orange-300' },
   CAUTION: { label: 'Zvýšená opatrnost', icon: 'ℹ️', bg: 'bg-yellow-900/30', border: 'border-yellow-700', text: 'text-yellow-300' },
 };
 
 const SEVERITY_ORDER: Severity[] = ['DANGER', 'WARNING', 'CAUTION'];
 
+/** Formats a sorted list of 0-based indices as "WP 1, 2, 5" */
+function formatWpList(indices: number[]): string {
+  const sorted = [...new Set(indices)].sort((a, b) => a - b);
+  return 'WP ' + sorted.map((i) => i + 1).join(', ');
+}
+
 export default function CollisionPanel({ collisions, onClose }: CollisionPanelProps) {
   const top = highestSeverity(collisions);
   const sc = severityClasses(top);
 
-  // Group collisions by severity
-  const grouped = SEVERITY_ORDER
-    .map((sev) => ({ sev, items: collisions.filter((c) => c.severity === sev) }))
+  // One entry per unique zone
+  const groups: CollisionGroup[] = groupCollisionsByZone(collisions);
+  const zoneCount = groups.length;
+
+  // Group zone-cards by severity for section headers
+  const bySeverity = SEVERITY_ORDER
+    .map((sev) => ({ sev, items: groups.filter((g) => g.severity === sev) }))
     .filter(({ items }) => items.length > 0);
 
   return (
@@ -44,10 +53,10 @@ export default function CollisionPanel({ collisions, onClose }: CollisionPanelPr
         <div className={`flex items-center justify-between px-4 py-3 border-b border-gray-700 rounded-t-xl ${sc.bg20}`}>
           <div>
             <h2 className="text-sm font-semibold text-white">
-              Varování kolizí ({collisions.length})
+              Varování kolizí ({zoneCount} {zoneCount === 1 ? 'zóna' : zoneCount < 5 ? 'zóny' : 'zón'})
             </h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              {collisions.length} waypointů v omezených zónách
+              {zoneCount} {zoneCount === 1 ? 'zóna' : zoneCount < 5 ? 'zóny' : 'zón'} v omezené oblasti
             </p>
           </div>
           <button
@@ -59,39 +68,39 @@ export default function CollisionPanel({ collisions, onClose }: CollisionPanelPr
           </button>
         </div>
 
-        {/* Collision list — scrollable */}
+        {/* Zone list — scrollable, one card per unique zone */}
         <div className="overflow-y-auto flex-1 px-4 py-3 space-y-4">
-          {grouped.map(({ sev, items }) => {
+          {bySeverity.map(({ sev, items }) => {
             const cfg = SEVERITY_CONFIG[sev];
             return (
               <div key={sev}>
-                {/* Severity group header */}
+                {/* Severity section header */}
                 <div className={`flex items-center gap-1.5 mb-2 text-xs font-semibold ${cfg.text}`}>
                   <span>{cfg.icon}</span>
                   <span>{cfg.label}</span>
                   <span className="text-gray-500 font-normal">({items.length})</span>
                 </div>
 
-                {/* Individual collision cards */}
+                {/* Zone cards */}
                 <div className="space-y-2">
-                  {items.map((c, idx) => (
+                  {items.map((g) => (
                     <div
-                      key={`${c.waypointId}-${c.zoneName}-${idx}`}
+                      key={`${g.zoneType}|${g.zoneName}`}
                       className={`rounded-lg p-3 border ${cfg.bg} ${cfg.border}`}
                     >
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <span className="text-white text-xs font-medium leading-snug">
-                          {c.zoneName}
+                          {g.zoneName}
                         </span>
-                        <span className={`flex-shrink-0 text-xs px-1.5 py-0.5 rounded border ${cfg.border} ${cfg.text} bg-black/20`}>
-                          WP {c.waypointIndex + 1}
+                        <span className={`flex-shrink-0 text-xs px-1.5 py-0.5 rounded border ${cfg.border} ${cfg.text} bg-black/20 whitespace-nowrap`}>
+                          {formatWpList(g.waypointIndices)}
                         </span>
                       </div>
                       <p className="text-gray-400 text-xs mb-1.5">
-                        Typ zóny: <span className="text-gray-300">{c.zoneType}</span>
+                        Typ zóny: <span className="text-gray-300">{g.zoneType}</span>
                       </p>
                       <p className="text-xs leading-relaxed text-gray-300">
-                        {c.instructions}
+                        {g.instructions}
                       </p>
                     </div>
                   ))}

@@ -23,7 +23,7 @@ import { Waypoint, MissionType, Drone } from '@/lib/types';
 import ActiveProfileBadge from './ActiveProfileBadge';
 import { FilmType } from '@/app/page';
 import { estimateBattery } from '@/lib/batteryEstimate';
-import { Collision, highestSeverity } from '@/lib/collisionDetection';
+import { Collision, highestSeverity, groupCollisionsByZone } from '@/lib/collisionDetection';
 import { severityClasses } from '@/lib/severityColor';
 import CollisionPanel from './CollisionPanel';
 
@@ -291,6 +291,8 @@ export default function Sidebar({
   // Derive banner color from highest severity in current collisions
   const topSeverity = highestSeverity(collisions);
   const sc = severityClasses(topSeverity);
+  // Count unique zones (not individual WP collisions) for the banner
+  const uniqueZoneCount = groupCollisionsByZone(collisions).length;
 
   const content = (
     <div className="flex flex-col h-full">
@@ -594,7 +596,7 @@ export default function Sidebar({
           <div className="flex items-center justify-between gap-2">
             <span className={`text-xs font-medium ${sc.text}`}>
               {topSeverity === 'DANGER' ? '⛔' : topSeverity === 'WARNING' ? '⚠️' : 'ℹ️'}{' '}
-              {collisions.length} waypoint{collisions.length > 1 ? 'y' : ''} v omezené zóně
+              {uniqueZoneCount} {uniqueZoneCount === 1 ? 'zóna' : uniqueZoneCount < 5 ? 'zóny' : 'zón'} v omezené oblasti
             </span>
             <button
               onClick={() => setShowCollisionPanel(true)}

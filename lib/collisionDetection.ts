@@ -25,6 +25,49 @@ export interface Collision {
   instructions: string;
 }
 
+/** One unique zone with all waypoint indices that fall inside it. */
+export interface CollisionGroup {
+  zoneName: string;
+  zoneType: string;
+  severity: Severity;
+  instructions: string;
+  /** 0-based waypoint indices (displayed as WP n+1) */
+  waypointIndices: number[];
+}
+
+/**
+ * Collapses a flat Collision[] into one entry per unique zone.
+ * Severity of a group = highest severity among all WP collisions in that zone.
+ */
+export function groupCollisionsByZone(collisions: Collision[]): CollisionGroup[] {
+  const map = new Map<string, CollisionGroup>();
+  const SEVERITY_RANK: Record<Severity, number> = { DANGER: 2, WARNING: 1, CAUTION: 0 };
+
+  for (const c of collisions) {
+    const key = `${c.zoneType}|${c.zoneName}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.waypointIndices.push(c.waypointIndex);
+      if (SEVERITY_RANK[c.severity] > SEVERITY_RANK[existing.severity]) {
+        existing.severity = c.severity;
+      }
+    } else {
+      map.set(key, {
+        zoneName: c.zoneName,
+        zoneType: c.zoneType,
+        severity: c.severity,
+        instructions: c.instructions,
+        waypointIndices: [c.waypointIndex],
+      });
+    }
+  }
+
+  // Sort: DANGER first, then WARNING, then CAUTION
+  return [...map.values()].sort(
+    (a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity],
+  );
+}
+
 // Internal record for polygon-based zones
 interface Zone {
   name: string;
