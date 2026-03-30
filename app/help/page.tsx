@@ -170,6 +170,18 @@ export default function HelpPage() {
             🗂 Přehled funkcí
           </a>
           <a
+            href="#letzone"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-orange-700 text-orange-400 hover:bg-orange-900/30 transition-colors"
+          >
+            🚧 Letové zóny
+          </a>
+          <a
+            href="#kolize"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-orange-700 text-orange-400 hover:bg-orange-900/30 transition-colors"
+          >
+            ⚠️ Kolize
+          </a>
+          <a
             href="#foto"
             className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-blue-700 text-blue-400 hover:bg-blue-900/30 transition-colors"
           >
@@ -275,6 +287,107 @@ export default function HelpPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── Letové zóny ── */}
+        <section id="letzone" className={sectionClass}>
+          <h2 className={h2Class}>🚧 Letové zóny a vzdušný prostor</h2>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Aplikace zobrazuje letecká omezení přímo v mapě. Stiskni tlačítko{' '}
+            <span className="text-orange-400 font-medium">🚧 Letové zóny</span> v sidebaru
+            a na mapě se zobrazí barevné polygony CTR, TRA a dalších omezených zón platných pro ČR.
+            Data pochází z <span className="text-gray-300">OpenAIP</span> (352 zón, statická cache).
+          </p>
+
+          {/* Barevná legenda */}
+          <div className="space-y-2 mb-4">
+            {[
+              { color: 'bg-red-500/30 border-red-500', label: '🔴 PROHIBITED / RESTRICTED', desc: 'Zakázané zóny — vstup bez výjimky nepovolen (vojenské prostory, zakázané oblasti)' },
+              { color: 'bg-orange-500/30 border-orange-500', label: '🟠 CTR / DANGER', desc: 'Řízené prostory letišť a nebezpečné zóny — nutné povolení ATC nebo provozovatele letiště' },
+              { color: 'bg-yellow-400/20 border-yellow-400', label: '🟡 TMA / ATZ / TRA / TSA', desc: 'Terminální oblasti, letištní provozní zóny a dočasně rezervované prostory — omezený přístup' },
+              { color: 'bg-white/10 border-gray-400', label: '⬜ RMZ / kluzáky / sport', desc: 'Zóny povinného hlášení, kluzákové oblasti a sportovní letecké prostory — zvýšená opatrnost' },
+            ].map((item) => (
+              <div key={item.label} className={`flex gap-3 items-start p-3 rounded-lg border ${item.color}`}>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-white mb-0.5">{item.label}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-[#1a1d27] rounded-lg p-4 border border-orange-800/50">
+            <p className="text-sm font-semibold text-orange-300 mb-1">Co dělat, když trasa zasahuje do zóny?</p>
+            <ol className="text-xs text-gray-400 space-y-1 list-decimal list-inside">
+              <li>Klikni na polygon zóny v mapě — zobrazí se název, třída a platné omezení</li>
+              <li>Ověř zónu na portálu <span className="text-blue-400">dronemap.gov.cz</span> (DroneMap ŘLP ČR)</li>
+              <li>Pro CTR/letiště kontaktuj ATC dané letiště nebo požádej o povolení přes DroneMap</li>
+              <li>Pro NP/CHKO a jiné zóny kontaktuj příslušný úřad nebo správu území</li>
+            </ol>
+          </div>
+
+          <p className="mt-3 text-xs text-gray-500">
+            Aktuální NOTAMy (dočasná omezení) aplikace nezobrazuje — před letem vždy zkontroluj{' '}
+            <span className="text-gray-400">dronemap.gov.cz</span> nebo <span className="text-gray-400">aisview.rlp.cz</span>.
+          </p>
+        </section>
+
+        {/* ── Kolizní detekce ── */}
+        <section id="kolize" className={sectionClass}>
+          <h2 className={h2Class}>⚠️ Kolizní detekce waypointů</h2>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Po každé změně trasy aplikace automaticky zkontroluje všechny waypointy vůči
+            letovým zónám, přírodním rezervacím, vodním zdrojům, železnicím, silnicím
+            a elektrickému vedení — bez ohledu na to, které vrstvy máš aktuálně zapnuté.
+          </p>
+
+          {/* Závažnosti */}
+          <div className="space-y-2 mb-4">
+            {[
+              {
+                icon: '⛔',
+                label: 'DANGER',
+                border: 'border-red-600',
+                bg: 'bg-red-900/20',
+                text: 'text-red-400',
+                desc: 'Let zakázán — waypoint je v zóně s absolutním zákazem létání (PROHIBITED, RESTRICTED). KMZ export zobrazí varování.',
+              },
+              {
+                icon: '⚠️',
+                label: 'WARNING',
+                border: 'border-orange-500',
+                bg: 'bg-orange-900/20',
+                text: 'text-orange-400',
+                desc: 'Vyžaduje povolení — ochranné pásmo dálnice, silnice I. třídy, železnice nebo vedení VVN/VN400. Bez povolení nelze létat.',
+              },
+              {
+                icon: 'ℹ️',
+                label: 'CAUTION',
+                border: 'border-yellow-500',
+                bg: 'bg-yellow-900/20',
+                text: 'text-yellow-400',
+                desc: 'Zvýšená opatrnost — blízkost vodního zdroje, přírodní rezervace nebo vedení nižšího napětí. Let může být možný, prověř legislativu.',
+              },
+            ].map((item) => (
+              <div key={item.label} className={`flex gap-3 items-start p-3 rounded-lg border ${item.border} ${item.bg}`}>
+                <span className="text-xl flex-shrink-0">{item.icon}</span>
+                <div>
+                  <p className={`text-sm font-semibold mb-0.5 ${item.text}`}>{item.label}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-[#1a1d27] rounded-lg p-4 border border-gray-700 space-y-2 text-sm text-gray-300">
+            <p className="font-semibold text-white text-sm">Jak kolize vidíš v aplikaci</p>
+            <ul className="text-xs text-gray-400 space-y-1.5 list-disc list-inside">
+              <li>V sidebaru se zobrazí červený banner s počtem kolizí (např. <span className="text-red-400 font-medium">⚠️ 3 kolize</span>)</li>
+              <li>Kliknutím na banner otevřeš seznam všech kolizí s popisem zóny a doporučením</li>
+              <li>Pokud trasa obsahuje DANGER kolizi, export KMZ zobrazí varovný dialog</li>
+              <li>Kolizní kontrola běží na pozadí — vrstvy v mapě nemusíš mít zapnuté</li>
+            </ul>
           </div>
         </section>
 
