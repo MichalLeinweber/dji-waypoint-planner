@@ -8,8 +8,8 @@ const withPWA = require('next-pwa')({
 });
 
 const nextConfig = {
-  // Empty turbopack config tells Next.js 16 that we intentionally use webpack
-  // (required because next-pwa adds a webpack plugin)
+  // turbopack: {} aktivuje Turbopack (Next.js 15+).
+  // next-pwa přidá webpack config která má přednost.
   turbopack: {},
   // No transpilePackages needed — Cesium is loaded via CDN script tag
 };

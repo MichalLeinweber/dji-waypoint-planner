@@ -92,7 +92,10 @@ function stitchWays(ways) {
         break;
       }
     }
-    if (!connected) break;
+    if (!connected) {
+      console.warn(`  [stitchWays] ${remaining.length} segment(s) could not be connected — dropped`);
+      break;
+    }
   }
 
   // Ensure closed ring

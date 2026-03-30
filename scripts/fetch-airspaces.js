@@ -32,13 +32,14 @@ if (!apiKey) {
 // ── Build request URL ─────────────────────────────────────────────────────────
 // Types: 1=RESTRICTED, 2=DANGER, 3=PROHIBITED, 4=CTR, 8=TRA
 // OpenAIP moved from api.openaip.net to api.core.openaip.net
+// API key sent only via header — never in the URL (prevents exposure in proxy logs)
 const typeParams = [1, 2, 3, 4, 8].map((t) => `type[]=${t}`).join('&');
-const url = `https://api.core.openaip.net/api/airspaces?apiKey=${apiKey}&page=1&limit=1000&country=CZ&${typeParams}`;
+const url = `https://api.core.openaip.net/api/airspaces?page=1&limit=1000&country=CZ&${typeParams}`;
 
 console.log('Fetching CZ airspace data from OpenAIP REST API...');
 
 // ── Fetch data ────────────────────────────────────────────────────────────────
-https.get(url, { headers: { 'x-openaip-api-key': apiKey, 'Accept': 'application/json' } }, (res) => {
+const req = https.get(url, { headers: { 'x-openaip-api-key': apiKey, 'Accept': 'application/json' } }, (res) => {
   let rawData = '';
   res.on('data', (chunk) => { rawData += chunk; });
   res.on('end', () => {
@@ -58,6 +59,9 @@ https.get(url, { headers: { 'x-openaip-api-key': apiKey, 'Accept': 'application/
 
     const count = parsed.items?.length ?? 0;
     console.log(`Received ${count} airspace zones.`);
+    if (parsed.totalCount && parsed.totalCount > 1000) {
+      console.warn(`VAROVÁNÍ: Data zkrácena! Celkem: ${parsed.totalCount}, staženo: ${count}`);
+    }
 
     // ── Save to public/data/ ────────────────────────────────────────────────
     const outDir  = path.join(__dirname, '..', 'public', 'data');
@@ -67,7 +71,13 @@ https.get(url, { headers: { 'x-openaip-api-key': apiKey, 'Accept': 'application/
     console.log(`Saved to: ${outFile}`);
     console.log('Done. Commit public/data/airspaces-cz.json to include it in the build.');
   });
-}).on('error', (err) => {
+});
+
+req.setTimeout(120000, () => {
+  req.destroy(new Error('Požadavek vypršel po 120 s.'));
+});
+
+req.on('error', (err) => {
   console.error('Network error:', err.message);
   process.exit(1);
 });
