@@ -11,6 +11,7 @@ import { Waypoint } from '@/lib/types';
 import AirspaceLayer from './AirspaceLayer';
 import ProtectedAreasLayer from './ProtectedAreasLayer';
 import SmallReservesLayer from './SmallReservesLayer';
+import WaterSourcesLayer from './WaterSourcesLayer';
 
 // Fix Leaflet's default icon URLs broken by webpack
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -191,6 +192,8 @@ interface MapProps {
   showProtectedAreas: boolean;
   /** Whether to show NPR/NPP/PR/PP small nature reserves on the map */
   showSmallReserves: boolean;
+  /** Whether to show water reservoirs and protection zones on the map */
+  showWaterSources: boolean;
 }
 
 export default function MapView({
@@ -207,6 +210,7 @@ export default function MapView({
   showAirspace,
   showProtectedAreas,
   showSmallReserves,
+  showWaterSources,
 }: MapProps) {
   const markersRef = useRef<Record<string, L.Marker>>({});
   const mapRef = useRef<L.Map | null>(null);
@@ -301,6 +305,9 @@ export default function MapView({
 
       {/* Small nature reserves overlay — NPR/NPP (dark green), PR/PP (light green) */}
       <SmallReservesLayer active={showSmallReserves} />
+
+      {/* Water sources overlay — drinking (dark blue), general reservoir (light blue) */}
+      <WaterSourcesLayer active={showWaterSources} />
 
       {/* Waypoint connection line */}
       {polylinePositions.length > 1 && (

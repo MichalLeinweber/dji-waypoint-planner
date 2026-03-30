@@ -137,6 +137,9 @@ interface SidebarProps {
   // Small nature reserves (NPR/NPP/PR/PP) toggle
   showSmallReserves: boolean;
   onToggleSmallReserves: () => void;
+  // Water sources and protection zones toggle
+  showWaterSources: boolean;
+  onToggleWaterSources: () => void;
   // Collision detection results
   collisions: Collision[];
   // Save / Export / Share
@@ -252,6 +255,8 @@ export default function Sidebar({
   onToggleProtectedAreas,
   showSmallReserves,
   onToggleSmallReserves,
+  showWaterSources,
+  onToggleWaterSources,
   collisions,
   onSaveMission,
   onShareMission,
@@ -603,6 +608,16 @@ export default function Sidebar({
           }`}
         >
           {showSmallReserves ? '🌱 Skrýt přírodní rezervace' : '🌱 Přírodní rezervace (NPR/PP)'}
+        </button>
+        <button
+          onClick={onToggleWaterSources}
+          className={`w-full py-1.5 text-xs rounded border transition-colors ${
+            showWaterSources
+              ? 'bg-sky-600/20 border-sky-500 text-sky-300 hover:bg-sky-600/30'
+              : 'bg-[#0f1117] border-gray-600 text-gray-300 hover:border-sky-500 hover:text-white'
+          }`}
+        >
+          {showWaterSources ? '💧 Skrýt vodní zdroje' : '💧 Vodní zdroje (nádrže)'}
         </button>
       </div>
 

@@ -218,6 +218,12 @@ export default function HelpPage() {
             🌱 Rezervace
           </a>
           <a
+            href="#voda"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-sky-700 text-sky-400 hover:bg-sky-900/30 transition-colors"
+          >
+            💧 Vodní zdroje
+          </a>
+          <a
             href="#legislativa"
             className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium bg-[#1a1d27] border border-yellow-700 text-yellow-400 hover:bg-yellow-900/30 transition-colors"
           >
@@ -1152,6 +1158,89 @@ export default function HelpPage() {
               >
                 ochranaprirody.cz
               </a>.
+            </p>
+          </div>
+        </section>
+
+        {/* ── Vodní zdroje a ochranná pásma ── */}
+        <section id="voda" className={sectionClass}>
+          <h2 className="text-white font-semibold text-base mb-4">💧 Vodní zdroje (nádrže a ochranná pásma)</h2>
+
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Tlačítko <span className="text-sky-400 font-medium">💧 Vodní zdroje</span> zobrazí
+            na mapě vrstvu vodních nádrží a rezervoárů ČR. Zákon o vodách (č. 254/2001 Sb.)
+            stanovuje ochranná pásma vodních zdrojů, ve kterých může být létání dronem omezeno
+            nebo podmíněno souhlasem správce.
+          </p>
+
+          {/* 2 tier cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div className="bg-[#0f1117] border border-sky-800 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#0369a1' }} />
+                <span className="text-sky-300 font-medium text-sm">💧 Pitná voda</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Vodní zdroj označený jako zdroj pitné vody.{' '}
+                <strong className="text-yellow-400">Doporučujeme ověřit</strong> podmínky u správce
+                vodárenské soustavy před letem v okolí nádrže.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-sky-900 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#7dd3fc' }} />
+                <span className="text-sky-400 font-medium text-sm">🌊 Ostatní nádrže</span>
+              </div>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Přehrady, retenční nádrže a rybníky bez explicitního označení pitné vody.
+                Ověřte zda se nachází v ochranném pásmu vodního zdroje.
+              </p>
+            </div>
+          </div>
+
+          <h3 className="text-white font-medium text-sm mb-2">📋 Ochranná pásma I. a II. stupně</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-3">
+            Česká legislativa rozlišuje dvě pásma ochrany vodních zdrojů:
+          </p>
+          <div className="space-y-2 mb-5">
+            <div className="bg-[#0f1117] border border-gray-700 rounded p-3">
+              <p className="text-sm font-medium text-sky-300 mb-1">I. stupeň ochrany</p>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Bezprostřední okolí odběrného místa. Vstup a jakákoliv činnost je přísně omezena.
+                Létání dronem je prakticky vyloučeno bez povolení správce.
+              </p>
+            </div>
+            <div className="bg-[#0f1117] border border-gray-700 rounded p-3">
+              <p className="text-sm font-medium text-sky-400 mb-1">II. stupeň ochrany</p>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Širší oblast kolem vodního zdroje. Létání dronem může být omezeno —
+                vždy kontaktujte správce vodárenské soustavy nebo krajský vodoprávní úřad.
+              </p>
+            </div>
+          </div>
+
+          <h3 className="text-white font-medium text-sm mb-2">🔔 Kolizní detekce</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Aplikace detekuje waypointy uvnitř vodních nádrží a zobrazí{' '}
+            <span className="text-yellow-400">ℹ️ CAUTION</span> upozornění.
+            Přesné hranice ochranných pásem I./II. stupně nejsou dostupné v OpenStreetMap —
+            zobrazená plocha je samotná nádrž, nikoli pásmo ochrany.
+          </p>
+
+          <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+            <p className="text-yellow-300 text-xs leading-relaxed">
+              <strong>⚠ Upozornění:</strong> Data vodních nádrží jsou orientační (zdroj: OpenStreetMap).
+              Přesná ochranná pásma vodních zdrojů vyhledejte ve Veřejném registru práv a povinností
+              (VPRP) nebo na portálu{' '}
+              <a
+                href="https://www.vuv.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-200 underline hover:text-white"
+              >
+                vuv.cz
+              </a>{' '}
+              (Výzkumný ústav vodohospodářský T. G. Masaryka).
             </p>
           </div>
         </section>

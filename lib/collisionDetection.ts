@@ -93,6 +93,17 @@ function smallReserveInstructions(type: string): string {
   }
 }
 
+function waterSourceSeverity(): Severity {
+  return 'CAUTION';
+}
+
+function waterSourceInstructions(tier: string): string {
+  if (tier === 'drinking') {
+    return 'Ochranné pásmo vodního zdroje pitné vody – ověřte podmínky u správce soustavy. Viz vuv.cz';
+  }
+  return 'Vodní nádrž – ověřte zda jde o zdroj pitné vody před letem. Viz vuv.cz';
+}
+
 // ── Ray-casting point-in-polygon ──────────────────────────────────────────
 
 /**
@@ -196,6 +207,31 @@ async function loadZones(): Promise<Zone[]> {
     }
   } catch {
     console.warn('[collisionDetection] Failed to load small reserves');
+  }
+
+  // Load water sources (reservoirs and drinking water protection zones)
+  try {
+    const res = await fetch('/data/water-sources-cz.json');
+    if (res.ok) {
+      const data = await res.json() as GeoJSON.FeatureCollection;
+      for (const feature of data.features) {
+        if (feature.geometry.type !== 'Polygon') continue;
+        const geom = feature.geometry as GeoJSON.Polygon;
+        const ring = geom.coordinates[0] as [number, number][];
+        if (!ring || ring.length < 3) continue;
+        const props = feature.properties ?? {};
+        const tier: string = props.tier ?? 'general';
+        zones.push({
+          name: props.name ?? 'Vodní nádrž',
+          type: tier === 'drinking' ? 'WATER_DRINKING' : 'WATER_GENERAL',
+          severity: waterSourceSeverity(),
+          instructions: waterSourceInstructions(tier),
+          ring,
+        });
+      }
+    }
+  } catch {
+    console.warn('[collisionDetection] Failed to load water sources');
   }
 
   zonesCache = zones;

@@ -51,6 +51,9 @@ export default function HomePage() {
   // ── Small nature reserves (NPR/NPP/PR/PP) state ───────────────
   const [showSmallReserves, setShowSmallReserves] = useState(false);
 
+  // ── Water sources and protection zones state ──────────────────
+  const [showWaterSources, setShowWaterSources] = useState(false);
+
   // ── Collision detection state ─────────────────────────────────
   const [collisions, setCollisions] = useState<Collision[]>([]);
 
@@ -60,6 +63,10 @@ export default function HomePage() {
 
   const handleToggleSmallReserves = useCallback(() => {
     setShowSmallReserves((prev) => !prev);
+  }, []);
+
+  const handleToggleWaterSources = useCallback(() => {
+    setShowWaterSources((prev) => !prev);
   }, []);
 
   // Re-run collision check whenever waypoints change
@@ -621,6 +628,8 @@ export default function HomePage() {
         onToggleProtectedAreas={handleToggleProtectedAreas}
         showSmallReserves={showSmallReserves}
         onToggleSmallReserves={handleToggleSmallReserves}
+        showWaterSources={showWaterSources}
+        onToggleWaterSources={handleToggleWaterSources}
         collisions={collisions}
         onSaveMission={handleSaveMission}
         onShareMission={handleShareMission}
@@ -652,6 +661,7 @@ export default function HomePage() {
           showAirspace={showAirspace}
           showProtectedAreas={showProtectedAreas}
           showSmallReserves={showSmallReserves}
+          showWaterSources={showWaterSources}
         />
       </main>
     </div>
