@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-30 (Session 23 — správa pilotů/dronů, fix kolizního panelu, help #letzone + #kolize)*
+*Poslední aktualizace: 2026-03-30 (Session 23 finální — code review #2: 4 opravy)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -300,6 +300,12 @@ Aplikace zobrazí krok za krokem:
 - Kliknutí na výsledek → `map.flyTo([lat,lng], zoom 17)` přes `flyToTarget` prop
 - Omezeno na ČR (`countrycodes=cz`), User-Agent: `DJI-Waypoint-Planner/1.0`
 - Help stránka: přidán krok 1 „Najdi lokaci pomocí vyhledávacího pole..."
+
+**Code Quality (Session 23 — code review #2):**
+- `app/settings/page.tsx` — DroneForm.set() ternary bug: číselná pole ukládala celý state objekt místo skalárního čísla → fix správnou strukturou ternárního výrazu
+- `app/page.tsx` — odstraněn duplikátní `import { Drone } from '@/lib/types'` (sloučen do jediného importu na řádku 9)
+- `lib/collisionDetection.ts` — powerlines-cz.json (3.4 MB) se nyní načítá jednou přes sdílenou `loadPowerlinesData()` cache (dříve dvakrát: jednou v `loadZones()` pro Polygon substations, jednou v `loadLineZones()` pro LineString vedení)
+- `components/ActiveProfileBadge.tsx` — `refresh` obaleno v `useCallback` se správnou dependency arrayí (dříve function deklarace mimo useEffect → ESLint exhaustive-deps warning)
 
 **Code Quality (Session 21 — kompletní code review):**
 - `lib/panelUtils.ts` — centralizovány sdílené utility: `METERS_PER_DEG_LAT`, `generateId()`, `bearingDeg()`, `haversineM()` (odstraněno ~250 řádků duplicit)

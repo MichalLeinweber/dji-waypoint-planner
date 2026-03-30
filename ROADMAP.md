@@ -119,6 +119,10 @@
       public/data/small-reserves-cz.json, toggle 🌱, kolizní detekce, help sekce #rezervace)
 - [x] Kompletní code review celé codebase (Opus 4.6, všechny soubory lib/ + components/ + film/ + scripts/ + konfigurace)
 - [x] Systém průběžného code review — šablona a postup uloženy v globálním ~/.claude/CLAUDE.md (sekce Code Review System)
+- [x] Code review #2 (tag review-20260330b) — 4 opravy: DroneForm.set() ternary bug
+      (číselná pole ukládala objekt místo čísla), duplicate Drone import sloučen,
+      powerlines-cz.json jednorázový fetch přes sdílenou loadPowerlinesData() cache,
+      ActiveProfileBadge refresh() wrapped v useCallback
 - [x] CTR/TRA letové zóny na mapě
       (OpenAIP Core API → statický GeoJSON public/data/airspaces-cz.json,
        352 zón, barevné polygony, tooltip, toggle 🚧, caching)
