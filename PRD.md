@@ -129,7 +129,7 @@ Aplikace zobrazí krok za krokem:
 
 ## 9. Stav vývoje
 
-*Poslední aktualizace: 2026-03-29 (Session 20)*
+*Poslední aktualizace: 2026-03-30 (Session 21 — Code Review)*
 
 ### ✅ Dokončeno – kompletní přehled
 
@@ -254,6 +254,25 @@ Aplikace zobrazí krok za krokem:
 - Kliknutí na výsledek → `map.flyTo([lat,lng], zoom 17)` přes `flyToTarget` prop
 - Omezeno na ČR (`countrycodes=cz`), User-Agent: `DJI-Waypoint-Planner/1.0`
 - Help stránka: přidán krok 1 „Najdi lokaci pomocí vyhledávacího pole..."
+
+**Code Quality (Session 21 — kompletní code review):**
+- `lib/panelUtils.ts` — centralizovány sdílené utility: `METERS_PER_DEG_LAT`, `generateId()`, `bearingDeg()`, `haversineM()` (odstraněno ~250 řádků duplicit)
+- `lib/missionStore.ts` — validace po JSON.parse (guard proti corrupted localStorage)
+- `lib/geocoding.ts` — AbortSignal parametr, placeId ve výsledku, AbortError rethrown
+- `lib/exportKMZ.ts` — `calcAvgSpeed()` helper eliminuje duplicitní výpočet
+- `lib/batteryEstimate.ts` — lokální haversineM nahrazen importem z panelUtils
+- `lib/protectedAreas.ts` — `type: 'NP' | 'CHKO'` (odstraněn zbytečný `| string`)
+- `components/SearchBar.tsx` — AbortController pro cancel in-flight requestů, stabilní key
+- `components/MissionList.tsx` — confirm() před smazáním mise
+- `components/SaveMissionDialog.tsx` — cleanup focusTimerRef na unmount
+- `components/WaypointPanel.tsx` — confirm() před "Smazat vše"
+- `components/film/*` — všechny panely importují z panelUtils (ArcShot, Boomerang, Hyperlapse, PoiSequence, Reveal, CraneUp, Dronie, Rocket, TopDown)
+- `app/globals.css` — odstraněn redundantní `:root` block a duplicitní `html,body` vlastnosti
+- `app/layout.tsx` — odstraněn `apple-touch-icon` (icons složka prázdná)
+- `package.json` — odstraněny nepotřebné závislosti `maplibre-gl` a `cesium`
+- `scripts/fetch-airspaces.js` — apiKey odstraněn z URL (pouze v headeru), warn při paginaci > 1000, timeout 120 s
+- `scripts/fetch-protected-areas.js` — warn při zahozených segmentech v stitchWays
+- `next.config.js` — opraven misleading komentář k turbopack
 
 **Opravené bugy:**
 - Leaflet crosshair cursor (leaflet-grab přebíjel CSS – oprava přes classList)

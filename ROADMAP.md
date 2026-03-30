@@ -53,6 +53,8 @@
 *Poznámka: Design se dělá až po dokončení všech funkcionalit.*
 
 ## ✅ Dokončeno (přesunuto z plánů)
+- [x] Kompletní code review celé codebase (Opus 4.6, všechny soubory lib/ + components/ + film/ + scripts/ + konfigurace)
+- [x] Systém průběžného code review — šablona a postup uloženy v globálním ~/.claude/CLAUDE.md (sekce Code Review System)
 - [x] CTR/TRA letové zóny na mapě
       (OpenAIP Core API → statický GeoJSON public/data/airspaces-cz.json,
        352 zón, barevné polygony, tooltip, toggle 🚧, caching)
